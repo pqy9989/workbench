@@ -1,0 +1,1006 @@
+:root {
+  --fill-area-bg: #0a0d10;
+  --fill-area-panel: #12161b;
+  --fill-area-panel-soft: #171c22;
+  --fill-area-line: #232a32;
+  --fill-area-text: #e7edf3;
+  --fill-area-muted: #84919e;
+  --fill-area-faint: #5d6a76;
+  --fill-area-cyan: #02c1cd;
+  --fill-area-green: #c8f24e;
+}
+
+* { box-sizing: border-box; }
+html, body { width: 100%; min-height: 100%; margin: 0; }
+body {
+  background: #f1f1f1;
+  color: var(--fill-area-text);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+}
+button { border: 0; font: inherit; cursor: pointer; }
+.fill-area [hidden] { display: none !important; }
+
+.fill-area,
+.fill-area * {
+  scrollbar-color: #354451 #12161b;
+  scrollbar-width: thin;
+}
+
+.fill-area::-webkit-scrollbar,
+.fill-area *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.fill-area::-webkit-scrollbar-track,
+.fill-area *::-webkit-scrollbar-track {
+  background: #12161b;
+}
+
+.fill-area::-webkit-scrollbar-thumb,
+.fill-area *::-webkit-scrollbar-thumb {
+  border: 2px solid #12161b;
+  border-radius: 6px;
+  background: #354451;
+}
+
+.fill-area::-webkit-scrollbar-thumb:hover,
+.fill-area *::-webkit-scrollbar-thumb:hover {
+  background: #4b5d6b;
+}
+
+.fill-area-preview {
+  width: 401px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+}
+
+.fill-area-preview__title {
+  width: 100%;
+  margin: 0 0 12px;
+  color: #12161b;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 28px;
+}
+
+.fill-area + .fill-area-preview__title {
+  margin-top: 72px;
+}
+
+.fill-area {
+  width: 401px;
+  min-width: 401px;
+  height: 780px;
+  min-height: 780px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--fill-area-line);
+  border-radius: 12px;
+  background: var(--fill-area-panel);
+}
+
+.fill-area__content {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 12px 20px 0;
+}
+
+.fill-area__banner {
+  width: 100%;
+  margin: 0 0 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(2, 193, 205, 0.12);
+  color: var(--fill-area-cyan);
+  font-size: 11px;
+  line-height: 16.5px;
+}
+
+.fill-area__list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.fill-area__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  min-height: 0;
+  padding: 16px 0;
+  border-bottom: 1px dashed var(--fill-area-line);
+}
+
+.fill-area__row:first-child { padding-top: 16px; }
+.fill-area__row:last-child { padding-bottom: 16px; }
+
+.fill-area__row > b {
+  width: 14px;
+  height: 18px;
+  flex: 0 0 14px;
+  display: block;
+  color: var(--fill-area-text);
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+}
+
+.fill-area__row-main {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.fill-area__row-top {
+  width: 100%;
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fill-area__row-top time {
+  width: 120px;
+  flex: 0 0 120px;
+  color: var(--fill-area-green);
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.fill-area__severity {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fill-area__severity span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--fill-area-text);
+  font-size: 12px;
+  line-height: 19.5px;
+  white-space: nowrap;
+}
+
+.fill-area__severity i {
+  width: 12px;
+  height: 12px;
+  display: block;
+  flex: 0 0 12px;
+  background: url("./assets/icon-radio.svg") center / 12px 12px no-repeat;
+}
+
+.fill-area__severity .is-selected i {
+  background-image: url("./assets/icon-radio-selected.svg");
+}
+
+.fill-area button[aria-label="删除"] {
+  width: 16px;
+  height: 18px;
+  flex: 0 0 16px;
+  display: grid;
+  place-items: center;
+  padding: 1px 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.fill-area button[aria-label="删除"] img {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.fill-area__field {
+  position: relative;
+  width: 100%;
+  min-height: 37.5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 4px 0 0;
+  padding: 8px 12px;
+  border: 1px solid var(--fill-area-line);
+  border-radius: 8px;
+  background: var(--fill-area-panel-soft);
+  color: var(--fill-area-text);
+  font-size: 13px;
+  line-height: 19.5px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.fill-area__field::after {
+  content: "";
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  margin-left: 12px;
+  background: url("./assets/icon-chevron.svg") center / 14px 14px no-repeat;
+  transform: rotate(-90deg);
+}
+
+.fill-area__field.is-placeholder { color: var(--fill-area-faint); }
+
+.fill-area__footer {
+  height: 68px;
+  flex: 0 0 68px;
+  display: flex;
+  align-items: center;
+  justify-content: stretch;
+  gap: 6px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--fill-area-line);
+  background: var(--fill-area-panel);
+}
+
+.fill-area__button {
+  min-width: 0;
+  height: 36px;
+  flex: 1 1 0;
+  padding: 8px 14px;
+  border: 1px solid var(--fill-area-line);
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  font-size: 13px;
+  line-height: 19.5px;
+  white-space: nowrap;
+}
+
+.fill-area__button--primary {
+  border-color: var(--fill-area-cyan);
+  background: var(--fill-area-cyan);
+  color: var(--fill-area-bg);
+}
+
+.fill-area__button:hover { background: var(--fill-area-panel-soft); }
+.fill-area__button--primary:hover { background: #16cbd5; }
+
+
+/* 动作标注-标注 */
+.fill-area[data-variant="action-annotation"] .fill-area__content { padding-top: 4px; }
+.fill-area[data-variant="action-annotation"] .fill-area__row--action { padding-top: 8px; padding-bottom: 8px; }
+.fill-area[data-variant="action-annotation"] .fill-area__row--action:first-child { padding-top: 8px; }
+.fill-area[data-variant="action-annotation"] .fill-area__row--action:last-child { padding-bottom: 8px; }
+.fill-area[data-variant="action-annotation"] .fill-area__row-main { width: 100%; }
+.fill-area[data-variant="action-annotation"] .fill-area__action-top { gap: 20px; }
+.fill-area[data-variant="action-annotation"] .fill-area__action-top time { width: auto; flex: 0 0 auto; }
+.fill-area[data-variant="action-annotation"] .fill-area__color { width: 16px; height: 16px; flex: 1 1 auto; max-width: 16px; border: 1px solid var(--fill-area-line); border-radius: 2px; }
+.fill-area[data-variant="action-annotation"] .fill-area__action-top > button[aria-label="删除"] { margin-left: auto; }
+.fill-area__color--blue { background: #399ed0; }
+.fill-area__color--orange { background: #d06b39; }
+.fill-area__color--purple { background: #9139d0; }
+.fill-area__color--green { background: #39d078; }
+.fill-area[data-variant="action-annotation"] .fill-area__field { margin-top: 4px; }
+.fill-area[data-variant="action-annotation"] .fill-area__field-row { display: flex; align-items: center; gap: 4px; }
+.fill-area[data-variant="action-annotation"] .fill-area__field-row .fill-area__field { flex: 1 1 auto; min-width: 0; }
+.fill-area__ban { width: 16px; height: 16px; flex: 0 0 16px; display: block; }
+.fill-area__icon-hint {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  display: block;
+}
+
+.fill-area [data-tooltip] {
+  position: relative;
+}
+
+.fill-area [data-tooltip]::before,
+.fill-area [data-tooltip]::after {
+  position: absolute;
+  right: 0;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 120ms ease, transform 120ms ease, visibility 120ms ease;
+}
+
+.fill-area [data-tooltip]::before {
+  content: attr(data-tooltip);
+  bottom: calc(100% + 7px);
+  min-width: max-content;
+  padding: 4px 7px;
+  border: 1px solid var(--fill-area-line);
+  border-radius: 5px;
+  background: #e7edf3;
+  color: #0f1d24;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 16px;
+  white-space: nowrap;
+  transform: translateY(3px);
+}
+
+.fill-area [data-tooltip]::after {
+  content: "";
+  bottom: calc(100% + 3px);
+  width: 7px;
+  height: 7px;
+  margin-right: 4px;
+  border-right: 1px solid var(--fill-area-line);
+  border-bottom: 1px solid var(--fill-area-line);
+  background: #e7edf3;
+  transform: translateY(3px) rotate(45deg);
+}
+
+.fill-area [data-tooltip]:hover::before,
+.fill-area [data-tooltip]:hover::after,
+.fill-area [data-tooltip]:focus-visible::before,
+.fill-area [data-tooltip]:focus-visible::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+.fill-area [data-tooltip]:hover::before,
+.fill-area [data-tooltip]:focus-visible::before {
+  transform: translateY(0);
+}
+
+.fill-area [data-tooltip]:hover::after,
+.fill-area [data-tooltip]:focus-visible::after {
+  transform: translateY(0) rotate(45deg);
+}
+.fill-area__chip { display: inline-flex; align-items: center; gap: 2px; min-height: 24px; padding: 2px 4px; border: 1px solid var(--fill-area-line); border-radius: 5px; color: #fbfbfb; font-size: 13px; line-height: 19.5px; }
+.fill-area__chip img { width: 16px; height: 16px; display: block; }
+.fill-area[data-variant="action-annotation"] .fill-area__button {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+
+/* 动作标注-抽检 */
+.fill-area[data-variant="action-spot-check"] .fill-area__content {
+  padding: 12px 20px 0;
+}
+
+.fill-area[data-variant="action-spot-check"] .fill-area__row--action-check {
+  height: 159.5px;
+  flex: 0 0 159.5px;
+  gap: 6px;
+  padding: 8px 0;
+}
+
+.fill-area[data-variant="action-spot-check"] .fill-area__row--action-check:first-child {
+  height: 164.5px;
+  flex-basis: 164.5px;
+  padding-top: 8px;
+}
+
+.fill-area[data-variant="action-spot-check"] .fill-area__row-main {
+  width: 338px;
+  flex: 0 0 338px;
+}
+
+.fill-area[data-variant="action-spot-check"] .fill-area__row--action-check > b {
+  width: 15px;
+  flex-basis: 15px;
+}
+
+.fill-area[data-variant="action-spot-check"] .fill-area__action-check-top {
+  height: 18px;
+  gap: 0;
+}
+
+.fill-area[data-variant="action-spot-check"] .fill-area__action-check-top time {
+  width: 164px;
+  flex: 0 0 164px;
+}
+
+.fill-area[data-variant="action-spot-check"] .fill-area__action-check-top .fill-area__color {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  margin-right: auto;
+  border: 1px solid var(--fill-area-line);
+  border-radius: 2px;
+}
+
+.fill-area[data-variant="action-spot-check"] .fill-area__field {
+  height: 37.5px;
+  min-height: 37.5px;
+  margin-top: 4px;
+  padding: 5px 12px;
+}
+
+.fill-area[data-variant="action-spot-check"] .fill-area__row--action-check:first-child .fill-area__action-check-top + .fill-area__field {
+  margin-top: 9px;
+}
+
+.fill-area[data-variant="action-spot-check"] .fill-area__field-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fill-area[data-variant="action-spot-check"] .fill-area__field-row .fill-area__field {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.fill-area[data-variant="action-spot-check"] .fill-area__chip {
+  min-height: 26px;
+  padding: 2px 4px;
+}
+
+.fill-area[data-variant="action-spot-check"] .fill-area__footer {
+  padding: 0 12px;
+}
+
+.fill-area[data-variant="action-spot-check"] .fill-area__footer--four {
+  gap: 6px;
+}
+
+.fill-area[data-variant="action-spot-check"] .fill-area__button {
+  height: 38px;
+  padding: 8px 6px;
+  font-size: 13px;
+}
+
+.fill-area[data-variant="action-spot-check"] .fill-area__button--primary {
+  height: 36px;
+}
+
+
+/* 语义标注-切分 */
+.fill-area[data-variant="semantic-segmentation"] {
+  height: 792px;
+  min-height: 792px;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__content {
+  padding: 12px 20px 0;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-list {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-item {
+  position: relative;
+  flex: 0 0 45px;
+  padding: 4px 0;
+  border: 0;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-item::after {
+  content: "";
+  position: absolute;
+  top: 36px;
+  left: 0;
+  width: 100%;
+  border-top: 1px dashed var(--fill-area-line);
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-item.is-open {
+  flex-basis: 174px;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-item:last-child {
+  flex-basis: 37px;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-item.is-open::before {
+  content: "";
+  position: absolute;
+  top: 32px;
+  left: 14px;
+  height: 129px;
+  border-left: 1px solid #344352;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-item.is-open::after {
+  top: 165px;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-parent {
+  height: 28px;
+  display: flex;
+  align-items: center;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-badge {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  flex: 0 0 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--fill-area-green);
+  color: var(--fill-area-bg);
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-badge img {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  display: block;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-toggle {
+  cursor: pointer;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-toggle img {
+  transform: rotate(-90deg);
+  transition: transform 160ms ease;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-toggle[aria-expanded="false"] img {
+  transform: rotate(180deg);
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-parent > time {
+  width: 144px;
+  margin-left: 4px;
+  color: var(--fill-area-green);
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-parent > button[aria-label="删除"] {
+  margin-left: auto;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-children {
+  position: relative;
+  height: 121px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 0 32px;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-item:not(.is-open) > .fill-area__tree-children {
+  display: none !important;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-children > div {
+  position: relative;
+  height: 43px;
+  min-height: 35px;
+  flex: 0 0 35px;
+  display: flex;
+  align-items: center;
+  padding: 0 0 0 10px;
+  border-bottom: 1px dashed var(--fill-area-line);
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-children > div:last-child {
+  border-bottom: 0;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-children > div::before {
+  content: "";
+  position: absolute;
+  left: -18px;
+  top: 17px;
+  width: 14px;
+  border-top: 1px solid #344352;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-children span {
+  width: 18px;
+  color: var(--fill-area-text);
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-children time {
+  margin-left: 6px;
+  color: #9aa6b2;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__tree-children button {
+  margin-left: auto;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__footer {
+  padding: 0 12px;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__button {
+  height: 38px;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__button--primary {
+  height: 36px;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__footer .fill-area__button:first-child {
+  flex: 0 0 183.5px;
+}
+
+.fill-area[data-variant="semantic-segmentation"] .fill-area__footer .fill-area__button:last-child {
+  flex: 0 0 185.5px;
+}
+
+
+/* 语义标注-切分抽检 / 标注验收共用树节点 */
+.fill-area:is([data-variant="semantic-segmentation-spot-check"], [data-variant="semantic-annotation-acceptance"]) .fill-area__content {
+  padding: 12px 20px 0;
+}
+
+.fill-area:is([data-variant="semantic-segmentation-spot-check"], [data-variant="semantic-annotation-acceptance"]) .fill-area__tree-parent {
+  height: 28px;
+  display: flex;
+  align-items: center;
+}
+
+.fill-area:is([data-variant="semantic-segmentation-spot-check"], [data-variant="semantic-annotation-acceptance"]) .fill-area__tree-badge {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  flex: 0 0 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--fill-area-green);
+  color: var(--fill-area-bg);
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.fill-area:is([data-variant="semantic-segmentation-spot-check"], [data-variant="semantic-annotation-acceptance"]) .fill-area__tree-badge img {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  display: block;
+}
+
+.fill-area:is([data-variant="semantic-segmentation-spot-check"], [data-variant="semantic-annotation-acceptance"]) .fill-area__tree-toggle img {
+  transform: rotate(-90deg);
+  transition: transform 160ms ease;
+}
+
+.fill-area:is([data-variant="semantic-segmentation-spot-check"], [data-variant="semantic-annotation-acceptance"]) .fill-area__tree-toggle[aria-expanded="false"] img {
+  transform: rotate(180deg);
+}
+
+.fill-area:is([data-variant="semantic-segmentation-spot-check"], [data-variant="semantic-annotation-acceptance"]) .fill-area__tree-parent > time {
+  width: 144px;
+  margin-left: 4px;
+  color: var(--fill-area-green);
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.fill-area:is([data-variant="semantic-segmentation-spot-check"], [data-variant="semantic-annotation-acceptance"]) .fill-area__tree-parent > button[aria-label="删除"] {
+  margin-left: auto;
+}
+
+.fill-area:is([data-variant="semantic-segmentation-spot-check"], [data-variant="semantic-annotation-acceptance"]) .fill-area__footer {
+  padding: 0 12px;
+}
+
+.fill-area:is([data-variant="semantic-segmentation-spot-check"], [data-variant="semantic-annotation-acceptance"]) .fill-area__button {
+  height: 38px;
+}
+
+.fill-area:is([data-variant="semantic-segmentation-spot-check"], [data-variant="semantic-annotation-acceptance"]) .fill-area__button--primary {
+  height: 36px;
+}
+
+
+/* 语义标注-切分抽检 */
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-list {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-item {
+  position: relative;
+  height: 78.5px;
+  margin-bottom: 8px;
+  padding: 4px 0 0;
+  border-bottom: 1px dashed var(--fill-area-line);
+}
+
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-item.is-open {
+  height: 247.5px;
+}
+
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-item:last-child {
+  margin-bottom: 0;
+}
+
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-branch {
+  position: relative;
+  margin: 3.5px 0 0 32px;
+}
+
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-branch::before {
+  content: "";
+  position: absolute;
+  left: -18px;
+  top: -3.5px;
+  height: 41.5px;
+  border-left: 1px solid #344352;
+}
+
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-branch .fill-area__field,
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-child .fill-area__field {
+  height: 37.5px;
+  min-height: 37.5px;
+  margin: 0;
+  padding: 8px 12px;
+}
+
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-children {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 0 32px;
+}
+
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-item:not(.is-open) > .fill-area__review-children {
+  display: none !important;
+}
+
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-children::before {
+  content: "";
+  position: absolute;
+  left: -18px;
+  top: -8px;
+  bottom: 5px;
+  border-left: 1px solid #344352;
+}
+
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-child {
+  position: relative;
+  height: 76.5px;
+  padding: 0 0 0 10px;
+  border-bottom: 1px dashed var(--fill-area-line);
+}
+
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-child::before {
+  content: "";
+  position: absolute;
+  left: -18px;
+  top: 13.5px;
+  width: 14px;
+  border-top: 1px solid #344352;
+}
+
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-child:last-child {
+  border-bottom: 0;
+}
+
+.fill-area__review-child-top {
+  height: 35px;
+  display: flex;
+  align-items: center;
+}
+
+.fill-area__review-child-top span {
+  width: 18px;
+  color: var(--fill-area-text);
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.fill-area__review-child-top time {
+  margin-left: 6px;
+  color: #9aa6b2;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.fill-area__review-child-top button {
+  margin-left: auto;
+}
+
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__footer--four {
+  gap: 6px;
+}
+
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__button {
+  padding: 8px 6px;
+}
+
+
+/* 语义标注-标注验收 */
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-item {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 676px;
+  padding: 4px 0 0;
+  border-bottom: 1px dashed var(--fill-area-line);
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-item:not(.is-open) {
+  height: 121px;
+  min-height: 121px;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-branch,
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-children {
+  margin-left: 32px;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-item::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 32px;
+  bottom: 113px;
+  border-left: 1px solid #344352;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-item:not(.is-open)::before {
+  bottom: 7px;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__description {
+  min-height: 37.5px;
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+  padding: 8px 12px;
+  overflow: hidden;
+  border: 1px solid var(--fill-area-line);
+  border-radius: 8px;
+  background: var(--fill-area-panel-soft);
+  color: var(--fill-area-text);
+  font-size: 13px;
+  line-height: 19.5px;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__description--wrap {
+  min-height: 56.5px;
+  white-space: normal;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__field {
+  height: 37.5px;
+  min-height: 37.5px;
+  margin-top: 4px;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-children {
+  margin-top: 8px;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-item:not(.is-open) > .fill-area__acceptance-children {
+  display: none !important;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-child {
+  position: relative;
+  padding: 0 0 8px 10px;
+  border-bottom: 1px dashed var(--fill-area-line);
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-child::before {
+  content: "";
+  position: absolute;
+  left: -18px;
+  top: 17px;
+  width: 14px;
+  border-top: 1px solid #344352;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-child:last-child {
+  border-bottom: 0;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__footer--three {
+  gap: 6px;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__footer--three .fill-area__button:first-child {
+  flex: 0 0 119.7px;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__footer--three .fill-area__button:not(:first-child) {
+  flex: 0 0 121.7px;
+}
+
+
+/* Item hover feedback */
+@media (hover: hover) {
+  .fill-area__row,
+  .fill-area__tree-item,
+  .fill-area__tree-children > div,
+  .fill-area__review-item,
+  .fill-area__review-child,
+  .fill-area__acceptance-item,
+  .fill-area__acceptance-child,
+  .fill-area button[aria-label="删除"] {
+    transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease, color 140ms ease;
+  }
+
+  .fill-area__row:hover,
+  .fill-area__tree-item:hover,
+  .fill-area__tree-children > div:hover,
+  .fill-area__review-item:hover,
+  .fill-area__review-child:hover,
+  .fill-area__acceptance-item:hover,
+  .fill-area__acceptance-child:hover {
+    background-color: rgba(132, 145, 158, 0.07);
+  }
+
+  .fill-area__row:hover,
+  .fill-area__tree-item:hover,
+  .fill-area__review-item:hover,
+  .fill-area__acceptance-item:hover {
+    box-shadow: -20px 0 0 rgba(132, 145, 158, 0.07), 20px 0 0 rgba(132, 145, 158, 0.07);
+  }
+
+  .fill-area__tree-children > div:hover,
+  .fill-area__review-child:hover,
+  .fill-area__acceptance-child:hover {
+    box-shadow: -52px 0 0 rgba(132, 145, 158, 0.07), 20px 0 0 rgba(132, 145, 158, 0.07);
+  }
+
+  .fill-area__tree-item:has(.fill-area__tree-children > div:hover),
+  .fill-area__review-item:has(.fill-area__review-child:hover),
+  .fill-area__acceptance-item:has(.fill-area__acceptance-child:hover) {
+    background-color: transparent;
+    box-shadow: none;
+  }
+
+  .fill-area button[aria-label="删除"]:hover {
+    background-color: transparent;
+  }
+
+  .fill-area button[aria-label="删除"]:hover img {
+    filter: brightness(1.35);
+  }
+}
