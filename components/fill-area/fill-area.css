@@ -50,7 +50,7 @@ button { border: 0; font: inherit; cursor: pointer; }
 }
 
 .fill-area-preview {
-  width: 401px;
+  width: 450px;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -71,8 +71,8 @@ button { border: 0; font: inherit; cursor: pointer; }
 }
 
 .fill-area {
-  width: 401px;
-  min-width: 401px;
+  width: 450px;
+  min-width: 360px;
   height: 780px;
   min-height: 780px;
   display: flex;
@@ -88,6 +88,15 @@ button { border: 0; font: inherit; cursor: pointer; }
   flex: 1 1 auto;
   overflow: auto;
   padding: 12px 20px 0;
+}
+
+.fill-area__empty {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  color: var(--fill-area-muted);
+  font-size: 13px;
+  line-height: 20px;
 }
 
 .fill-area__banner {
@@ -285,14 +294,52 @@ button { border: 0; font: inherit; cursor: pointer; }
 .fill-area__color--green { background: #39d078; }
 .fill-area[data-variant="action-annotation"] .fill-area__field { margin-top: 4px; }
 .fill-area[data-variant="action-annotation"] .fill-area__field-row { display: flex; align-items: center; gap: 4px; }
-.fill-area[data-variant="action-annotation"] .fill-area__field-row .fill-area__field { flex: 1 1 auto; min-width: 0; }
+.fill-area[data-variant="action-annotation"] .fill-area__field-row .fill-area__select { flex: 1 1 auto; min-width: 0; }
+.fill-area__select { position: relative; width: 100%; }
+.fill-area__select.is-open .fill-area__field {
+  border-color: rgba(2, 193, 205, 0.55);
+  box-shadow: none;
+}
+.fill-area__select.is-open .fill-area__field::after { transform: rotate(90deg); }
+.fill-area__dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 30;
+  width: 100%;
+  padding: 4px;
+  border: 1px solid var(--fill-area-line);
+  border-radius: 8px;
+  background: var(--fill-area-panel-soft);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+.fill-area__option {
+  width: 100%;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--fill-area-text);
+  font-size: 13px;
+  line-height: 20px;
+  text-align: left;
+}
+.fill-area__option:hover,
+.fill-area__option.is-selected { background: rgba(2, 193, 205, 0.14); color: var(--fill-area-cyan); }
 .fill-area__ban { width: 16px; height: 16px; flex: 0 0 16px; display: block; }
 .fill-area__icon-hint {
   position: relative;
   width: 16px;
   height: 16px;
   flex: 0 0 16px;
-  display: block;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
 }
 
 .fill-area [data-tooltip] {
@@ -369,10 +416,12 @@ button { border: 0; font: inherit; cursor: pointer; }
 
 /* 动作标注-抽检 */
 .fill-area[data-variant="action-spot-check"] .fill-area__content {
-  padding: 12px 20px 0;
+  padding: 12px 12px 0;
 }
 
 .fill-area[data-variant="action-spot-check"] .fill-area__row--action-check {
+  width: 100%;
+  min-width: 0;
   height: 159.5px;
   flex: 0 0 159.5px;
   gap: 6px;
@@ -386,8 +435,9 @@ button { border: 0; font: inherit; cursor: pointer; }
 }
 
 .fill-area[data-variant="action-spot-check"] .fill-area__row-main {
-  width: 338px;
-  flex: 0 0 338px;
+  width: auto;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .fill-area[data-variant="action-spot-check"] .fill-area__row--action-check > b {
@@ -397,21 +447,27 @@ button { border: 0; font: inherit; cursor: pointer; }
 
 .fill-area[data-variant="action-spot-check"] .fill-area__action-check-top {
   height: 18px;
-  gap: 0;
+  gap: 20px;
 }
 
 .fill-area[data-variant="action-spot-check"] .fill-area__action-check-top time {
-  width: 164px;
-  flex: 0 0 164px;
+  width: auto;
+  min-width: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .fill-area[data-variant="action-spot-check"] .fill-area__action-check-top .fill-area__color {
   width: 16px;
   height: 16px;
   flex: 0 0 16px;
-  margin-right: auto;
   border: 1px solid var(--fill-area-line);
   border-radius: 2px;
+}
+
+.fill-area[data-variant="action-spot-check"] .fill-area__action-check-top > button[aria-label="删除"] {
+  margin-left: auto;
 }
 
 .fill-area[data-variant="action-spot-check"] .fill-area__field {

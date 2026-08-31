@@ -7,9 +7,13 @@
   <link rel="stylesheet" href="../../components/platform-sidebar/platform-sidebar.css" />
   <script src="../../components/platform-sidebar/platform-sidebar.js" defer></script>
   <link rel="stylesheet" href="../../components/task-header/task-header.css" />
+  <script src="../../components/task-header/task-header.js" defer></script>
   <link rel="stylesheet" href="../../components/media-viewer/media-viewer.css" />
+  <script src="../../components/media-viewer/media-viewer.js" defer></script>
   <link rel="stylesheet" href="../../components/annotation-timeline/annotation-timeline.css" />
+  <script src="../../components/annotation-timeline/annotation-timeline.js" defer></script>
   <link rel="stylesheet" href="../../components/fill-area/fill-area.css" />
+  <script src="../../components/fill-area/fill-area.js" defer></script>
   <link rel="stylesheet" href="./page.css" />
 </head>
 <body data-page-id="action-quality-check">
@@ -22,75 +26,30 @@
       <nav class="page-tabs" data-page-tabs aria-label="页面切换"></nav>
 
       <header class="page-header" data-block="task-header">
-        <div class="task-header" data-component="task-header" data-variant="quality-check" aria-label="任务信息-质检">
-          <div class="task-header__top-row">
-            <div class="task-header__main-meta">
-              <button class="task-header__back" type="button" aria-label="返回"><img src="../../components/task-header/assets/icon-back.svg" alt="" /></button>
-              <div class="task-header__meta-group"><span class="task-header__muted">任务ID</span><span class="task-header__text">17782</span><span class="task-header__crumb-icon" aria-hidden="true"><img src="../../components/task-header/assets/icon-gesture.svg" alt="" /></span><a class="task-header__link" href="#">质检标准</a></div>
-              <span class="task-header__divider" aria-hidden="true"></span>
-              <div class="task-header__meta-group task-header__task-name"><span class="task-header__muted">任务名称</span><span class="task-header__text task-header__ellipsis">20260717_山东省临清市中周店村11</span></div>
-              <span class="task-header__divider" aria-hidden="true"></span>
-              <div class="task-header__meta-group"><span class="task-header__muted">序列号</span><span class="task-header__text">UDAS-0002-2983</span></div>
-              <span class="task-header__divider" aria-hidden="true"></span>
-              <div class="task-header__meta-group"><span class="task-header__muted">采集员</span><span class="task-header__text">李少龙</span></div>
-              <span class="task-header__divider" aria-hidden="true"></span>
-              <div class="task-header__meta-group"><span class="task-header__muted">数据ID</span><span class="task-header__text">328698</span></div>
-              <span class="task-header__divider" aria-hidden="true"></span>
-              <div class="task-header__meta-group"><span class="task-header__muted">版本</span><span class="task-header__text">第1版</span></div>
-            </div>
-            <div class="task-header__theme-switch" role="group" aria-label="主题切换"><button class="task-header__theme-button task-header__theme-button--active" type="button" aria-label="深色主题"><img src="../../components/task-header/assets/icon-moon.svg" alt="" /></button><button class="task-header__theme-button" type="button" aria-label="浅色主题"><img src="../../components/task-header/assets/icon-sun.svg" alt="" /></button></div>
-          </div>
-          <div class="task-header__status-row">
-            <div class="task-header__status-left"><div class="task-header__chip task-header__chip--current"><i aria-hidden="true"></i><span>当前节点</span><strong>动作质检</strong></div><span class="task-header__status-divider" aria-hidden="true"></span><div class="task-header__chip task-header__chip--pending"><i aria-hidden="true"></i><span>状态</span><strong>待质检</strong></div></div>
-            <a class="task-header__log-link" href="#">查看日志</a>
-          </div>
-        </div>
+        <task-header data-variant="quality-check" aria-label="任务信息-质检"></task-header>
       </header>
 
       <div class="page-content">
         <section class="media-block" data-block="media-viewer">
           <div class="media-slot">
-            <section class="media-viewer" data-component="media-viewer" data-variant="three-equal-feeds" aria-label="视频区-三格">
-              <div class="media-viewer__grid">
-                <figure class="media-viewer__feed media-viewer__feed--primary"><img class="media-viewer__image" src="../../components/media-viewer/assets/camera-head.png" alt="头部视角视频画面" /><figcaption class="media-viewer__label"><span>头部视角</span><button class="media-viewer__fullscreen" type="button" aria-label="全屏查看头部视角" title="全屏"><span aria-hidden="true">⛶</span></button></figcaption></figure>
-                <figure class="media-viewer__feed"><img class="media-viewer__image" src="../../components/media-viewer/assets/camera-left-arm.png" alt="左臂视角视频画面" /><figcaption class="media-viewer__label"><span>左臂视角</span><button class="media-viewer__fullscreen" type="button" aria-label="全屏查看左臂视角" title="全屏"><span aria-hidden="true">⛶</span></button></figcaption></figure>
-                <figure class="media-viewer__feed"><img class="media-viewer__image" src="../../components/media-viewer/assets/camera-right-arm.png" alt="右臂视角视频画面" /><figcaption class="media-viewer__label"><span>右臂视角</span><button class="media-viewer__fullscreen" type="button" aria-label="全屏查看右臂视角" title="全屏"><span aria-hidden="true">⛶</span></button></figcaption></figure>
-              </div>
-            </section>
+            <media-viewer data-variant="one-large-two-stacked" aria-label="视频区-左一右二"></media-viewer>
           </div>
         </section>
 
         <section class="playback-block" data-block="playback-controls">
-          <div class="annotation-variant" data-component="annotation-timeline" data-variant="manual-quality-check" aria-label="人工质检-动作质检">
-            <div class="timeline-slot">
-              <div class="timeline-card timeline-card--range"><div class="timeline-ruler timeline-ruler--range"><span class="range-time">00:10:79-3:04:58</span><img class="marker marker--orange marker--one" src="../../components/annotation-timeline/assets/icon-marker-orange.svg" alt="" /><img class="marker marker--orange marker--two" src="../../components/annotation-timeline/assets/icon-marker-orange.svg" alt="" /></div><div class="timeline-track timeline-track--range"><span class="timeline-progress"></span><span class="timeline-selection"></span><img class="range-handle range-handle--start" src="../../components/annotation-timeline/assets/icon-range-handle.svg" alt="" /><img class="range-handle range-handle--end" src="../../components/annotation-timeline/assets/icon-range-handle.svg" alt="" /></div><span class="timeline-current-time">00:10</span></div>
-            </div>
-            <div class="controls-slot">
-              <div class="control-panel"><div class="transport-tools"><button class="tool-button tool-button--primary" type="button" data-action="toggle-play"><img src="../../components/annotation-timeline/assets/icon-play.svg" alt="播放" /></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-skip-prev.svg" alt="上一帧" /></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-skip-next.svg" alt="下一帧" /></button><button class="tool-button tool-button--speed" type="button"><b>2x</b><span>倍速</span></button></div><button class="tool-button tool-button--shortcut" type="button"><img src="../../components/annotation-timeline/assets/icon-keyboard.svg" alt="" /><span>快捷键</span></button></div>
-            </div>
-          </div>
+          <annotation-timeline data-variant="manual-quality-check" aria-label="人工质检-动作质检"></annotation-timeline>
         </section>
 
         <aside class="fill-block" data-block="fill-area">
+          <button class="fill-resizer" type="button" role="separator" aria-label="调整右侧操作区宽度" aria-orientation="vertical" aria-valuemin="360" aria-valuenow="450"></button>
           <div class="fill-slot">
-            <section class="fill-area" data-component="fill-area" data-variant="manual-quality-check" aria-label="人工质检-动作质检">
-              <div class="fill-area__content">
-                <div class="fill-area__banner">采集指令：归位书本与笔记本:将散落的书本和笔记本整理并放回书架指定位置，保持竖立排列或按类别分层摆放，便于查找和取用</div>
-                <div class="fill-area__list">
-                  <article class="fill-area__row"><b>01</b><div class="fill-area__row-main"><div class="fill-area__row-top"><time>5.14s</time><div class="fill-area__severity" role="radiogroup" aria-label="01 失误程度"><button type="button" data-severity="轻微"><i></i>轻微</button><button class="is-selected" type="button" data-severity="严重"><i></i>严重</button></div><button type="button" aria-label="删除"><img src="../../components/fill-area/assets/icon-trash.svg" alt="" /></button></div></div></article>
-                  <article class="fill-area__row"><b>02</b><div class="fill-area__row-main"><div class="fill-area__row-top"><time>5.14s</time><div class="fill-area__severity" role="radiogroup" aria-label="02 失误程度"><button type="button" data-severity="轻微"><i></i>轻微</button><button class="is-selected" type="button" data-severity="严重"><i></i>严重</button></div><button type="button" aria-label="删除"><img src="../../components/fill-area/assets/icon-trash.svg" alt="" /></button></div></div></article>
-                  <article class="fill-area__row"><b>03</b><div class="fill-area__row-main"><div class="fill-area__row-top"><time>5.14s</time><div class="fill-area__severity" role="radiogroup" aria-label="03 失误程度"><button type="button" data-severity="轻微"><i></i>轻微</button><button class="is-selected" type="button" data-severity="严重"><i></i>严重</button></div><button type="button" aria-label="删除"><img src="../../components/fill-area/assets/icon-trash.svg" alt="" /></button></div></div></article>
-                  <article class="fill-area__row"><b>04</b><div class="fill-area__row-main"><div class="fill-area__row-top"><time>06:15~06:15</time><div class="fill-area__severity" role="radiogroup" aria-label="04 失误程度"><button type="button" data-severity="轻微"><i></i>轻微</button><button class="is-selected" type="button" data-severity="严重"><i></i>严重</button></div><button type="button" aria-label="删除"><img src="../../components/fill-area/assets/icon-trash.svg" alt="" /></button></div></div></article>
-                </div>
-              </div>
-              <footer class="fill-area__footer"><button class="fill-area__button fill-area__button--primary" type="button">合格</button><button class="fill-area__button" type="button">不合格</button><button class="fill-area__button" type="button">暂离</button></footer>
-            </section>
+            <fill-area data-variant="manual-quality-check" aria-label="人工质检-动作质检"></fill-area>
           </div>
         </aside>
       </div>
     </main>
   </div>
-  <script src="../page-tabs.js"></script>
-  <script src="./page.js"></script>
+  <script src="../page-tabs.js" defer></script>
+  <script src="./page.js" defer></script>
 </body>
 </html>

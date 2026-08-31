@@ -1,5 +1,55 @@
 const pageId = document.body.dataset.pageId;
 
+const fillResizer = document.querySelector('.fill-resizer');
+const pageContent = document.querySelector('.page-content');
+
+function setFillColumn(width) {
+  if (!pageContent || !fillResizer) return;
+  const minWidth = 360;
+  const maxWidth = Math.max(minWidth, pageContent.clientWidth - 420 - 8);
+  const nextWidth = Math.min(maxWidth, Math.max(minWidth, Math.round(width)));
+  document.documentElement.style.setProperty('--fill-column', `${nextWidth}px`);
+  fillResizer.setAttribute('aria-valuenow', String(nextWidth));
+}
+
+fillResizer?.addEventListener('pointerdown', (event) => {
+  fillResizer.setPointerCapture(event.pointerId);
+  document.body.classList.add('is-resizing-fill');
+});
+
+fillResizer?.addEventListener('pointermove', (event) => {
+  if (!fillResizer.hasPointerCapture(event.pointerId) || !pageContent) return;
+  setFillColumn(pageContent.getBoundingClientRect().right - event.clientX);
+});
+
+fillResizer?.addEventListener('pointerup', (event) => {
+  if (fillResizer.hasPointerCapture(event.pointerId)) {
+    fillResizer.releasePointerCapture(event.pointerId);
+  }
+  document.body.classList.remove('is-resizing-fill');
+});
+
+fillResizer?.addEventListener('keydown', (event) => {
+  if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+  event.preventDefault();
+  const currentWidth = Number.parseInt(getComputedStyle(document.documentElement).getPropertyValue('--fill-column'), 10) || 450;
+  setFillColumn(currentWidth + (event.key === 'ArrowLeft' ? 20 : -20));
+});
+
+function configureTaskHeader(options) {
+  const header = document.querySelector('task-header');
+  if (!header) return;
+
+  Object.entries(options).forEach(([key, value]) => {
+    const attribute = key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+    if (value === null || value === undefined || value === '') {
+      header.removeAttribute(attribute);
+      return;
+    }
+    header.setAttribute(attribute, value);
+  });
+}
+
 const themeButtons = document.querySelectorAll('.task-header__theme-button');
 const savedTheme = localStorage.getItem('workbench-theme');
 const initialTheme = savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'dark';
@@ -28,20 +78,14 @@ themeButtons.forEach((button) => {
 if (pageId === 'quality-spot-check') {
   document.title = '动作质检-质检抽检';
 
-  const taskHeader = document.querySelector('[data-component="task-header"]');
-  taskHeader.dataset.variant = 'spot-check';
-  taskHeader.setAttribute('aria-label', '任务信息-抽检');
-  taskHeader.querySelector('.task-header__chip--current strong').textContent = '质检抽检';
-  taskHeader.querySelector('.task-header__chip--pending strong').textContent = '待抽检';
-
-  const statusLeft = taskHeader.querySelector('.task-header__status-left');
-  const previousDivider = document.createElement('span');
-  const previous = document.createElement('div');
-  previousDivider.className = 'task-header__status-divider';
-  previousDivider.setAttribute('aria-hidden', 'true');
-  previous.className = 'task-header__chip task-header__chip--previous';
-  previous.innerHTML = '<span>上一节点</span><strong>动作质检 · 供应商A · 提交 · 前序节点处理完成 · 已流转至当前节点</strong>';
-  statusLeft.append(previousDivider, previous);
+  configureTaskHeader({
+    dataVariant: 'spot-check',
+    ariaLabel: '任务信息-抽检',
+    breadcrumbCurrent: '质检抽检',
+    currentNode: '质检抽检',
+    status: '待抽检',
+    previousNode: '动作质检 · 供应商A · 提交 · 前序节点处理完成 · 已流转至当前节点'
+  });
 
   const fillArea = document.querySelector('[data-component="fill-area"]');
   fillArea.dataset.variant = 'quality-spot-check';
@@ -63,10 +107,13 @@ if (pageId === 'quality-spot-check') {
 if (pageId === 'action-annotation') {
   document.title = '动作标注';
 
-  const taskHeader = document.querySelector('[data-component="task-header"]');
-  taskHeader.setAttribute('aria-label', '任务信息-动作标注');
-  taskHeader.querySelector('.task-header__chip--current strong').textContent = '动作标注';
-  taskHeader.querySelector('.task-header__chip--pending strong').textContent = '待标注';
+  configureTaskHeader({
+    ariaLabel: '任务信息-动作标注',
+    breadcrumbCurrent: '数据标注',
+    currentNode: '动作标注',
+    status: '待标注',
+    previousNode: null
+  });
 
   const mediaViewer = document.querySelector('[data-component="media-viewer"]');
   mediaViewer.dataset.variant = 'four-equal-feeds';
@@ -81,44 +128,230 @@ if (pageId === 'action-annotation') {
   timeline.dataset.variant = 'action-annotation';
   timeline.setAttribute('aria-label', '动作标注-标注时间轴');
   timeline.innerHTML = `
-    <div class="timeline-slot"><div class="timeline-card timeline-card--segments"><div class="timeline-ruler"><img class="ruler-start" src="../../components/annotation-timeline/assets/icon-timeline-start.svg" alt="" /><img class="marker marker--red" src="../../components/annotation-timeline/assets/icon-marker-red.svg" alt="" /><img class="marker marker--orange marker--two" src="../../components/annotation-timeline/assets/icon-marker-orange.svg" alt="" /><div class="segment-scale"><span class="segment-progress"></span></div><div class="scale-labels"><span>00:00s</span><span>00:10s</span></div></div><div class="annotation-row"><b class="row-count">14</b><div class="color-segments"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div></div></div>
-    <div class="controls-slot"><div class="control-panel"><div class="transport-tools"><button class="tool-button tool-button--primary" type="button" data-action="toggle-play"><img src="../../components/annotation-timeline/assets/icon-play.svg" alt="播放" /></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-skip-prev.svg" alt="上一帧" /></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-skip-next.svg" alt="下一帧" /></button><button class="tool-button tool-button--speed" type="button"><b>2x</b><span>倍速</span></button></div><div class="annotation-tools"><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-plus.svg" alt="" /><span>添加</span></button><button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-plus-forward.svg" alt="" /><span>添加并前进</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-forward.svg" alt="" /><span>仅前进</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-eraser.svg" alt="" /><span>清空</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-drag.svg" alt="" /><span>拖动</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-scissors.svg" alt="" /><span>分割</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-merge.svg" alt="" /><span>合并</span></button><button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-merge-up.svg" alt="" /><span>向上合并</span></button><button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-merge-down.svg" alt="" /><span>向下合并</span></button><button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-source-first.svg" alt="" /><span>源视频优先</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-keyboard.svg" alt="" /><span>快捷键</span></button></div></div></div>`;
+    <div class="timeline-slot"><div class="timeline-card timeline-card--segments"><div class="timeline-ruler"><img class="ruler-start" src="../../components/annotation-timeline/assets/icon-timeline-start.svg" alt="" /><img class="marker marker--red" src="../../components/annotation-timeline/assets/icon-marker-red.svg" alt="" /><img class="marker marker--orange marker--two" src="../../components/annotation-timeline/assets/icon-marker-orange.svg" alt="" /><div class="segment-scale"><span class="segment-progress is-draggable" role="slider" tabindex="0" aria-label="标注选区" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i class="segment-resize-handle segment-resize-handle--start" aria-hidden="true"></i><i class="segment-resize-handle segment-resize-handle--end" aria-hidden="true"></i></span></div><div class="scale-labels"><span>00:00s</span><span>00:10s</span></div></div><div class="annotation-row"><b class="row-count">0</b><div class="color-segments color-segments--interactive" aria-label="已添加标注片段"></div></div></div></div>
+    <div class="controls-slot"><div class="control-panel"><div class="transport-tools"><button class="tool-button tool-button--primary" type="button" data-action="toggle-play"><img src="../../components/annotation-timeline/assets/icon-play.svg" alt="播放" /></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-skip-prev.svg" alt="上一帧" /></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-skip-next.svg" alt="下一帧" /></button><button class="tool-button tool-button--speed" type="button"><b>2x</b><span>倍速</span></button></div><div class="annotation-tools"><button class="tool-button" type="button" data-action="add-segment"><img src="../../components/annotation-timeline/assets/icon-plus.svg" alt="" /><span>添加</span></button><button class="tool-button tool-button--small-label" type="button" data-action="add-and-forward"><img src="../../components/annotation-timeline/assets/icon-plus-forward.svg" alt="" /><span>添加并前进</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-forward.svg" alt="" /><span>仅前进</span></button><button class="tool-button" type="button" data-action="clear-segments"><img src="../../components/annotation-timeline/assets/icon-eraser.svg" alt="" /><span>清空</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-drag.svg" alt="" /><span>拖动</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-scissors.svg" alt="" /><span>分割</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-merge.svg" alt="" /><span>合并</span></button><button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-merge-up.svg" alt="" /><span>向上合并</span></button><button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-merge-down.svg" alt="" /><span>向下合并</span></button><button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-source-first.svg" alt="" /><span>源视频优先</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-keyboard.svg" alt="" /><span>快捷键</span></button></div></div></div>`;
 
   const fillArea = document.querySelector('[data-component="fill-area"]');
   fillArea.dataset.variant = 'action-annotation';
   fillArea.setAttribute('aria-label', '动作标注-标注');
-  const colors = ['blue', 'orange', 'purple', 'green'];
-  const descriptions = ['请选择动作元素', '高的', '高的', '高的'];
-  const actions = ['选择或输入动作描述', '夹取', '夹取', '夹取'];
-  fillArea.querySelector('.fill-area__content').innerHTML = `<div class="fill-area__list">${colors.map((color, index) => `
-    <article class="fill-area__row fill-area__row--action">
-      <b>0${index + 1}</b><div class="fill-area__row-main"><div class="fill-area__row-top fill-area__action-top"><time>06:15~06:15(4:40:47)</time><i class="fill-area__color fill-area__color--${color}"></i><button type="button" aria-label="删除"><img src="../../components/fill-area/assets/icon-trash.svg" alt="" /></button></div>
-      <button class="fill-area__field${index === 0 ? ' is-placeholder' : ''}" type="button">${index === 0 ? descriptions[index] : `<span class="fill-area__chip">${descriptions[index]} <img src="../../components/fill-area/assets/icon-close.svg" alt="" /></span>`}</button>
-      <div class="fill-area__field-row"><button class="fill-area__field${index === 0 ? ' is-placeholder' : ''}" type="button">${index === 0 ? actions[index] : `<span class="fill-area__chip">${actions[index]} <img src="../../components/fill-area/assets/icon-close.svg" alt="" /></span>`}</button><img class="fill-area__ban" src="../../components/fill-area/assets/icon-ban.svg" alt="" /></div></div>
-    </article>`).join('')}</div>`;
+  const fillContent = fillArea.querySelector('.fill-area__content');
+  fillContent.innerHTML = '<div class="fill-area__empty">暂无标注数据</div>';
   fillArea.querySelector('.fill-area__footer').innerHTML = '<button class="fill-area__button fill-area__button--primary" type="button">通过</button><button class="fill-area__button" type="button">采集-不合格</button><button class="fill-area__button" type="button">驳回-标注</button><button class="fill-area__button" type="button">暂离</button>';
   const buttons = fillArea.querySelectorAll('.fill-area__button');
   buttons[0].textContent = '通过';
   buttons[1].textContent = '采集-不合格';
   buttons[2].textContent = '驳回-标注';
   buttons[3].textContent = '暂离';
+
+  const timelineCard = timeline.querySelector('.timeline-card--segments');
+  const scale = timeline.querySelector('.segment-scale');
+  const selection = timeline.querySelector('.segment-progress');
+  const resizeStart = timeline.querySelector('.segment-resize-handle--start');
+  const resizeEnd = timeline.querySelector('.segment-resize-handle--end');
+  const segmentTrack = timeline.querySelector('.color-segments--interactive');
+  const count = timeline.querySelector('.row-count');
+  const addButton = timeline.querySelector('[data-action="add-segment"]');
+  const addAndForwardButton = timeline.querySelector('[data-action="add-and-forward"]');
+  const clearButton = timeline.querySelector('[data-action="clear-segments"]');
+  const segmentColors = ['#399ed0', '#d06b39', '#9139d0', '#39d078'];
+  const dropdownOptions = {
+    element: ['机械臂', '夹爪', '目标物体', '工作台', '收纳区域'],
+    description: ['抓取物体', '移动物体', '放置物体', '调整姿态', '松开夹爪']
+  };
+  let segmentCount = 0;
+
+  function updateSelectionGeometry(left, width) {
+    selection.style.left = `${left}px`;
+    selection.style.width = `${width}px`;
+    timelineCard.style.setProperty('--segment-selection-left', `${left}px`);
+    timelineCard.style.setProperty('--segment-progress-width', `${width}px`);
+    const maxLeft = Math.max(0, scale.clientWidth - width);
+    selection.setAttribute('aria-valuenow', String(maxLeft ? Math.round((left / maxLeft) * 100) : 0));
+  }
+
+  function moveElement(element, track, clientX, grabOffset) {
+    const bounds = track.getBoundingClientRect();
+    const maxLeft = Math.max(0, bounds.width - element.offsetWidth);
+    const left = Math.min(maxLeft, Math.max(0, clientX - bounds.left - grabOffset));
+    element.style.left = `${left}px`;
+    return { left, maxLeft };
+  }
+
+  function makeDraggable(element, track, onMove) {
+    let grabOffset = 0;
+    element.addEventListener('pointerdown', (event) => {
+      grabOffset = event.clientX - element.getBoundingClientRect().left;
+      element.setPointerCapture(event.pointerId);
+      element.classList.add('is-dragging');
+    });
+    element.addEventListener('pointermove', (event) => {
+      if (!element.hasPointerCapture(event.pointerId)) return;
+      const position = moveElement(element, track, event.clientX, grabOffset);
+      onMove?.(position);
+    });
+    element.addEventListener('pointerup', (event) => {
+      if (element.hasPointerCapture(event.pointerId)) element.releasePointerCapture(event.pointerId);
+      element.classList.remove('is-dragging');
+    });
+  }
+
+  function makeResizable(handle, edge) {
+    const minimumWidth = 32;
+    let initialLeft = 0;
+    let initialWidth = 0;
+
+    handle.addEventListener('pointerdown', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const scaleBounds = scale.getBoundingClientRect();
+      const selectionBounds = selection.getBoundingClientRect();
+      initialLeft = selectionBounds.left - scaleBounds.left;
+      initialWidth = selectionBounds.width;
+      handle.setPointerCapture(event.pointerId);
+      selection.classList.add('is-resizing');
+    });
+
+    handle.addEventListener('pointermove', (event) => {
+      if (!handle.hasPointerCapture(event.pointerId)) return;
+      const pointerX = event.clientX - scale.getBoundingClientRect().left;
+      if (edge === 'start') {
+        const right = initialLeft + initialWidth;
+        const left = Math.max(0, Math.min(pointerX, right - minimumWidth));
+        updateSelectionGeometry(left, right - left);
+      } else {
+        const right = Math.min(scale.clientWidth, Math.max(initialLeft + minimumWidth, pointerX));
+        updateSelectionGeometry(initialLeft, right - initialLeft);
+      }
+    });
+
+    handle.addEventListener('pointerup', (event) => {
+      if (handle.hasPointerCapture(event.pointerId)) handle.releasePointerCapture(event.pointerId);
+      selection.classList.remove('is-resizing');
+    });
+  }
+
+  makeDraggable(selection, scale, ({ left, maxLeft }) => {
+    timelineCard.style.setProperty('--segment-selection-left', `${left}px`);
+    selection.setAttribute('aria-valuenow', String(maxLeft ? Math.round((left / maxLeft) * 100) : 0));
+  });
+  makeResizable(resizeStart, 'start');
+  makeResizable(resizeEnd, 'end');
+
+  selection.addEventListener('keydown', (event) => {
+    if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+    event.preventDefault();
+    const current = Number.parseFloat(getComputedStyle(selection).left) || 0;
+    const nextX = scale.getBoundingClientRect().left + current + (event.key === 'ArrowLeft' ? -8 : 8);
+    const position = moveElement(selection, scale, nextX, 0);
+    timelineCard.style.setProperty('--segment-selection-left', `${position.left}px`);
+  });
+
+  function renderRightRow(index, colorClass) {
+    if (segmentCount === 1) fillContent.innerHTML = '<div class="fill-area__list"></div>';
+    fillContent.querySelector('.fill-area__list').insertAdjacentHTML('beforeend', `
+      <article class="fill-area__row fill-area__row--action" data-segment-id="${index}">
+        <b>${String(index).padStart(2, '0')}</b><div class="fill-area__row-main"><div class="fill-area__row-top fill-area__action-top"><time>06:15~06:15(4:40:47)</time><i class="fill-area__color fill-area__color--${colorClass}"></i><button type="button" aria-label="删除"><img src="../../components/fill-area/assets/icon-trash.svg" alt="" /></button></div>
+        ${renderDropdown('element', '请选择动作元素')}
+        <div class="fill-area__field-row">${renderDropdown('description', '选择或输入动作描述')}<img class="fill-area__ban" src="../../components/fill-area/assets/icon-ban.svg" alt="" /></div></div>
+      </article>`);
+  }
+
+  function renderDropdown(type, placeholder) {
+    const options = dropdownOptions[type]
+      .map((option) => `<button class="fill-area__option" type="button" role="option" data-value="${option}">${option}</button>`)
+      .join('');
+    return `<div class="fill-area__select" data-dropdown="${type}">
+      <button class="fill-area__field is-placeholder" type="button" aria-haspopup="listbox" aria-expanded="false">${placeholder}</button>
+      <div class="fill-area__dropdown" role="listbox" hidden>${options}</div>
+    </div>`;
+  }
+
+  function closeDropdowns(except = null) {
+    fillContent.querySelectorAll('.fill-area__select.is-open').forEach((select) => {
+      if (select === except) return;
+      select.classList.remove('is-open');
+      select.querySelector('.fill-area__field').setAttribute('aria-expanded', 'false');
+      select.querySelector('.fill-area__dropdown').hidden = true;
+    });
+  }
+
+  fillContent.addEventListener('click', (event) => {
+    const option = event.target.closest('.fill-area__option');
+    if (option) {
+      const select = option.closest('.fill-area__select');
+      const field = select.querySelector('.fill-area__field');
+      field.textContent = option.dataset.value;
+      field.classList.remove('is-placeholder');
+      select.querySelectorAll('.fill-area__option').forEach((item) => item.classList.toggle('is-selected', item === option));
+      closeDropdowns();
+      return;
+    }
+
+    const field = event.target.closest('.fill-area__select > .fill-area__field');
+    if (!field) return;
+    const select = field.closest('.fill-area__select');
+    const willOpen = !select.classList.contains('is-open');
+    closeDropdowns(select);
+    select.classList.toggle('is-open', willOpen);
+    field.setAttribute('aria-expanded', String(willOpen));
+    select.querySelector('.fill-area__dropdown').hidden = !willOpen;
+  });
+
+  document.addEventListener('click', (event) => {
+    if (!fillArea.contains(event.target)) closeDropdowns();
+  });
+
+  function addSegment() {
+    segmentCount += 1;
+    const scaleBounds = scale.getBoundingClientRect();
+    const selectionBounds = selection.getBoundingClientRect();
+    const leftRatio = (selectionBounds.left - scaleBounds.left) / scaleBounds.width;
+    const widthRatio = selectionBounds.width / scaleBounds.width;
+    const segment = document.createElement('i');
+    const colorIndex = (segmentCount - 1) % segmentColors.length;
+    segment.className = 'annotation-segment';
+    segment.dataset.segmentId = String(segmentCount);
+    segment.style.left = `${leftRatio * 100}%`;
+    segment.style.width = `${widthRatio * 100}%`;
+    segment.style.background = segmentColors[colorIndex];
+    segmentTrack.append(segment);
+    count.textContent = String(segmentCount);
+    renderRightRow(segmentCount, ['blue', 'orange', 'purple', 'green'][colorIndex]);
+  }
+
+  function advanceSelection() {
+    const scaleBounds = scale.getBoundingClientRect();
+    const selectionBounds = selection.getBoundingClientRect();
+    const currentLeft = selectionBounds.left - scaleBounds.left;
+    const position = moveElement(selection, scale, scaleBounds.left + currentLeft + selectionBounds.width, 0);
+    timelineCard.style.setProperty('--segment-selection-left', `${position.left}px`);
+    selection.setAttribute('aria-valuenow', String(position.maxLeft ? Math.round((position.left / position.maxLeft) * 100) : 0));
+  }
+
+  addButton.addEventListener('click', addSegment);
+  addAndForwardButton.addEventListener('click', () => {
+    addSegment();
+    advanceSelection();
+  });
+
+  clearButton.addEventListener('click', () => {
+    segmentCount = 0;
+    segmentTrack.replaceChildren();
+    count.textContent = '0';
+    fillContent.innerHTML = '<div class="fill-area__empty">暂无标注数据</div>';
+  });
 }
 
 if (pageId === 'action-spot-check') {
   document.title = '动作标注-抽检';
 
-  const taskHeader = document.querySelector('[data-component="task-header"]');
-  taskHeader.setAttribute('aria-label', '任务信息-抽检');
-  taskHeader.querySelector('.task-header__chip--current strong').textContent = '供应商抽检';
-  taskHeader.querySelector('.task-header__chip--pending strong').textContent = '待抽检';
-  const statusLeft = taskHeader.querySelector('.task-header__status-left');
-  const previousDivider = document.createElement('span');
-  const previous = document.createElement('div');
-  previousDivider.className = 'task-header__status-divider';
-  previousDivider.setAttribute('aria-hidden', 'true');
-  previous.className = 'task-header__chip task-header__chip--previous';
-  previous.innerHTML = '<span>上一节点</span><strong>动作标注 · 供应商A · 提交 · 前序节点处理完成 · 已流转至当前节点</strong>';
-  statusLeft.append(previousDivider, previous);
+  configureTaskHeader({
+    ariaLabel: '任务信息-抽检',
+    breadcrumbCurrent: '供应商抽检',
+    currentNode: '供应商抽检',
+    status: '待抽检',
+    previousNode: '动作标注 · 供应商A · 提交 · 前序节点处理完成 · 已流转至当前节点'
+  });
 
   const mediaViewer = document.querySelector('[data-component="media-viewer"]');
   mediaViewer.dataset.variant = 'four-equal-feeds';
@@ -149,10 +382,13 @@ if (pageId === 'action-spot-check') {
 if (pageId === 'semantic-segmentation') {
   document.title = '语义切分';
 
-  const taskHeader = document.querySelector('[data-component="task-header"]');
-  taskHeader.setAttribute('aria-label', '任务信息-语义切分');
-  taskHeader.querySelector('.task-header__chip--current strong').textContent = '语义标注';
-  taskHeader.querySelector('.task-header__chip--pending strong').textContent = '待切分';
+  configureTaskHeader({
+    ariaLabel: '任务信息-语义切分',
+    breadcrumbCurrent: '语义切分',
+    currentNode: '语义标注',
+    status: '待切分',
+    previousNode: null
+  });
 
   const mediaViewer = document.querySelector('[data-component="media-viewer"]');
   mediaViewer.dataset.variant = 'four-equal-feeds';
@@ -181,18 +417,13 @@ if (pageId === 'semantic-segmentation') {
 if (pageId === 'semantic-segmentation-spot-check') {
   document.title = '切分抽检';
 
-  const taskHeader = document.querySelector('[data-component="task-header"]');
-  taskHeader.setAttribute('aria-label', '任务信息-切分抽检');
-  taskHeader.querySelector('.task-header__chip--current strong').textContent = '供应商抽检';
-  taskHeader.querySelector('.task-header__chip--pending strong').textContent = '待抽检';
-  const statusLeft = taskHeader.querySelector('.task-header__status-left');
-  const previousDivider = document.createElement('span');
-  const previous = document.createElement('div');
-  previousDivider.className = 'task-header__status-divider';
-  previousDivider.setAttribute('aria-hidden', 'true');
-  previous.className = 'task-header__chip task-header__chip--previous';
-  previous.innerHTML = '<span>上一节点</span><strong>语义标注 · 供应商A · 提交 · 前序节点处理完成 · 已流转至当前节点</strong>';
-  statusLeft.append(previousDivider, previous);
+  configureTaskHeader({
+    ariaLabel: '任务信息-切分抽检',
+    breadcrumbCurrent: '切分抽检',
+    currentNode: '供应商抽检',
+    status: '待抽检',
+    previousNode: '语义标注 · 供应商A · 提交 · 前序节点处理完成 · 已流转至当前节点'
+  });
 
   const mediaViewer = document.querySelector('[data-component="media-viewer"]');
   mediaViewer.dataset.variant = 'four-equal-feeds';
@@ -223,18 +454,13 @@ if (pageId === 'semantic-segmentation-spot-check') {
 if (pageId === 'semantic-annotation-acceptance') {
   document.title = '标注验收';
 
-  const taskHeader = document.querySelector('[data-component="task-header"]');
-  taskHeader.setAttribute('aria-label', '任务信息-标注验收');
-  taskHeader.querySelector('.task-header__chip--current strong').textContent = '供应商验收';
-  taskHeader.querySelector('.task-header__chip--pending strong').textContent = '待验收';
-  const statusLeft = taskHeader.querySelector('.task-header__status-left');
-  const previousDivider = document.createElement('span');
-  const previous = document.createElement('div');
-  previousDivider.className = 'task-header__status-divider';
-  previousDivider.setAttribute('aria-hidden', 'true');
-  previous.className = 'task-header__chip task-header__chip--previous';
-  previous.innerHTML = '<span>上一节点</span><strong>语义切分 · 供应商A · 提交 · 前序节点处理完成 · 已流转至当前节点</strong>';
-  statusLeft.append(previousDivider, previous);
+  configureTaskHeader({
+    ariaLabel: '任务信息-标注验收',
+    breadcrumbCurrent: '标注验收',
+    currentNode: '供应商验收',
+    status: '待验收',
+    previousNode: '语义切分 · 供应商A · 提交 · 前序节点处理完成 · 已流转至当前节点'
+  });
 
   const mediaViewer = document.querySelector('[data-component="media-viewer"]');
   mediaViewer.dataset.variant = 'four-equal-feeds';
@@ -269,16 +495,6 @@ if (pageId === 'semantic-annotation-acceptance') {
 
 document.querySelectorAll('.fill-area button[aria-label="删除"]').forEach((button) => {
   button.dataset.tooltip = '删除';
-});
-
-document.querySelectorAll('.fill-area__ban').forEach((icon) => {
-  const hint = document.createElement('span');
-  hint.className = 'fill-area__icon-hint';
-  hint.dataset.tooltip = '无法描述';
-  hint.setAttribute('role', 'img');
-  hint.setAttribute('aria-label', '无法描述');
-  icon.before(hint);
-  hint.append(icon);
 });
 
 document.querySelectorAll('.fill-area__tree-toggle').forEach((toggle) => {
