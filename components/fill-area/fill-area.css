@@ -83,6 +83,73 @@ button { border: 0; font: inherit; cursor: pointer; }
   background: var(--fill-area-panel);
 }
 
+.fill-area__title {
+  height: 40px;
+  flex: 0 0 40px;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--fill-area-line);
+  background: var(--fill-area-panel);
+  color: var(--fill-area-text);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.fill-area__shortcut-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  color: var(--fill-area-muted);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.fill-area__shortcut-hint kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--fill-area-line);
+  border-radius: 4px;
+  background: var(--fill-area-bg);
+  color: var(--fill-area-text);
+  font: inherit;
+}
+
+.fill-area__shortcut-hint > kbd:first-child {
+  font-size: 0;
+}
+
+.fill-area__shortcut-hint > kbd:first-child::after {
+  content: "opt";
+  font-size: 11px;
+}
+
+.fill-area__shortcut-hint i { font-style: normal; }
+
+.fill-area__arrow-keys {
+  display: grid;
+  grid-template-columns: repeat(3, 14px);
+  grid-template-rows: repeat(2, 13px);
+  gap: 1px;
+}
+
+.fill-area__arrow-keys kbd {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-size: 9px;
+  line-height: 11px;
+}
+
+.fill-area__arrow-keys kbd:first-child { grid-column: 2; }
+.fill-area__arrow-keys kbd:nth-child(2) { grid-column: 1; grid-row: 2; }
+.fill-area__arrow-keys kbd:nth-child(3) { grid-column: 2; grid-row: 2; }
+.fill-area__arrow-keys kbd:nth-child(4) { grid-column: 3; grid-row: 2; }
+
 .fill-area__content {
   min-height: 0;
   flex: 1 1 auto;
@@ -243,8 +310,8 @@ button { border: 0; font: inherit; cursor: pointer; }
 .fill-area__field.is-placeholder { color: var(--fill-area-faint); }
 
 .fill-area__footer {
-  height: 68px;
-  flex: 0 0 68px;
+  height: 60px;
+  flex: 0 0 60px;
   display: flex;
   align-items: center;
   justify-content: stretch;
@@ -362,15 +429,16 @@ button { border: 0; font: inherit; cursor: pointer; }
   bottom: calc(100% + 7px);
   min-width: max-content;
   padding: 4px 7px;
-  border: 1px solid var(--fill-area-line);
+  border: 1px solid #3c4854;
   border-radius: 5px;
-  background: #e7edf3;
-  color: #0f1d24;
+  background: #171c22;
+  color: #e9f0f6;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   font-size: 11px;
   font-weight: 400;
   line-height: 16px;
-  white-space: nowrap;
+  text-align: left;
+  white-space: pre-line;
   transform: translateY(3px);
 }
 
@@ -380,9 +448,9 @@ button { border: 0; font: inherit; cursor: pointer; }
   width: 7px;
   height: 7px;
   margin-right: 4px;
-  border-right: 1px solid var(--fill-area-line);
-  border-bottom: 1px solid var(--fill-area-line);
-  background: #e7edf3;
+  border-right: 1px solid #3c4854;
+  border-bottom: 1px solid #3c4854;
+  background: #171c22;
   transform: translateY(3px) rotate(45deg);
 }
 
@@ -401,6 +469,31 @@ button { border: 0; font: inherit; cursor: pointer; }
 
 .fill-area [data-tooltip]:hover::after,
 .fill-area [data-tooltip]:focus-visible::after {
+  transform: translateY(0) rotate(45deg);
+}
+
+/* The first row sits directly under the scroll boundary, so its tooltip opens
+   downward to avoid being clipped by the component title. */
+.fill-area__row:first-child [data-tooltip]::before {
+  top: calc(100% + 8px);
+  bottom: auto;
+  transform: translateY(-3px);
+}
+
+.fill-area__row:first-child [data-tooltip]::after {
+  top: calc(100% + 4px);
+  bottom: auto;
+  border: 0;
+  border-top: 1px solid #3c4854;
+  border-left: 1px solid #3c4854;
+  transform: translateY(-3px) rotate(45deg);
+}
+
+.fill-area__row:first-child [data-tooltip]:is(:hover, :focus-visible)::before {
+  transform: translateY(0);
+}
+
+.fill-area__row:first-child [data-tooltip]:is(:hover, :focus-visible)::after {
   transform: translateY(0) rotate(45deg);
 }
 .fill-area__chip { display: inline-flex; align-items: center; gap: 2px; min-height: 24px; padding: 2px 4px; border: 1px solid var(--fill-area-line); border-radius: 5px; color: #fbfbfb; font-size: 13px; line-height: 19.5px; }

@@ -31,6 +31,7 @@
 
       this.innerHTML = `
         <section class="fill-area" data-component="fill-area" data-variant="${variant}" aria-label="${label}">
+          <h3 class="fill-area__title"><span>${label}</span><small class="fill-area__shortcut-hint"><kbd>Option</kbd><i>+</i><span class="fill-area__arrow-keys" aria-label="上下左右方向键"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span><span>在当前条目内切换字段或选项</span></small></h3>
           <div class="fill-area__content">
             <div class="fill-area__banner">采集指令：归位书本与笔记本:将散落的书本和笔记本整理并放回书架指定位置，保持竖立排列或按类别分层摆放，便于查找和取用</div>
             <div class="fill-area__list">
@@ -56,16 +57,67 @@
         const hint = document.createElement("button");
         hint.className = "fill-area__icon-hint";
         hint.type = "button";
-        hint.dataset.tooltip = "无法描述";
+        hint.dataset.tooltip = "无法描述\nControl + /";
         hint.setAttribute("aria-label", "无法描述");
         hint.setAttribute("aria-pressed", "false");
         icon.before(hint);
         hint.append(icon);
+      });
+      this.querySelectorAll('button[aria-label="删除"]').forEach((button) => {
+        button.dataset.tooltip = "删除\nDelete";
       });
     }
   }
 
   if (!customElements.get("fill-area")) {
     customElements.define("fill-area", FillArea);
+  }
+
+  if (document.documentElement.dataset.fillAreaSeverityReady !== "true") {
+    document.documentElement.dataset.fillAreaSeverityReady = "true";
+
+    document.addEventListener("click", (event) => {
+      const selected = event.target.closest(".fill-area__severity [data-severity]");
+      if (!selected) return;
+      const group = selected.closest(".fill-area__severity");
+      group.querySelectorAll("[data-severity]").forEach((button) => {
+        const isSelected = button === selected;
+        button.classList.toggle("is-selected", isSelected);
+        button.setAttribute("aria-checked", String(isSelected));
+      });
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (!event.altKey || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+      const row = event.target.closest(".fill-area__row");
+      const group = row?.querySelector(".fill-area__severity");
+      if (!group) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const options = [...group.querySelectorAll("[data-severity]")];
+      const target = options[event.key === "ArrowLeft" ? 0 : options.length - 1];
+      options.forEach((button) => {
+        const isSelected = button === target;
+        button.classList.toggle("is-selected", isSelected);
+        button.setAttribute("aria-checked", String(isSelected));
+      });
+      target?.focus({ preventScroll: true });
+    });
+
+    document.addEventListener("keydown", (event) => {
+      const row = event.target.closest(".fill-area__row");
+      if (!row) return;
+      if (event.key === "Delete") {
+        event.preventDefault();
+        row.querySelector('button[aria-label="删除"]')?.click();
+        return;
+      }
+      if (event.ctrlKey && event.key === "/") {
+        const unavailable = row.querySelector(".fill-area__icon-hint");
+        if (!unavailable) return;
+        event.preventDefault();
+        unavailable.click();
+      }
+    });
   }
 })();

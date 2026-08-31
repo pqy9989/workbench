@@ -55,15 +55,6 @@
     render() {
       this.innerHTML = `
         <section class="task-header" data-component="task-header">
-          <div class="task-header__nav-row">
-            <div class="task-header__breadcrumb" aria-label="当前位置">
-              <span class="task-header__breadcrumb-root" data-task-header-field="breadcrumb-root"></span>
-              <span class="task-header__breadcrumb-separator">/</span>
-              <span class="task-header__breadcrumb-current" data-task-header-field="breadcrumb-current"></span>
-            </div>
-            <div class="task-header__theme-switch" role="group" aria-label="主题切换"><button class="task-header__theme-button task-header__theme-button--active" type="button" aria-label="深色主题"><img src="${assetBase}icon-moon.svg" alt="" /></button><button class="task-header__theme-button" type="button" aria-label="浅色主题"><img src="${assetBase}icon-sun.svg" alt="" /></button></div>
-          </div>
-
           <div class="task-header__info-row">
             <div class="task-header__main-meta">
               <div class="task-header__meta-group"><span class="task-header__muted">任务ID</span><span class="task-header__text" data-task-header-field="task-id"></span><button class="task-header__info-button" type="button" aria-label="查看任务信息" aria-expanded="false"><img src="${assetBase}icon-info.svg" alt="" /></button></div>
@@ -75,7 +66,10 @@
               <div class="task-header__chip task-header__chip--pending"><i aria-hidden="true"></i><span>状态</span><strong data-task-header-field="status"></strong></div>
             </div>
 
-            <a class="task-header__link" href="#"><span class="task-header__standard-icon" aria-hidden="true"><img src="${assetBase}icon-gesture.svg" alt="" /></span><span data-task-header-field="standard-text"></span></a>
+            <div class="task-header__actions">
+              <a class="task-header__link" href="#"><span class="task-header__standard-icon" aria-hidden="true"><img src="${assetBase}icon-gesture.svg" alt="" /></span><span data-task-header-field="standard-text"></span></a>
+              <div class="task-header__theme-switch" role="group" aria-label="主题切换"><button class="task-header__theme-button task-header__theme-button--active" type="button" aria-label="深色主题"><img src="${assetBase}icon-moon.svg" alt="" /></button><button class="task-header__theme-button" type="button" aria-label="浅色主题"><img src="${assetBase}icon-sun.svg" alt="" /></button></div>
+            </div>
           </div>
 
           <section class="task-header__info-popover" aria-label="任务信息" hidden>
