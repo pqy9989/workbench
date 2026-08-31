@@ -8,6 +8,7 @@
   --task-header-green: #c8f24e;
   --task-header-amber: #d0ab39;
   --task-header-prev-bg: #1a1e23;
+  --task-header-counter-bg: #14171a;
 }
 
 * {
@@ -55,29 +56,29 @@ a {
 .task-header {
   position: relative;
   width: 100%;
-  height: 40px;
-  min-height: 40px;
+  height: 52px;
+  min-height: 52px;
   display: flex;
   flex-direction: column;
   background: var(--task-header-bg);
   border-bottom: 1px solid var(--task-header-line);
   color: var(--task-header-text);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 18px;
 }
 
 .task-header__nav-row,
 .task-header__info-row {
   width: 100%;
-  min-height: 40px;
+  min-height: 52px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 2px 32px;
+  padding: 9px 32px;
 }
 
 .task-header__info-row {
-  padding-block: 5px;
+  padding-block: 9px;
   border-bottom: 1px solid var(--task-header-line);
 }
 
@@ -124,6 +125,23 @@ a {
   overflow: visible;
   white-space: nowrap;
 }
+
+.task-header__close {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  border: 1px solid var(--task-header-line);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.task-header__close img { width: 14px; height: 14px; display: block; }
+.task-header__close:hover { background: var(--task-header-panel); }
+.task-header__close:focus-visible { outline: 2px solid var(--task-header-link); outline-offset: 2px; }
 
 .task-header__back {
   width: 14px;
@@ -199,7 +217,7 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 18px;
   white-space: nowrap;
 }
@@ -211,6 +229,31 @@ a {
   gap: 12px;
   margin-left: 16px;
 }
+
+.task-header__countdown,
+.task-header__countdown-digits {
+  display: flex;
+  align-items: center;
+}
+
+.task-header__countdown { flex: 0 0 auto; gap: 6px; color: var(--task-header-text); }
+.task-header__countdown-label { font-size: 14px; line-height: 18px; }
+.task-header__countdown-digits { gap: 2px; }
+.task-header__countdown-digits b {
+  min-width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 4px 7px;
+  border: 1px solid var(--task-header-line);
+  border-radius: 8px;
+  background: var(--task-header-counter-bg);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 18px;
+}
+.task-header__countdown-digits i { padding-inline: 2px; color: #fff; font-style: normal; }
 
 .task-header__divider,
 .task-header__status-divider {
@@ -225,8 +268,10 @@ a {
 }
 
 .task-header__task-name {
-  max-width: none;
-  overflow: visible;
+  min-width: 100px;
+  max-width: 520px;
+  overflow: hidden;
+  flex: 0 1 auto;
   flex-wrap: nowrap;
   white-space: nowrap;
 }
@@ -234,9 +279,10 @@ a {
 .task-header__ellipsis {
   display: block;
   width: auto;
-  max-width: none;
-  overflow: visible;
-  text-overflow: clip;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -297,13 +343,13 @@ a {
 }
 
 .task-header__chip span {
-  font-size: 13px;
+  font-size: 14px;
   line-height: 15px;
   font-weight: 400;
 }
 
 .task-header__chip strong {
-  font-size: 13px;
+  font-size: 14px;
   line-height: 16.5px;
   font-weight: 400;
 }

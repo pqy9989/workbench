@@ -50,9 +50,63 @@ function configureTaskHeader(options) {
   });
 }
 
+function setFillAreaTitle(fillArea, title) {
+  if (!fillArea) return;
+  fillArea.setAttribute('aria-label', title);
+  const visibleTitle = fillArea.querySelector('.fill-area__title > span');
+  if (visibleTitle) visibleTitle.textContent = title;
+}
+
 const themeButtons = document.querySelectorAll('.task-header__theme-button');
 const savedTheme = localStorage.getItem('workbench-theme');
 const initialTheme = savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'dark';
+let workbenchTheme = initialTheme;
+let countdownTimer = null;
+
+function stopWorkbenchCountdown() {
+  if (countdownTimer !== null) window.clearInterval(countdownTimer);
+  countdownTimer = null;
+}
+
+function startWorkbenchCountdown() {
+  stopWorkbenchCountdown();
+  const header = document.querySelector('task-header');
+  let remainingSeconds = 59 * 60 + 59;
+  const update = () => {
+    const minutes = String(Math.floor(remainingSeconds / 60)).padStart(2, '0');
+    const seconds = String(remainingSeconds % 60).padStart(2, '0');
+    header?.setAttribute('countdown', `${minutes}:${seconds}`);
+  };
+  update();
+  countdownTimer = window.setInterval(() => {
+    if (remainingSeconds <= 0) {
+      stopWorkbenchCountdown();
+      return;
+    }
+    remainingSeconds -= 1;
+    update();
+  }, 1000);
+}
+
+function setPageView(view, { updateHistory = true } = {}) {
+  const workbench = view === 'workbench';
+  document.body.dataset.view = workbench ? 'workbench' : 'task-list';
+  applyTheme(workbench ? workbenchTheme : 'light');
+  if (workbench) startWorkbenchCountdown();
+  else stopWorkbenchCountdown();
+
+  if (updateHistory) {
+    const url = new URL(window.location.href);
+    if (workbench) {
+      url.searchParams.set('page', 'action-annotation');
+      url.searchParams.set('mode', 'workbench');
+    } else {
+      url.searchParams.delete('mode');
+      url.searchParams.delete('page');
+    }
+    window.history.pushState({ view: document.body.dataset.view }, '', url);
+  }
+}
 
 function applyTheme(theme) {
   document.body.dataset.theme = theme;
@@ -65,14 +119,29 @@ function applyTheme(theme) {
   });
 }
 
-applyTheme(initialTheme);
+setPageView(new URLSearchParams(window.location.search).get('mode') === 'workbench' ? 'workbench' : 'task-list', { updateHistory: false });
 
 themeButtons.forEach((button) => {
   button.addEventListener('click', () => {
     const theme = button.getAttribute('aria-label') === '浅色主题' ? 'light' : 'dark';
+    workbenchTheme = theme;
     applyTheme(theme);
     localStorage.setItem('workbench-theme', theme);
   });
+});
+
+document.querySelectorAll('.task-list-view__start').forEach((button) => {
+  button.addEventListener('click', () => setPageView('workbench'));
+});
+
+document.addEventListener('task-header-close', () => setPageView('task-list'));
+
+document.querySelectorAll('.platform-sidebar__item').forEach((button) => {
+  if (button.textContent.trim() === '标注工作台') button.addEventListener('click', () => setPageView('task-list'));
+});
+
+window.addEventListener('popstate', () => {
+  setPageView(new URLSearchParams(window.location.search).get('mode') === 'workbench' ? 'workbench' : 'task-list', { updateHistory: false });
 });
 
 if (pageId === 'quality-spot-check') {
@@ -89,8 +158,7 @@ if (pageId === 'quality-spot-check') {
 
   const fillArea = document.querySelector('[data-component="fill-area"]');
   fillArea.dataset.variant = 'quality-spot-check';
-  fillArea.setAttribute('aria-label', '人工质检-质检抽检');
-  fillArea.querySelector('.fill-area__title > span').textContent = '人工质检-质检抽检';
+  setFillAreaTitle(fillArea, '质检抽检');
 
   fillArea.querySelectorAll('.fill-area__row').forEach((row, index) => {
     const field = document.createElement('button');
@@ -135,8 +203,7 @@ if (pageId === 'action-annotation') {
 
   const fillArea = document.querySelector('[data-component="fill-area"]');
   fillArea.dataset.variant = 'action-annotation';
-  fillArea.setAttribute('aria-label', '动作标注-标注');
-  fillArea.querySelector('.fill-area__title > span').textContent = '动作标注-标注';
+  setFillAreaTitle(fillArea, '标注');
   const fillContent = fillArea.querySelector('.fill-area__content');
   fillContent.innerHTML = '<div class="fill-area__empty">暂无标注数据</div>';
   fillArea.querySelector('.fill-area__footer').innerHTML = '<button class="fill-area__button fill-area__button--primary" type="button">提交</button><button class="fill-area__button" type="button">暂离</button>';
@@ -544,7 +611,11 @@ if (pageId === 'action-annotation') {
       updateMergeSelection();
       return;
     }
-    if (!splitModeActive) return;
+    if (!splitModeActive) {
+      if (!selectedSegment) return;
+      activateSegment(selectedSegment.dataset.segmentId, { revealRow: true });
+      return;
+    }
     const bounds = segmentTrack.getBoundingClientRect();
     const splitRatio = (event.clientX - bounds.left) / bounds.width;
     const segment = [...segmentTrack.querySelectorAll('.annotation-segment')].find((item) => {
@@ -599,7 +670,7 @@ if (pageId === 'action-annotation') {
     window.requestAnimationFrame(() => firstField.focus({ preventScroll: true }));
   }
 
-  function activateSegment(segmentId) {
+  function activateSegment(segmentId, { revealRow = false } = {}) {
     const segment = segmentTrack.querySelector(`.annotation-segment[data-segment-id="${segmentId}"]`);
     const row = fillContent.querySelector(`.fill-area__row[data-segment-id="${segmentId}"]`);
     if (!segment || !row) return;
@@ -609,6 +680,8 @@ if (pageId === 'action-annotation') {
     row.classList.add('is-active');
     segment.classList.add('is-current');
     linkedSegmentId = segmentId;
+
+    if (revealRow) row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 
     const leftRatio = Number.parseFloat(segment.style.left) / 100;
     const widthRatio = Number.parseFloat(segment.style.width) / 100;
@@ -922,11 +995,11 @@ if (pageId === 'action-spot-check') {
   timeline.setAttribute('aria-label', '动作标注-抽检时间轴');
   timeline.innerHTML = `
     <div class="timeline-slot"><div class="timeline-card timeline-card--segments"><div class="timeline-ruler"><img class="ruler-start" src="../../components/annotation-timeline/assets/icon-timeline-start.svg" alt="" /><img class="marker marker--red" src="../../components/annotation-timeline/assets/icon-marker-red.svg" alt="" /><img class="marker marker--orange marker--two" src="../../components/annotation-timeline/assets/icon-marker-orange.svg" alt="" /><div class="segment-scale"><span class="segment-progress"></span></div><div class="scale-labels"><span>00:00s</span><span>00:10s</span></div></div><div class="annotation-row"><b class="row-count">14</b><div class="color-segments"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div></div></div>
-    <div class="controls-slot"><div class="control-panel"><div class="transport-tools"><button class="tool-button tool-button--primary" type="button" data-action="toggle-play"><img src="../../components/annotation-timeline/assets/icon-play.svg" alt="播放" /></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-skip-prev.svg" alt="上一帧" /></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-skip-next.svg" alt="下一帧" /></button><button class="tool-button tool-button--speed" type="button"><b>2x</b><span>倍速</span></button></div><div class="annotation-tools"><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-plus.svg" alt="" /><span>添加</span></button><button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-plus-forward.svg" alt="" /><span>添加并前进</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-forward.svg" alt="" /><span>仅前进</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-eraser.svg" alt="" /><span>清空</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-drag.svg" alt="" /><span>拖动</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-scissors.svg" alt="" /><span>分割</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-merge.svg" alt="" /><span>合并</span></button><button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-merge-up.svg" alt="" /><span>向上合并</span></button><button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-merge-down.svg" alt="" /><span>向下合并</span></button><button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-source-first.svg" alt="" /><span>源视频优先</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-keyboard.svg" alt="" /><span>快捷键</span></button></div></div></div>`;
+    <div class="controls-slot"><div class="control-panel"><div class="transport-tools"><button class="tool-button tool-button--primary" type="button" data-action="toggle-play"><img src="../../components/annotation-timeline/assets/icon-play.svg" alt="播放" /></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-skip-prev.svg" alt="上一帧" /></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-skip-next.svg" alt="下一帧" /></button><button class="tool-button tool-button--speed" type="button"><b>2x</b><span>倍速</span></button></div><div class="annotation-tools"><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-plus.svg" alt="" /><span>添加</span></button><button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-plus-forward.svg" alt="" /><span>添加并前进</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-forward.svg" alt="" /><span>仅前进</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-eraser.svg" alt="" /><span>清空</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-drag.svg" alt="" /><span>拖动</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-scissors.svg" alt="" /><span>分割</span></button><button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-scissors.svg" alt="" /><span>父级分割</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-merge.svg" alt="" /><span>合并</span></button><button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-merge-up.svg" alt="" /><span>向上合并</span></button><button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-merge-down.svg" alt="" /><span>向下合并</span></button><button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-source-first.svg" alt="" /><span>源视频优先</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-keyboard.svg" alt="" /><span>快捷键</span></button></div></div></div>`;
 
   const fillArea = document.querySelector('[data-component="fill-area"]');
   fillArea.dataset.variant = 'action-spot-check';
-  fillArea.setAttribute('aria-label', '动作标注-抽检');
+  setFillAreaTitle(fillArea, '抽检');
   const colors = ['blue', 'orange', 'purple', 'green'];
   const labels = ['选择错误原因', '选择错误原因', '选择或输入动作描述', '选择或输入动作描述'];
   fillArea.querySelector('.fill-area__content').innerHTML = `<div class="fill-area__list">${colors.map((color, index) => `
@@ -963,7 +1036,7 @@ if (pageId === 'semantic-segmentation') {
 
   const fillArea = document.querySelector('[data-component="fill-area"]');
   fillArea.dataset.variant = 'semantic-segmentation';
-  fillArea.setAttribute('aria-label', '语义标注-切分');
+  setFillAreaTitle(fillArea, '切分');
   const parent = (id, open = false) => `<article class="fill-area__tree-item${open ? ' is-open' : ''}"><div class="fill-area__tree-parent">${open ? `<button class="fill-area__tree-badge fill-area__tree-toggle" type="button" aria-expanded="true" aria-controls="semantic-page-${id}" aria-label="收起 ${id} 子片段"><img src="../../components/fill-area/assets/icon-tree-chevron.svg" alt="" />${id}</button>` : `<span class="fill-area__tree-badge">${id}</span>`}<time>06:15~06:15(4:40:47)</time><button type="button" aria-label="删除"><img src="../../components/fill-area/assets/icon-trash.svg" alt="" /></button></div>${open ? `<div class="fill-area__tree-children" id="semantic-page-${id}">${['01','02','03'].map((child) => `<div><span>${child}</span><time>06:15~06:15(4:40:47)</time><button type="button" aria-label="删除"><img src="../../components/fill-area/assets/icon-trash.svg" alt="" /></button></div>`).join('')}</div>` : ''}</article>`;
   fillArea.querySelector('.fill-area__content').innerHTML = `<div class="fill-area__tree-list">${parent('01')}${parent('02', true)}${parent('03')}${parent('04', true)}${parent('05')}${parent('06')}</div>`;
   fillArea.querySelector('.fill-area__footer').innerHTML = '<button class="fill-area__button fill-area__button--primary" type="button">提交</button><button class="fill-area__button" type="button">暂离</button>';
@@ -998,7 +1071,7 @@ if (pageId === 'semantic-segmentation-spot-check') {
 
   const fillArea = document.querySelector('[data-component="fill-area"]');
   fillArea.dataset.variant = 'semantic-segmentation-spot-check';
-  fillArea.setAttribute('aria-label', '语义标注-切分抽检');
+  setFillAreaTitle(fillArea, '切分抽检');
   const reviewItem = (id, open = false) => `<article class="fill-area__review-item${open ? ' is-open' : ''}"><div class="fill-area__tree-parent">${open ? `<button class="fill-area__tree-badge fill-area__tree-toggle" type="button" aria-expanded="true" aria-controls="segmentation-check-${id}" aria-label="收起 ${id} 子片段"><img src="../../components/fill-area/assets/icon-tree-chevron.svg" alt="" />${id}</button>` : `<span class="fill-area__tree-badge">${id}</span>`}<time>06:15~06:15(4:40:47)</time><button type="button" aria-label="删除"><img src="../../components/fill-area/assets/icon-trash.svg" alt="" /></button></div><div class="fill-area__review-branch"><button class="fill-area__field is-placeholder" type="button">选择错误原因</button></div>${open ? `<div class="fill-area__review-children" id="segmentation-check-${id}">${['01','02'].map((child) => `<div class="fill-area__review-child"><div class="fill-area__review-child-top"><span>${child}</span><time>06:15~06:15(4:40:47)</time><button type="button" aria-label="删除"><img src="../../components/fill-area/assets/icon-trash.svg" alt="" /></button></div><button class="fill-area__field is-placeholder" type="button">选择错误原因</button></div>`).join('')}</div>` : ''}</article>`;
   fillArea.querySelector('.fill-area__content').innerHTML = `<div class="fill-area__review-list">${reviewItem('01')}${reviewItem('02', true)}${reviewItem('03')}${reviewItem('04', true)}</div>`;
   const fillFooter = fillArea.querySelector('.fill-area__footer');
@@ -1033,9 +1106,13 @@ if (pageId === 'semantic-annotation-acceptance') {
     <div class="timeline-slot"><div class="timeline-card timeline-card--segments"><div class="timeline-ruler"><img class="ruler-start" src="../../components/annotation-timeline/assets/icon-timeline-start.svg" alt="" /><img class="marker marker--red" src="../../components/annotation-timeline/assets/icon-marker-red.svg" alt="" /><img class="marker marker--orange marker--two" src="../../components/annotation-timeline/assets/icon-marker-orange.svg" alt="" /><div class="segment-scale"><span class="segment-progress"></span></div><div class="scale-labels"><span>00:00s</span><span>00:10s</span></div></div><div class="annotation-row"><b class="row-count">14</b><div class="color-segments"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="annotation-row"><b class="row-count">1</b><div class="labeled-segments labeled-segments--full"><span>完成整段录制的前端测试V4预标注抽验任务</span></div></div></div></div>
     <div class="controls-slot"><div class="control-panel"><div class="transport-tools"><button class="tool-button tool-button--primary" type="button" data-action="toggle-play"><img src="../../components/annotation-timeline/assets/icon-play.svg" alt="播放" /></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-skip-prev.svg" alt="上一帧" /></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-skip-next.svg" alt="下一帧" /></button><button class="tool-button tool-button--speed" type="button"><b>2x</b><span>倍速</span></button></div><div class="annotation-tools"><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-plus.svg" alt="" /><span>添加</span></button><button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-plus-forward.svg" alt="" /><span>添加并前进</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-forward.svg" alt="" /><span>仅前进</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-eraser.svg" alt="" /><span>清空</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-drag.svg" alt="" /><span>拖动</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-scissors.svg" alt="" /><span>分割</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-merge.svg" alt="" /><span>合并</span></button><button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-merge-up.svg" alt="" /><span>向上合并</span></button><button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-merge-down.svg" alt="" /><span>向下合并</span></button><button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-source-first.svg" alt="" /><span>源视频优先</span></button><button class="tool-button" type="button"><img src="../../components/annotation-timeline/assets/icon-keyboard.svg" alt="" /><span>快捷键</span></button></div></div></div>`;
 
+  const acceptanceSplitButton = [...timeline.querySelectorAll('.annotation-tools .tool-button')]
+    .find((button) => button.textContent.trim() === '分割');
+  acceptanceSplitButton?.insertAdjacentHTML('afterend', '<button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-scissors.svg" alt="" /><span>父级分割</span></button>');
+
   const fillArea = document.querySelector('[data-component="fill-area"]');
   fillArea.dataset.variant = 'semantic-annotation-acceptance';
-  fillArea.setAttribute('aria-label', '语义标注-标注验收');
+  setFillAreaTitle(fillArea, '标注验收');
   const acceptanceChildren = [
     ['01', '观察并整理桌面物品（前端测试V4 预标注片段 1）'],
     ['02', '选择错移动遥控器到目标位置（前端测试V4 预标注片段 2）'],
@@ -1047,6 +1124,15 @@ if (pageId === 'semantic-annotation-acceptance') {
   fillFooter.className = 'fill-area__footer fill-area__footer--three';
   fillFooter.innerHTML = '<button class="fill-area__button fill-area__button--primary" type="button">通过</button><button class="fill-area__button" type="button">采集-不合格</button><button class="fill-area__button" type="button">暂离</button>';
 }
+
+document.querySelectorAll('.fill-area__footer').forEach((footer) => {
+  if ([...footer.querySelectorAll('.fill-area__button')].some((button) => button.textContent.trim() === '保存')) return;
+  const saveButton = document.createElement('button');
+  saveButton.className = 'fill-area__button';
+  saveButton.type = 'button';
+  saveButton.textContent = '保存';
+  footer.append(saveButton);
+});
 
 document.querySelectorAll('.fill-area button[aria-label="删除"]').forEach((button) => {
   button.dataset.tooltip = '删除\nDelete';

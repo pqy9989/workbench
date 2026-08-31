@@ -49,7 +49,7 @@ document.querySelectorAll('[data-page-tabs]').forEach((tabs) => {
     const label = document.createElement('span');
 
     link.className = 'page-tabs__item';
-    link.href = page.href;
+    link.href = `${page.href}${new URLSearchParams(window.location.search).get('mode') === 'workbench' ? '&mode=workbench' : ''}`;
     link.title = page.name;
     label.textContent = page.name;
     link.append(label);

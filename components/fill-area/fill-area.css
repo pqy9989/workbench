@@ -310,8 +310,8 @@ button { border: 0; font: inherit; cursor: pointer; }
 .fill-area__field.is-placeholder { color: var(--fill-area-faint); }
 
 .fill-area__footer {
-  height: 60px;
-  flex: 0 0 60px;
+  height: var(--workbench-operation-height, 68px);
+  flex: 0 0 var(--workbench-operation-height, 68px);
   display: flex;
   align-items: center;
   justify-content: stretch;
@@ -508,6 +508,10 @@ button { border: 0; font: inherit; cursor: pointer; }
 
 
 /* 动作标注-抽检 */
+.fill-area[data-variant="action-spot-check"] .fill-area__title {
+  padding-inline: 12px;
+}
+
 .fill-area[data-variant="action-spot-check"] .fill-area__content {
   padding: 12px 12px 0;
 }
@@ -1008,7 +1012,7 @@ button { border: 0; font: inherit; cursor: pointer; }
   max-width: 100%;
   min-width: 0;
   height: auto;
-  min-height: 676px;
+  min-height: 0;
   padding: 4px 0 0;
   border-bottom: 1px dashed var(--fill-area-line);
 }
@@ -1028,7 +1032,7 @@ button { border: 0; font: inherit; cursor: pointer; }
   position: absolute;
   left: 14px;
   top: 32px;
-  bottom: 113px;
+  bottom: 8px;
   border-left: 1px solid #344352;
 }
 
@@ -1052,7 +1056,7 @@ button { border: 0; font: inherit; cursor: pointer; }
 }
 
 .fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__description--wrap {
-  min-height: 56.5px;
+  min-height: 37.5px;
   white-space: normal;
 }
 
@@ -1099,6 +1103,17 @@ button { border: 0; font: inherit; cursor: pointer; }
 
 .fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__footer--three .fill-area__button:not(:first-child) {
   flex: 0 0 121.7px;
+}
+
+/* 所有工作台底部操作按钮保持单行等宽铺满 */
+.fill-area[data-variant] .fill-area__footer .fill-area__button {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__footer.fill-area__footer--three .fill-area__button {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 

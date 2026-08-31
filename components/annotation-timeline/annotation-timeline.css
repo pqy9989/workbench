@@ -181,7 +181,7 @@ button { border: 0; font: inherit; cursor: pointer; }
   background: #d9febe;
 }
 
-.control-panel { min-height: 68px; display: flex; align-items: center; justify-content: space-between; padding: 10px; }
+.control-panel { height: var(--workbench-operation-height, 68px); min-height: var(--workbench-operation-height, 68px); display: flex; align-items: center; justify-content: space-between; padding: 10px; }
 .transport-tools,
 .annotation-tools { display: flex; align-items: center; gap: 6px; }
 .tool-button { width: 46px; height: 46px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--annotation-line); background: var(--annotation-button); color: var(--annotation-text); }

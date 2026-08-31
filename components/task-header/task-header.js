@@ -13,6 +13,7 @@
     standardText: "质检标准",
     currentNode: "动作质检",
     status: "待质检",
+    countdown: "59:59",
     label: "任务信息"
   };
 
@@ -31,6 +32,7 @@
         "standard-text",
         "current-node",
         "status",
+        "countdown",
         "previous-node"
       ];
     }
@@ -41,6 +43,7 @@
         this.dataset.rendered = "true";
       }
       this.syncAttributes();
+      this.setupCloseButton();
       this.setupInfoPopover();
     }
 
@@ -57,17 +60,20 @@
         <section class="task-header" data-component="task-header">
           <div class="task-header__info-row">
             <div class="task-header__main-meta">
+              <button class="task-header__close" type="button" aria-label="关闭信息栏"><img src="${assetBase}icon-close.svg" alt="" /></button>
               <div class="task-header__meta-group"><span class="task-header__muted">任务ID</span><span class="task-header__text" data-task-header-field="task-id"></span><button class="task-header__info-button" type="button" aria-label="查看任务信息" aria-expanded="false"><img src="${assetBase}icon-info.svg" alt="" /></button></div>
+              <a class="task-header__link" href="#"><span class="task-header__standard-icon" aria-hidden="true"><img src="${assetBase}icon-gesture.svg" alt="" /></span><span data-task-header-field="standard-text"></span></a>
               <span class="task-header__divider" aria-hidden="true"></span>
               <div class="task-header__meta-group task-header__task-name"><span class="task-header__muted">任务名称</span><span class="task-header__text task-header__ellipsis" data-task-header-field="task-name"></span></div>
               <span class="task-header__divider" aria-hidden="true"></span>
               <div class="task-header__chip task-header__chip--current"><i aria-hidden="true"></i><span>当前节点</span><strong data-task-header-field="current-node"></strong></div>
               <span class="task-header__status-divider" aria-hidden="true"></span>
               <div class="task-header__chip task-header__chip--pending"><i aria-hidden="true"></i><span>状态</span><strong data-task-header-field="status"></strong></div>
+              <span class="task-header__divider" aria-hidden="true"></span>
+              <div class="task-header__countdown"><span class="task-header__countdown-label">倒计时</span><span class="task-header__countdown-digits" data-task-header-countdown aria-label="倒计时 59:59"></span></div>
             </div>
 
             <div class="task-header__actions">
-              <a class="task-header__link" href="#"><span class="task-header__standard-icon" aria-hidden="true"><img src="${assetBase}icon-gesture.svg" alt="" /></span><span data-task-header-field="standard-text"></span></a>
               <div class="task-header__theme-switch" role="group" aria-label="主题切换"><button class="task-header__theme-button task-header__theme-button--active" type="button" aria-label="深色主题"><img src="${assetBase}icon-moon.svg" alt="" /></button><button class="task-header__theme-button" type="button" aria-label="浅色主题"><img src="${assetBase}icon-sun.svg" alt="" /></button></div>
             </div>
           </div>
@@ -79,7 +85,7 @@
               <hr />
               <div><dt>采集员</dt><dd data-task-header-field="collector"></dd></div>
               <hr />
-              <div><dt>采集员</dt><dd data-task-header-field="version"></dd></div>
+              <div><dt>版本</dt><dd data-task-header-field="version"></dd></div>
               <hr />
               <div class="task-header__info-previous"><dt>上一节点</dt><dd data-task-header-field="previous-node"></dd></div>
             </dl>
@@ -115,6 +121,13 @@
         if (field) field.textContent = value;
       });
 
+      const countdown = this.value("countdown", defaults.countdown).replace(/[^0-9]/g, '').padStart(4, '0').slice(-4);
+      const countdownRoot = root.querySelector('[data-task-header-countdown]');
+      if (countdownRoot) {
+        countdownRoot.innerHTML = [...countdown].map((digit, index) => `${index === 2 ? '<i aria-hidden="true">:</i>' : ''}<b>${digit}</b>`).join('');
+        countdownRoot.setAttribute('aria-label', `倒计时 ${countdown.slice(0, 2)}:${countdown.slice(2, 4)}`);
+      }
+
     }
 
     setupInfoPopover() {
@@ -141,6 +154,14 @@
         if (event.key === "Escape") close();
       });
       this.dataset.infoReady = "true";
+    }
+
+    setupCloseButton() {
+      if (this.dataset.closeReady === "true") return;
+      this.querySelector('.task-header__close')?.addEventListener('click', () => {
+        this.dispatchEvent(new CustomEvent('task-header-close', { bubbles: true, cancelable: true }));
+      });
+      this.dataset.closeReady = "true";
     }
   }
 
