@@ -43,13 +43,26 @@ const currentPageId = workbenchPages.some((page) => page.id === requestedPageId)
 
 document.body.dataset.pageId = currentPageId;
 
+function getPageHref(pageHref) {
+  const url = new URL(pageHref, window.location.href);
+  if (new URLSearchParams(window.location.search).get('mode') === 'workbench') {
+    url.searchParams.set('mode', 'workbench');
+  } else {
+    url.searchParams.delete('mode');
+  }
+  return url.href;
+}
+
 document.querySelectorAll('[data-page-tabs]').forEach((tabs) => {
   tabs.replaceChildren(...workbenchPages.map((page) => {
     const link = document.createElement('a');
     const label = document.createElement('span');
 
     link.className = 'page-tabs__item';
-    link.href = `${page.href}${new URLSearchParams(window.location.search).get('mode') === 'workbench' ? '&mode=workbench' : ''}`;
+    link.href = getPageHref(page.href);
+    link.addEventListener('click', () => {
+      link.href = getPageHref(page.href);
+    });
     link.title = page.name;
     label.textContent = page.name;
     link.append(label);
