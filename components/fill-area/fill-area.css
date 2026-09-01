@@ -119,15 +119,6 @@ button { border: 0; font: inherit; cursor: pointer; }
   font: inherit;
 }
 
-.fill-area__shortcut-hint > kbd:first-child {
-  font-size: 0;
-}
-
-.fill-area__shortcut-hint > kbd:first-child::after {
-  content: "opt";
-  font-size: 11px;
-}
-
 .fill-area__shortcut-hint i { font-style: normal; }
 
 .fill-area__arrow-keys {
@@ -348,6 +339,11 @@ button { border: 0; font: inherit; cursor: pointer; }
 /* 动作标注-标注 */
 .fill-area[data-variant="action-annotation"] .fill-area__content { padding-top: 4px; }
 .fill-area[data-variant="action-annotation"] .fill-area__row--action { padding-top: 8px; padding-bottom: 8px; }
+.fill-area[data-variant="action-annotation"] .fill-area__row--action.is-active {
+  background-color: rgba(132, 145, 158, 0.07);
+  box-shadow: -20px 0 0 rgba(132, 145, 158, 0.07), 20px 0 0 rgba(132, 145, 158, 0.07);
+}
+.fill-area[data-variant="action-annotation"] .fill-area__row--action:focus { outline: none; }
 .fill-area[data-variant="action-annotation"] .fill-area__row--action:first-child { padding-top: 8px; }
 .fill-area[data-variant="action-annotation"] .fill-area__row--action:last-child { padding-bottom: 8px; }
 .fill-area[data-variant="action-annotation"] .fill-area__row-main { width: 100%; }
@@ -633,39 +629,39 @@ button { border: 0; font: inherit; cursor: pointer; }
 
 .fill-area[data-variant="semantic-segmentation"] .fill-area__tree-item {
   position: relative;
-  flex: 0 0 45px;
-  padding: 4px 0;
+  flex: 0 0 41px;
+  padding: 6px 0;
   border: 0;
 }
 
 .fill-area[data-variant="semantic-segmentation"] .fill-area__tree-item::after {
   content: "";
   position: absolute;
-  top: 36px;
+  top: 40px;
   left: 0;
   width: 100%;
   border-top: 1px dashed var(--fill-area-line);
 }
 
 .fill-area[data-variant="semantic-segmentation"] .fill-area__tree-item.is-open {
-  flex-basis: 174px;
+  flex-basis: 161px;
 }
 
 .fill-area[data-variant="semantic-segmentation"] .fill-area__tree-item:last-child {
-  flex-basis: 37px;
+  flex-basis: 41px;
 }
 
 .fill-area[data-variant="semantic-segmentation"] .fill-area__tree-item.is-open::before {
   content: "";
   position: absolute;
-  top: 32px;
+  top: 34px;
   left: 14px;
-  height: 129px;
+  height: 104px;
   border-left: 1px solid #344352;
 }
 
 .fill-area[data-variant="semantic-segmentation"] .fill-area__tree-item.is-open::after {
-  top: 165px;
+  top: 160px;
 }
 
 .fill-area[data-variant="semantic-segmentation"] .fill-area__tree-parent {
@@ -731,11 +727,11 @@ button { border: 0; font: inherit; cursor: pointer; }
 
 .fill-area[data-variant="semantic-segmentation"] .fill-area__tree-children {
   position: relative;
-  height: 121px;
+  height: 117px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin: 8px 0 0 32px;
+  gap: 0;
+  margin: 7px 0 0 32px;
 }
 
 .fill-area[data-variant="semantic-segmentation"] .fill-area__tree-item:not(.is-open) > .fill-area__tree-children {
@@ -744,9 +740,9 @@ button { border: 0; font: inherit; cursor: pointer; }
 
 .fill-area[data-variant="semantic-segmentation"] .fill-area__tree-children > div {
   position: relative;
-  height: 43px;
-  min-height: 35px;
-  flex: 0 0 35px;
+  height: 39px;
+  min-height: 39px;
+  flex: 0 0 39px;
   display: flex;
   align-items: center;
   padding: 0 0 0 10px;
@@ -761,7 +757,7 @@ button { border: 0; font: inherit; cursor: pointer; }
   content: "";
   position: absolute;
   left: -18px;
-  top: 17px;
+  top: 19px;
   width: 14px;
   border-top: 1px solid #344352;
 }
@@ -893,13 +889,13 @@ button { border: 0; font: inherit; cursor: pointer; }
 .fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-item {
   position: relative;
   height: 78.5px;
-  margin-bottom: 8px;
+  margin-bottom: 0;
   padding: 4px 0 0;
   border-bottom: 1px dashed var(--fill-area-line);
 }
 
 .fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-item.is-open {
-  height: 247.5px;
+  height: auto;
 }
 
 .fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-item:last-child {
@@ -932,7 +928,7 @@ button { border: 0; font: inherit; cursor: pointer; }
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
   margin: 8px 0 0 32px;
 }
 
@@ -967,6 +963,36 @@ button { border: 0; font: inherit; cursor: pointer; }
 
 .fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-child:last-child {
   border-bottom: 0;
+}
+
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-item.is-active {
+  z-index: 1;
+  isolation: isolate;
+  background: transparent;
+}
+
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-item.is-active::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  right: -20px;
+  left: -20px;
+  height: 78.5px;
+  background: rgba(132, 145, 158, 0.07);
+}
+
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-child.is-active {
+  background: rgba(132, 145, 158, 0.07);
+  box-shadow: -52px 0 0 rgba(132, 145, 158, 0.07), 20px 0 0 rgba(132, 145, 158, 0.07);
+}
+
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__field:focus-visible,
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-item.is-active > .fill-area__review-branch > .fill-area__field,
+.fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-child.is-active > .fill-area__field {
+  border-color: rgba(2, 193, 205, 0.7);
+  outline: none;
+  box-shadow: none;
 }
 
 .fill-area__review-child-top {
@@ -1017,6 +1043,11 @@ button { border: 0; font: inherit; cursor: pointer; }
   border-bottom: 1px dashed var(--fill-area-line);
 }
 
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-item:focus,
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-child:focus {
+  outline: none;
+}
+
 .fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-item:not(.is-open) {
   height: 121px;
   min-height: 121px;
@@ -1055,6 +1086,88 @@ button { border: 0; font: inherit; cursor: pointer; }
   line-height: 19.5px;
 }
 
+.fill-area[data-variant="semantic-annotation-acceptance"][data-has-user-selection="true"] .fill-area__description[contenteditable="true"]:focus {
+  border-color: rgba(2, 193, 205, 0.7);
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"][data-has-user-selection="true"] .fill-area__acceptance-child.is-active {
+  z-index: 20;
+  isolation: isolate;
+  background: transparent;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"][data-has-user-selection="true"] .fill-area__acceptance-child.is-active::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  right: -20px;
+  bottom: 0;
+  left: -52px;
+  background: rgba(154, 166, 178, 0.08);
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"][data-has-user-selection="true"] .fill-area__acceptance-item.is-active {
+  z-index: 20;
+  isolation: isolate;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"][data-has-user-selection="true"] .fill-area__acceptance-item.is-active::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  right: -20px;
+  left: -20px;
+  height: 129px;
+  background: rgba(154, 166, 178, 0.08);
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-child.is-active > .fill-area__description,
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-child.is-active > .acceptance-error-select > .fill-area__field,
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-item.is-active > .fill-area__acceptance-branch > .fill-area__description,
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-item.is-active > .fill-area__acceptance-branch > .acceptance-error-select > .fill-area__field {
+  background: transparent;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__description[contenteditable="true"] {
+  cursor: text;
+  outline: none;
+  white-space: normal;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .acceptance-error-select {
+  position: relative;
+  margin-top: 4px;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-child:has(> .acceptance-error-select.is-open),
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-item:has(> .fill-area__acceptance-branch > .acceptance-error-select.is-open) {
+  z-index: 60;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .acceptance-error-select .fill-area__field {
+  margin-top: 0;
+  outline: none;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .acceptance-error-select .fill-area__field:focus-visible,
+.fill-area[data-variant="semantic-annotation-acceptance"] .acceptance-error-select.is-open .fill-area__field {
+  border-color: rgba(2, 193, 205, 0.7);
+  box-shadow: none;
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .acceptance-error-select .fill-area__dropdown {
+  z-index: 80;
+  background: var(--fill-area-panel-soft);
+}
+
+.fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__option.is-highlighted {
+  color: var(--fill-area-cyan);
+  background: rgba(2, 193, 205, 0.14);
+  outline: none;
+}
+
 .fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__description--wrap {
   min-height: 37.5px;
   white-space: normal;
@@ -1086,6 +1199,7 @@ button { border: 0; font: inherit; cursor: pointer; }
   left: -18px;
   top: 17px;
   width: 14px;
+  z-index: 1;
   border-top: 1px solid #344352;
 }
 
@@ -1158,6 +1272,75 @@ button { border: 0; font: inherit; cursor: pointer; }
   .fill-area__acceptance-item:has(.fill-area__acceptance-child:hover) {
     background-color: transparent;
     box-shadow: none;
+  }
+
+  .fill-area[data-variant="semantic-segmentation"] .fill-area__tree-item:hover {
+    background-color: transparent;
+    box-shadow: none;
+  }
+
+  .fill-area[data-variant="semantic-segmentation"] .fill-area__tree-item:hover > .fill-area__tree-parent {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .fill-area[data-variant="semantic-segmentation"] .fill-area__tree-item:hover > .fill-area__tree-parent::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: -6px;
+    right: -20px;
+    bottom: -7px;
+    left: -20px;
+    background: rgba(132, 145, 158, 0.07);
+  }
+
+  .fill-area[data-variant="semantic-segmentation"] .fill-area__tree-item:has(.fill-area__tree-children > div:hover) > .fill-area__tree-parent::after {
+    display: none;
+  }
+
+  .fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-item:hover {
+    z-index: 1;
+    isolation: isolate;
+    background-color: transparent;
+    box-shadow: none;
+  }
+
+  .fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-item:hover::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    right: -20px;
+    left: -20px;
+    height: 78.5px;
+    background: rgba(132, 145, 158, 0.07);
+  }
+
+  .fill-area[data-variant="semantic-segmentation-spot-check"] .fill-area__review-item:has(.fill-area__review-child:hover)::after {
+    display: none;
+  }
+
+  .fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-item.is-active:hover,
+  .fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-child.is-active:hover {
+    background-color: transparent;
+    box-shadow: none;
+  }
+
+  .fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-item:hover {
+    background-color: transparent;
+    box-shadow: none;
+  }
+
+  .fill-area[data-variant="semantic-annotation-acceptance"] .fill-area__acceptance-item:hover::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    right: -20px;
+    left: -20px;
+    height: 129px;
+    background: rgba(154, 166, 178, 0.08);
   }
 
   .fill-area button[aria-label="删除"]:hover {

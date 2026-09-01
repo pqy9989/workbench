@@ -31,7 +31,7 @@
 
       this.innerHTML = `
         <section class="fill-area" data-component="fill-area" data-variant="${variant}" aria-label="${label}">
-          <h3 class="fill-area__title"><span>${label}</span><small class="fill-area__shortcut-hint"><kbd>Option</kbd><i>+</i><span class="fill-area__arrow-keys" aria-label="上下左右方向键"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span><span>在当前条目内切换字段或选项</span></small></h3>
+          <h3 class="fill-area__title"><span>${label}</span><small class="fill-area__shortcut-hint"><kbd>Tab</kbd><span>切换字段或选项</span><i>/</i><kbd>Shift + ↑↓</kbd><span>切换条目</span></small></h3>
           <div class="fill-area__content">
             <div class="fill-area__banner">采集指令：归位书本与笔记本:将散落的书本和笔记本整理并放回书架指定位置，保持竖立排列或按类别分层摆放，便于查找和取用</div>
             <div class="fill-area__list">
@@ -118,6 +118,39 @@
         event.preventDefault();
         unavailable.click();
       }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (!event.shiftKey || !["ArrowUp", "ArrowDown"].includes(event.key)) return;
+      const fillArea = event.target.closest('.fill-area[data-component="fill-area"]');
+      if (!fillArea || fillArea.dataset.variant === "semantic-annotation-acceptance") return;
+
+      const itemSelector = [
+        ".fill-area__row",
+        ".fill-area__tree-children > div",
+        ".fill-area__tree-item",
+        ".fill-area__review-child",
+        ".fill-area__review-item"
+      ].join(", ");
+      const items = [...fillArea.querySelectorAll(itemSelector)];
+      if (!items.length) return;
+
+      event.preventDefault();
+      const currentItem = event.target.closest(itemSelector) || items.find((item) => item.classList.contains("is-active"));
+      const currentIndex = items.indexOf(currentItem);
+      const nextIndex = currentIndex < 0
+        ? 0
+        : Math.max(0, Math.min(items.length - 1, currentIndex + (event.key === "ArrowDown" ? 1 : -1)));
+      const nextItem = items[nextIndex];
+      items.forEach((item) => item.classList.toggle("is-active", item === nextItem));
+
+      const focusTarget = nextItem.querySelector('[contenteditable="true"], .fill-area__field, input, textarea, select, button:not([aria-label="删除"])');
+      if (focusTarget) focusTarget.focus({ preventScroll: true });
+      else {
+        nextItem.tabIndex = -1;
+        nextItem.focus({ preventScroll: true });
+      }
+      nextItem.scrollIntoView({ block: "nearest", behavior: "smooth" });
     });
   }
 })();

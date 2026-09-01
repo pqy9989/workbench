@@ -146,6 +146,12 @@ button { border: 0; font: inherit; cursor: pointer; }
   cursor: default;
 }
 
+.annotation-tools .tool-button.is-active {
+  border-color: var(--annotation-cyan);
+  color: var(--annotation-cyan);
+  background: rgba(2, 193, 205, 0.12);
+}
+
 .color-segments i { width: 100%; height: 16px; min-height: 16px; min-width: 0; }
 .color-segments i:nth-child(1) { background: #399ed0; }
 .color-segments i:nth-child(2) { background: #d06b39; }
@@ -180,6 +186,8 @@ button { border: 0; font: inherit; cursor: pointer; }
   width: auto;
   background: #d9febe;
 }
+
+.labeled-segments--full span[role="button"] { cursor: pointer; }
 
 .control-panel { height: var(--workbench-operation-height, 68px); min-height: var(--workbench-operation-height, 68px); display: flex; align-items: center; justify-content: space-between; padding: 10px; }
 .transport-tools,

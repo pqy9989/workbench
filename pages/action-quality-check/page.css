@@ -369,6 +369,8 @@ body.is-resizing-fill {
 
 .shortcut-dialog {
   position: fixed;
+  z-index: 10000;
+  isolation: isolate;
   inset: auto;
   width: min(340px, calc(100vw - 32px));
   max-height: min(720px, calc(100vh - 64px));

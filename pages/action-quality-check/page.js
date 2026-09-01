@@ -57,6 +57,612 @@ function setFillAreaTitle(fillArea, title) {
   if (visibleTitle) visibleTitle.textContent = title;
 }
 
+function setupSegmentationSpotCheckSelection(fillArea) {
+  const fillContent = fillArea.querySelector('.fill-area__content');
+  const parentItems = [...fillContent.querySelectorAll('.fill-area__review-item')];
+  const childItems = [...fillContent.querySelectorAll('.fill-area__review-child')];
+  const selectableItems = [...parentItems, ...childItems];
+  if (!selectableItems.length) return;
+
+  function activateItem(item, { focusField = true } = {}) {
+    selectableItems.forEach((entry) => entry.classList.toggle('is-active', entry === item));
+    if (!focusField) return;
+    const field = item.matches('.fill-area__review-child')
+      ? item.querySelector(':scope > .fill-area__field')
+      : item.querySelector(':scope > .fill-area__review-branch > .fill-area__field');
+    field?.focus({ preventScroll: true });
+  }
+
+  fillContent.addEventListener('click', (event) => {
+    if (event.target.closest('button[aria-label="删除"]')) return;
+    const item = event.target.closest('.fill-area__review-child, .fill-area__review-item');
+    if (item && selectableItems.includes(item)) activateItem(item);
+  });
+
+}
+
+function setupAcceptanceTimelineInteractions(timeline) {
+  const card = timeline.querySelector('.timeline-card--segments');
+  const scale = timeline.querySelector('.segment-scale');
+  const selection = timeline.querySelector('.segment-progress');
+  const track = timeline.querySelector('.color-segments');
+  const count = timeline.querySelector('.row-count');
+  if (!card || !scale || !selection || !track || !count) return;
+
+  selection.classList.add('is-draggable');
+  selection.tabIndex = 0;
+  selection.setAttribute('role', 'slider');
+  selection.setAttribute('aria-label', '标注选区');
+  selection.setAttribute('aria-valuemin', '0');
+  selection.setAttribute('aria-valuemax', '100');
+  selection.setAttribute('aria-valuenow', '0');
+  selection.insertAdjacentHTML('beforeend', '<i class="segment-resize-handle segment-resize-handle--start" aria-hidden="true"></i><i class="segment-resize-handle segment-resize-handle--end" aria-hidden="true"></i>');
+
+  const weights = [115, 50, 36, 21, 100, 29, 21, 43, 72, 57, 36, 29, 50, 72];
+  const colors = ['#399ed0', '#d06b39', '#9139d0', '#39d078', '#78d039', '#d0ab39', '#3985d0', '#3945d0', '#39d085', '#399ed0', '#d08539', '#39d078', '#d03952', '#d0399e'];
+  const totalWeight = weights.reduce((sum, value) => sum + value, 0);
+  let left = 0;
+  let nextSegmentId = weights.length + 1;
+  let splitMode = false;
+
+  track.classList.add('color-segments--interactive');
+  track.replaceChildren(...weights.map((weight, index) => {
+    const segment = document.createElement('span');
+    const width = (weight / totalWeight) * 100;
+    segment.className = 'annotation-segment';
+    segment.dataset.segmentId = String(index + 1);
+    segment.style.left = `${left}%`;
+    segment.style.width = `${width}%`;
+    segment.style.background = colors[index];
+    left += width;
+    return segment;
+  }));
+
+  const findTool = (label) => [...timeline.querySelectorAll('.tool-button')]
+    .find((button) => button.querySelector('span')?.textContent.trim() === label);
+  const addButton = findTool('添加');
+  const addForwardButton = findTool('添加并前进');
+  const forwardButton = findTool('仅前进');
+  const clearButton = findTool('清空');
+  const dragButton = findTool('拖动');
+  const splitButton = findTool('分割');
+  const parentSplitButton = findTool('父级分割');
+  const mergeButton = findTool('合并');
+  const mergeUpButton = findTool('向上合并');
+  const mergeDownButton = findTool('向下合并');
+  const sourceButton = findTool('源视频优先');
+  const shortcutButton = findTool('快捷键');
+  const playButton = timeline.querySelector('[data-action="toggle-play"]');
+  const transportButtons = timeline.querySelectorAll('.transport-tools .tool-button');
+
+  const toolbarShortcutMap = new Map([
+    ['播放', 'Space'],
+    ['上一帧', '←'],
+    ['下一帧', '→'],
+    ['倍速', '点击切换'],
+    ['添加', 'Control + +'],
+    ['添加并前进', 'Control + S'],
+    ['仅前进', 'Control + D'],
+    ['清空', 'Command + Shift + Z'],
+    ['拖动', 'Control + E'],
+    ['分割', 'Control + X'],
+    ['父级分割', 'Control + Shift + X'],
+    ['合并', 'Enter'],
+    ['向上合并', 'Command + ←'],
+    ['向下合并', 'Command + →'],
+    ['源视频优先', '点击切换'],
+    ['快捷键', '点击查看全部']
+  ]);
+  timeline.querySelectorAll('.tool-button').forEach((button) => {
+    const label = button.querySelector('span')?.textContent.trim()
+      || button.querySelector('img')?.alt
+      || button.textContent.trim();
+    const shortcut = toolbarShortcutMap.get(label);
+    if (shortcut) button.dataset.tooltip = `${label}\n${shortcut}`;
+  });
+
+  const selectionGeometry = () => ({
+    left: Number.parseFloat(selection.style.left) || 0,
+    width: selection.getBoundingClientRect().width || 128
+  });
+
+  function updateSelection(nextLeft, nextWidth = selectionGeometry().width) {
+    const maxWidth = Math.max(32, Math.min(nextWidth, scale.clientWidth));
+    const maxLeft = Math.max(0, scale.clientWidth - maxWidth);
+    const safeLeft = Math.max(0, Math.min(nextLeft, maxLeft));
+    selection.style.left = `${safeLeft}px`;
+    selection.style.width = `${maxWidth}px`;
+    card.style.setProperty('--segment-selection-left', `${safeLeft}px`);
+    card.style.setProperty('--segment-progress-width', `${maxWidth}px`);
+    selection.setAttribute('aria-valuenow', String(maxLeft ? Math.round((safeLeft / maxLeft) * 100) : 0));
+  }
+
+  let selectionGrabOffset = 0;
+  selection.addEventListener('pointerdown', (event) => {
+    if (event.target.closest('.segment-resize-handle')) return;
+    selectionGrabOffset = event.clientX - selection.getBoundingClientRect().left;
+    selection.setPointerCapture(event.pointerId);
+    selection.classList.add('is-dragging');
+  });
+  selection.addEventListener('pointermove', (event) => {
+    if (!selection.hasPointerCapture(event.pointerId)) return;
+    updateSelection(event.clientX - scale.getBoundingClientRect().left - selectionGrabOffset);
+  });
+  selection.addEventListener('pointerup', (event) => {
+    if (selection.hasPointerCapture(event.pointerId)) selection.releasePointerCapture(event.pointerId);
+    selection.classList.remove('is-dragging');
+  });
+
+  selection.querySelectorAll('.segment-resize-handle').forEach((handle) => {
+    let initialLeft = 0;
+    let initialWidth = 0;
+    handle.addEventListener('pointerdown', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      ({ left: initialLeft, width: initialWidth } = selectionGeometry());
+      handle.setPointerCapture(event.pointerId);
+      selection.classList.add('is-resizing');
+    });
+    handle.addEventListener('pointermove', (event) => {
+      if (!handle.hasPointerCapture(event.pointerId)) return;
+      const pointer = event.clientX - scale.getBoundingClientRect().left;
+      if (handle.classList.contains('segment-resize-handle--start')) {
+        const right = initialLeft + initialWidth;
+        const nextLeft = Math.max(0, Math.min(pointer, right - 32));
+        updateSelection(nextLeft, right - nextLeft);
+      } else {
+        updateSelection(initialLeft, Math.max(32, Math.min(scale.clientWidth - initialLeft, pointer - initialLeft)));
+      }
+    });
+    handle.addEventListener('pointerup', (event) => {
+      if (handle.hasPointerCapture(event.pointerId)) handle.releasePointerCapture(event.pointerId);
+      selection.classList.remove('is-resizing');
+    });
+  });
+
+  function currentSegments() {
+    return [...track.querySelectorAll('.annotation-segment')];
+  }
+
+  function setCurrent(segment) {
+    currentSegments().forEach((item) => item.classList.toggle('is-current', item === segment));
+  }
+
+  function addSegment() {
+    const geometry = selectionGeometry();
+    const segment = document.createElement('span');
+    segment.className = 'annotation-segment is-current';
+    segment.dataset.segmentId = String(nextSegmentId++);
+    segment.style.left = `${(geometry.left / scale.clientWidth) * 100}%`;
+    segment.style.width = `${(geometry.width / scale.clientWidth) * 100}%`;
+    segment.style.background = colors[(nextSegmentId - 2) % colors.length];
+    currentSegments().forEach((item) => item.classList.remove('is-current'));
+    track.append(segment);
+    count.textContent = String(currentSegments().length);
+    return segment;
+  }
+
+  function advanceSelection() {
+    const geometry = selectionGeometry();
+    updateSelection(geometry.left + geometry.width);
+  }
+
+  function splitSegment(segment, ratio) {
+    if (!segment || ratio <= 0.05 || ratio >= 0.95) return;
+    const segmentLeft = Number.parseFloat(segment.style.left);
+    const segmentWidth = Number.parseFloat(segment.style.width);
+    const sibling = segment.cloneNode(false);
+    sibling.dataset.segmentId = String(nextSegmentId++);
+    sibling.style.left = `${segmentLeft + segmentWidth * ratio}%`;
+    sibling.style.width = `${segmentWidth * (1 - ratio)}%`;
+    sibling.style.background = colors[(nextSegmentId - 2) % colors.length];
+    segment.style.width = `${segmentWidth * ratio}%`;
+    track.append(sibling);
+    setCurrent(sibling);
+    count.textContent = String(currentSegments().length);
+  }
+
+  function mergeSegments(segments) {
+    if (segments.length < 2) return;
+    const ordered = segments.sort((a, b) => Number.parseFloat(a.style.left) - Number.parseFloat(b.style.left));
+    const first = ordered[0];
+    const mergedLeft = Number.parseFloat(first.style.left);
+    const mergedRight = Math.max(...ordered.map((segment) => Number.parseFloat(segment.style.left) + Number.parseFloat(segment.style.width)));
+    first.style.left = `${mergedLeft}%`;
+    first.style.width = `${mergedRight - mergedLeft}%`;
+    ordered.slice(1).forEach((segment) => segment.remove());
+    currentSegments().forEach((segment) => segment.classList.remove('is-selected'));
+    setCurrent(first);
+    count.textContent = String(currentSegments().length);
+  }
+
+  function mergeAdjacent(direction) {
+    const ordered = currentSegments().sort((a, b) => Number.parseFloat(a.style.left) - Number.parseFloat(b.style.left));
+    const current = track.querySelector('.annotation-segment.is-current') || ordered[0];
+    const neighbor = ordered[ordered.indexOf(current) + direction];
+    if (neighbor) mergeSegments([current, neighbor]);
+  }
+
+  track.addEventListener('click', (event) => {
+    const segment = event.target.closest('.annotation-segment');
+    if (!segment) return;
+    if (event.altKey) {
+      segment.classList.toggle('is-selected');
+      return;
+    }
+    if (splitMode) {
+      const bounds = segment.getBoundingClientRect();
+      splitSegment(segment, (event.clientX - bounds.left) / bounds.width);
+      splitMode = false;
+      splitButton?.classList.remove('is-active');
+      return;
+    }
+    setCurrent(segment);
+    updateSelection((Number.parseFloat(segment.style.left) / 100) * scale.clientWidth, (Number.parseFloat(segment.style.width) / 100) * scale.clientWidth);
+  });
+
+  addButton?.addEventListener('click', addSegment);
+  addForwardButton?.addEventListener('click', () => { addSegment(); advanceSelection(); });
+  forwardButton?.addEventListener('click', advanceSelection);
+  clearButton?.addEventListener('click', () => { track.replaceChildren(); count.textContent = '0'; });
+  dragButton?.addEventListener('click', () => dragButton.classList.toggle('is-active'));
+  splitButton?.addEventListener('click', () => {
+    splitMode = !splitMode;
+    splitButton.classList.toggle('is-active', splitMode);
+  });
+  parentSplitButton?.addEventListener('click', () => splitSegment(track.querySelector('.annotation-segment.is-current') || currentSegments()[0], 0.5));
+  mergeButton?.addEventListener('click', () => mergeSegments([...track.querySelectorAll('.annotation-segment.is-selected')]));
+  mergeUpButton?.addEventListener('click', () => mergeAdjacent(-1));
+  mergeDownButton?.addEventListener('click', () => mergeAdjacent(1));
+  sourceButton?.addEventListener('click', () => {
+    const pressed = sourceButton.getAttribute('aria-pressed') !== 'true';
+    sourceButton.setAttribute('aria-pressed', String(pressed));
+    sourceButton.classList.toggle('is-active', pressed);
+  });
+  playButton?.addEventListener('click', () => {
+    const playing = playButton.getAttribute('aria-pressed') !== 'true';
+    playButton.setAttribute('aria-pressed', String(playing));
+    playButton.querySelector('img').alt = playing ? '暂停' : '播放';
+  });
+  transportButtons[1]?.addEventListener('click', () => updateSelection(selectionGeometry().left - 8));
+  transportButtons[2]?.addEventListener('click', () => updateSelection(selectionGeometry().left + 8));
+
+  const shortcutDialog = document.createElement('dialog');
+  shortcutDialog.className = 'shortcut-dialog';
+  shortcutDialog.setAttribute('aria-labelledby', 'acceptance-shortcut-dialog-title');
+  shortcutDialog.innerHTML = `
+    <div class="shortcut-dialog__header"><h2 id="acceptance-shortcut-dialog-title">快捷键</h2><button class="shortcut-dialog__close" type="button" aria-label="关闭快捷键菜单">×</button></div>
+    <div class="shortcut-dialog__list">
+      ${[
+        ['添加', 'Control + +'], ['添加并前进', 'Control + S'], ['仅前进', 'Control + D'],
+        ['分割', 'Control + X'], ['合并', 'Enter'], ['向上合并', 'Command + ←'],
+        ['向下合并', 'Command + →'], ['播放/暂停', 'Space'], ['移动选区', '← / →']
+      ].map(([label, key]) => `<div class="shortcut-dialog__item"><span>${label}</span><span class="shortcut-dialog__keys"><kbd>${key}</kbd></span></div>`).join('')}
+    </div>`;
+  document.body.append(shortcutDialog);
+  shortcutButton?.addEventListener('click', () => {
+    if (shortcutDialog.open) return shortcutDialog.close();
+    shortcutDialog.show();
+    const buttonBounds = shortcutButton.getBoundingClientRect();
+    shortcutDialog.style.left = `${Math.max(12, buttonBounds.right - (shortcutDialog.offsetWidth || 340))}px`;
+    shortcutDialog.style.bottom = `${window.innerHeight - buttonBounds.top + 8}px`;
+  });
+  shortcutDialog.querySelector('.shortcut-dialog__close').addEventListener('click', () => shortcutDialog.close());
+  document.addEventListener('pointerdown', (event) => {
+    if (!shortcutDialog.open || shortcutDialog.contains(event.target) || shortcutButton?.contains(event.target)) return;
+    shortcutDialog.close();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (document.body.dataset.pageId !== 'semantic-annotation-acceptance' || shortcutDialog.open) return;
+    const target = event.target;
+    if (target instanceof HTMLElement && (target.matches('input, textarea, select') || target.isContentEditable)) return;
+    if (event.code === 'Space') {
+      event.preventDefault();
+      playButton?.click();
+    } else if (event.ctrlKey && (event.key === '+' || event.key === '=')) {
+      event.preventDefault();
+      addSegment();
+    } else if (event.ctrlKey && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      addSegment();
+      advanceSelection();
+    } else if (event.ctrlKey && event.key.toLowerCase() === 'd') {
+      event.preventDefault();
+      advanceSelection();
+    } else if (event.ctrlKey && event.key.toLowerCase() === 'x') {
+      event.preventDefault();
+      splitButton?.click();
+    } else if (event.metaKey && event.key === 'ArrowLeft') {
+      event.preventDefault();
+      mergeAdjacent(-1);
+    } else if (event.metaKey && event.key === 'ArrowRight') {
+      event.preventDefault();
+      mergeAdjacent(1);
+    } else if (event.key === 'Enter') {
+      mergeSegments([...track.querySelectorAll('.annotation-segment.is-selected')]);
+    } else if (event.key === 'Escape' && splitMode) {
+      splitMode = false;
+      splitButton?.classList.remove('is-active');
+    }
+  });
+
+  timeline.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      event.preventDefault();
+      updateSelection(selectionGeometry().left + (event.key === 'ArrowLeft' ? -8 : 8));
+    }
+  });
+
+  timeline.querySelectorAll('.tool-button').forEach((button) => {
+    const label = button.querySelector('span')?.textContent.trim() || button.querySelector('img')?.alt || '';
+    button.dataset.tooltip = label;
+  });
+}
+
+function setupAcceptanceListInteractions(timeline, fillArea) {
+  const fillContent = fillArea.querySelector('.fill-area__content');
+  const shortcutHint = fillArea.querySelector('.fill-area__shortcut-hint');
+  const parentItem = fillContent.querySelector('.fill-area__acceptance-item');
+  const childItems = [...fillContent.querySelectorAll('.fill-area__acceptance-child')];
+  const items = [parentItem, ...childItems].filter(Boolean);
+  const track = timeline.querySelector('.color-segments--interactive');
+  const segments = [...track.querySelectorAll('.annotation-segment')];
+  const parentSegment = timeline.querySelector('.labeled-segments--full span');
+  const errorReasons = ['片段范围错误', '动作描述错误', '动作遗漏', '层级关系错误'];
+  if (!items.length || !track) return;
+
+  fillArea.dataset.hasUserSelection = 'false';
+  let pointerSelectionArmed = false;
+  const armPointerSelection = () => { pointerSelectionArmed = true; };
+  fillContent.addEventListener('pointerdown', armPointerSelection, true);
+  track.addEventListener('pointerdown', armPointerSelection, true);
+  parentSegment?.addEventListener('pointerdown', armPointerSelection, true);
+
+  if (shortcutHint) {
+    shortcutHint.innerHTML = '<kbd>Tab</kbd><span>切换字段或选项</span><i>/</i><kbd>Shift + ↑↓</kbd><span>切换条目</span>';
+  }
+
+  parentItem.dataset.acceptanceId = 'parent';
+  childItems.forEach((item, index) => { item.dataset.acceptanceId = String(index + 1).padStart(2, '0'); });
+  segments.forEach((segment, index) => {
+    const childIndex = Math.min(childItems.length - 1, Math.floor((index * childItems.length) / segments.length));
+    segment.dataset.acceptanceId = String(childIndex + 1).padStart(2, '0');
+  });
+  if (parentSegment) {
+    parentSegment.dataset.acceptanceId = 'parent';
+    parentSegment.tabIndex = 0;
+    parentSegment.setAttribute('role', 'button');
+    parentSegment.setAttribute('aria-label', '选择整段验收条目');
+  }
+
+  function placeCaretAtEnd(element) {
+    element.focus({ preventScroll: true });
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
+  items.forEach((item) => {
+    item.tabIndex = -1;
+    const description = item.querySelector(':scope > .fill-area__description, :scope > .fill-area__acceptance-branch > .fill-area__description');
+    if (description) {
+      description.contentEditable = 'false';
+      description.spellcheck = false;
+      description.tabIndex = -1;
+      description.setAttribute('role', 'textbox');
+      description.setAttribute('aria-label', `${item.dataset.acceptanceId === 'parent' ? '整段' : item.dataset.acceptanceId} 描述`);
+    }
+
+    const field = item.querySelector(':scope > .fill-area__field, :scope > .fill-area__acceptance-branch > .fill-area__field');
+    if (!field) return;
+    const select = document.createElement('div');
+    select.className = 'fill-area__select acceptance-error-select';
+    field.replaceWith(select);
+    select.append(field);
+    field.setAttribute('aria-haspopup', 'listbox');
+    field.setAttribute('aria-expanded', 'false');
+    const dropdown = document.createElement('div');
+    dropdown.className = 'fill-area__dropdown';
+    dropdown.setAttribute('role', 'listbox');
+    dropdown.hidden = true;
+    dropdown.innerHTML = errorReasons.map((reason) => `<button class="fill-area__option" type="button" role="option" data-value="${reason}">${reason}</button>`).join('');
+    select.append(dropdown);
+  });
+
+  let activeIndex = -1;
+
+  function activateItem(index, { focusDescription = false, syncTimeline = true, userInitiated = false } = {}) {
+    if (!userInitiated) return;
+    fillArea.dataset.hasUserSelection = 'true';
+    activeIndex = Math.max(0, Math.min(index, items.length - 1));
+    const item = items[activeIndex];
+    items.forEach((entry, entryIndex) => {
+      const isActive = entryIndex === activeIndex;
+      entry.classList.toggle('is-active', isActive);
+      const entryDescription = entry.querySelector(':scope > .fill-area__description, :scope > .fill-area__acceptance-branch > .fill-area__description');
+      if (entryDescription) {
+        const isEditing = isActive && focusDescription;
+        entryDescription.contentEditable = String(isEditing);
+        entryDescription.tabIndex = isActive ? 0 : -1;
+      }
+    });
+    item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+
+    if (syncTimeline) {
+      segments.forEach((segment) => segment.classList.remove('is-current'));
+      if (item.dataset.acceptanceId === 'parent') {
+        parentSegment?.classList.add('is-current');
+      } else {
+        parentSegment?.classList.remove('is-current');
+        const segment = segments.find((entry) => entry.dataset.acceptanceId === item.dataset.acceptanceId);
+        segment?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      }
+    }
+
+    if (focusDescription) {
+      const description = item.querySelector(':scope > .fill-area__description, :scope > .fill-area__acceptance-branch > .fill-area__description');
+      if (description) window.requestAnimationFrame(() => placeCaretAtEnd(description));
+    } else {
+      item.focus({ preventScroll: true });
+    }
+  }
+
+  fillContent.addEventListener('focusin', (event) => {
+    const description = event.target.closest('.fill-area__description');
+    if (!description || fillArea.dataset.hasUserSelection !== 'true') return;
+    const item = description.closest('[data-acceptance-id]');
+    if (!item?.classList.contains('is-active')) return;
+    description.contentEditable = 'true';
+    window.requestAnimationFrame(() => placeCaretAtEnd(description));
+  });
+
+  function setDropdownOpen(select, open) {
+    fillContent.querySelectorAll('.acceptance-error-select.is-open').forEach((entry) => {
+      if (entry === select) return;
+      entry.classList.remove('is-open');
+      entry.querySelector('.fill-area__field').setAttribute('aria-expanded', 'false');
+      entry.querySelector('.fill-area__dropdown').hidden = true;
+    });
+    select.classList.toggle('is-open', open);
+    select.querySelector('.fill-area__field').setAttribute('aria-expanded', String(open));
+    select.querySelector('.fill-area__dropdown').hidden = !open;
+    if (open) {
+      const options = [...select.querySelectorAll('.fill-area__option')];
+      const selectedIndex = Math.max(0, options.findIndex((option) => option.classList.contains('is-selected')));
+      options.forEach((option, index) => option.classList.toggle('is-highlighted', index === selectedIndex));
+    }
+  }
+
+  function closeAcceptanceDropdowns() {
+    fillContent.querySelectorAll('.acceptance-error-select.is-open').forEach((select) => {
+      select.classList.remove('is-open');
+      select.querySelector('.fill-area__field').setAttribute('aria-expanded', 'false');
+      select.querySelector('.fill-area__dropdown').hidden = true;
+    });
+  }
+
+  document.addEventListener('pointerdown', (event) => {
+    if (event.target.closest('.acceptance-error-select')) return;
+    closeAcceptanceDropdowns();
+  });
+
+  function chooseOption(option) {
+    const select = option.closest('.acceptance-error-select');
+    const field = select.querySelector('.fill-area__field');
+    select.querySelectorAll('.fill-area__option').forEach((entry) => entry.classList.toggle('is-selected', entry === option));
+    field.textContent = option.dataset.value;
+    field.classList.remove('is-placeholder');
+    setDropdownOpen(select, false);
+    field.focus({ preventScroll: true });
+  }
+
+  fillContent.addEventListener('click', (event) => {
+    const option = event.target.closest('.acceptance-error-select .fill-area__option');
+    if (option) return chooseOption(option);
+    const field = event.target.closest('.acceptance-error-select > .fill-area__field');
+    if (field) {
+      const select = field.closest('.acceptance-error-select');
+      setDropdownOpen(select, !select.classList.contains('is-open'));
+      return;
+    }
+    if (event.target.closest('button[aria-label="删除"]')) return;
+    const item = event.target.closest('[data-acceptance-id]');
+    if (item && items.includes(item)) {
+      const userInitiated = pointerSelectionArmed;
+      pointerSelectionArmed = false;
+      const focusDescription = Boolean(event.target.closest('.fill-area__description'));
+      activateItem(items.indexOf(item), { focusDescription, userInitiated });
+    }
+  });
+
+  fillContent.addEventListener('keydown', (event) => {
+    if (event.key === 'Tab' && !event.shiftKey) {
+      const activeItem = items[activeIndex];
+      if (activeItem && event.target === activeItem) {
+        const description = activeItem.querySelector(':scope > .fill-area__description, :scope > .fill-area__acceptance-branch > .fill-area__description');
+        if (description) {
+          event.preventDefault();
+          description.contentEditable = 'true';
+          description.tabIndex = 0;
+          placeCaretAtEnd(description);
+          return;
+        }
+      }
+    }
+
+    if (event.shiftKey && ['ArrowUp', 'ArrowDown'].includes(event.key)) {
+      event.preventDefault();
+      event.stopPropagation();
+      closeAcceptanceDropdowns();
+      activateItem(activeIndex + (event.key === 'ArrowDown' ? 1 : -1), { userInitiated: true });
+      return;
+    }
+
+    const select = event.target.closest('.acceptance-error-select');
+    if (select) {
+      const field = select.querySelector('.fill-area__field');
+      const options = [...select.querySelectorAll('.fill-area__option')];
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        if (!select.classList.contains('is-open')) return setDropdownOpen(select, true);
+        return chooseOption(select.querySelector('.fill-area__option.is-highlighted') || options[0]);
+      }
+      if (['ArrowUp', 'ArrowDown'].includes(event.key)) {
+        event.preventDefault();
+        if (!select.classList.contains('is-open')) return;
+        const current = Math.max(0, options.findIndex((option) => option.classList.contains('is-highlighted')));
+        const next = Math.max(0, Math.min(options.length - 1, current + (event.key === 'ArrowDown' ? 1 : -1)));
+        options.forEach((option, index) => option.classList.toggle('is-highlighted', index === next));
+      }
+      if (event.key === 'Tab' && select.classList.contains('is-open')) {
+        event.preventDefault();
+        const current = Math.max(0, options.findIndex((option) => option.classList.contains('is-highlighted')));
+        const direction = event.shiftKey ? -1 : 1;
+        const next = (current + direction + options.length) % options.length;
+        options.forEach((option, index) => option.classList.toggle('is-highlighted', index === next));
+      }
+      if (event.key === 'Escape') setDropdownOpen(select, false);
+      return;
+    }
+
+    const editingDescription = event.target.closest('[contenteditable="true"]');
+    if (editingDescription && event.key === 'Escape') {
+      event.preventDefault();
+      editingDescription.closest('[data-acceptance-id]')?.focus({ preventScroll: true });
+      return;
+    }
+    if (editingDescription && !event.altKey) return;
+  });
+
+  track.addEventListener('click', (event) => {
+    const segment = event.target.closest('.annotation-segment[data-acceptance-id]');
+    if (!segment || event.altKey) return;
+    const itemIndex = items.findIndex((item) => item.dataset.acceptanceId === segment.dataset.acceptanceId);
+    if (itemIndex >= 0) {
+      const userInitiated = pointerSelectionArmed;
+      pointerSelectionArmed = false;
+      activateItem(itemIndex, { syncTimeline: false, userInitiated });
+    }
+  });
+
+  parentSegment?.addEventListener('click', () => {
+    const userInitiated = pointerSelectionArmed;
+    pointerSelectionArmed = false;
+    activateItem(0, { syncTimeline: false, userInitiated });
+  });
+  parentSegment?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      activateItem(0, { syncTimeline: false, userInitiated: true });
+    }
+  });
+
+}
+
 const themeButtons = document.querySelectorAll('.task-header__theme-button');
 const savedTheme = localStorage.getItem('workbench-theme');
 const initialTheme = savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'dark';
@@ -644,14 +1250,14 @@ if (pageId === 'action-annotation') {
     segmentTrack.insertBefore(newSegment, splitCursor);
     count.textContent = String(segmentCount);
     renderRightRow(segmentCount, newSegment.dataset.colorClass);
-    activateSegment(newSegment.dataset.segmentId);
+    activateSegment(newSegment.dataset.segmentId, { focusRow: true });
     setSplitMode(false);
   });
 
   function renderRightRow(index, colorClass) {
     if (!fillContent.querySelector('.fill-area__list')) fillContent.innerHTML = '<div class="fill-area__list"></div>';
     fillContent.querySelector('.fill-area__list').insertAdjacentHTML('beforeend', `
-      <article class="fill-area__row fill-area__row--action" data-segment-id="${index}">
+      <article class="fill-area__row fill-area__row--action" data-segment-id="${index}" tabindex="-1">
         <b>${String(index).padStart(2, '0')}</b><div class="fill-area__row-main"><div class="fill-area__row-top fill-area__action-top"><time>06:15~06:15(4:40:47)</time><i class="fill-area__color fill-area__color--${colorClass}"></i><button type="button" aria-label="删除"><img src="../../components/fill-area/assets/icon-trash.svg" alt="" /></button></div>
         ${renderDropdown('element', '请选择动作元素')}
         <div class="fill-area__field-row">${renderDropdown('description', '选择或输入动作描述')}<img class="fill-area__ban" src="../../components/fill-area/assets/icon-ban.svg" alt="" /></div></div>
@@ -666,11 +1272,9 @@ if (pageId === 'action-annotation') {
         option.id = `${dropdown.id}-${optionIndex}`;
       });
     });
-    const firstField = row.querySelector('[data-dropdown="element"] > .fill-area__field');
-    window.requestAnimationFrame(() => firstField.focus({ preventScroll: true }));
   }
 
-  function activateSegment(segmentId, { revealRow = false } = {}) {
+  function activateSegment(segmentId, { revealRow = false, focusRow = false } = {}) {
     const segment = segmentTrack.querySelector(`.annotation-segment[data-segment-id="${segmentId}"]`);
     const row = fillContent.querySelector(`.fill-area__row[data-segment-id="${segmentId}"]`);
     if (!segment || !row) return;
@@ -682,7 +1286,7 @@ if (pageId === 'action-annotation') {
     linkedSegmentId = segmentId;
 
     if (revealRow) row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-
+    if (focusRow) window.requestAnimationFrame(() => row.focus({ preventScroll: true }));
     const leftRatio = Number.parseFloat(segment.style.left) / 100;
     const widthRatio = Number.parseFloat(segment.style.width) / 100;
     updateSelectionGeometry(leftRatio * scale.clientWidth, widthRatio * scale.clientWidth);
@@ -788,6 +1392,15 @@ if (pageId === 'action-annotation') {
   });
 
   fillContent.addEventListener('keydown', (event) => {
+    const focusedRow = event.target.closest('.fill-area__row--action[data-segment-id]');
+    if (event.target === focusedRow && event.key === 'Tab' && !event.shiftKey) {
+      const firstField = focusedRow.querySelector('[data-dropdown="element"] > .fill-area__field');
+      if (firstField) {
+        event.preventDefault();
+        firstField.focus({ preventScroll: true });
+      }
+      return;
+    }
     const field = event.target.closest('.fill-area__select > .fill-area__field');
     if (!field) return;
     const select = field.closest('.fill-area__select');
@@ -878,7 +1491,7 @@ if (pageId === 'action-annotation') {
     segmentTrack.append(segment);
     count.textContent = String(segmentTrack.querySelectorAll('.annotation-segment').length);
     renderRightRow(segmentCount, segment.dataset.colorClass);
-    activateSegment(segment.dataset.segmentId);
+    activateSegment(segment.dataset.segmentId, { focusRow: true });
     return true;
   }
 
@@ -1074,6 +1687,7 @@ if (pageId === 'semantic-segmentation-spot-check') {
   setFillAreaTitle(fillArea, '切分抽检');
   const reviewItem = (id, open = false) => `<article class="fill-area__review-item${open ? ' is-open' : ''}"><div class="fill-area__tree-parent">${open ? `<button class="fill-area__tree-badge fill-area__tree-toggle" type="button" aria-expanded="true" aria-controls="segmentation-check-${id}" aria-label="收起 ${id} 子片段"><img src="../../components/fill-area/assets/icon-tree-chevron.svg" alt="" />${id}</button>` : `<span class="fill-area__tree-badge">${id}</span>`}<time>06:15~06:15(4:40:47)</time><button type="button" aria-label="删除"><img src="../../components/fill-area/assets/icon-trash.svg" alt="" /></button></div><div class="fill-area__review-branch"><button class="fill-area__field is-placeholder" type="button">选择错误原因</button></div>${open ? `<div class="fill-area__review-children" id="segmentation-check-${id}">${['01','02'].map((child) => `<div class="fill-area__review-child"><div class="fill-area__review-child-top"><span>${child}</span><time>06:15~06:15(4:40:47)</time><button type="button" aria-label="删除"><img src="../../components/fill-area/assets/icon-trash.svg" alt="" /></button></div><button class="fill-area__field is-placeholder" type="button">选择错误原因</button></div>`).join('')}</div>` : ''}</article>`;
   fillArea.querySelector('.fill-area__content').innerHTML = `<div class="fill-area__review-list">${reviewItem('01')}${reviewItem('02', true)}${reviewItem('03')}${reviewItem('04', true)}</div>`;
+  setupSegmentationSpotCheckSelection(fillArea);
   const fillFooter = fillArea.querySelector('.fill-area__footer');
   fillFooter.className = 'fill-area__footer fill-area__footer--four';
   fillFooter.innerHTML = '<button class="fill-area__button fill-area__button--primary" type="button">通过</button><button class="fill-area__button" type="button">采集-不合格</button><button class="fill-area__button" type="button">驳回-标注</button><button class="fill-area__button" type="button">暂离</button>';
@@ -1109,6 +1723,7 @@ if (pageId === 'semantic-annotation-acceptance') {
   const acceptanceSplitButton = [...timeline.querySelectorAll('.annotation-tools .tool-button')]
     .find((button) => button.textContent.trim() === '分割');
   acceptanceSplitButton?.insertAdjacentHTML('afterend', '<button class="tool-button tool-button--small-label" type="button"><img src="../../components/annotation-timeline/assets/icon-scissors.svg" alt="" /><span>父级分割</span></button>');
+  setupAcceptanceTimelineInteractions(timeline);
 
   const fillArea = document.querySelector('[data-component="fill-area"]');
   fillArea.dataset.variant = 'semantic-annotation-acceptance';
@@ -1117,12 +1732,23 @@ if (pageId === 'semantic-annotation-acceptance') {
     ['01', '观察并整理桌面物品（前端测试V4 预标注片段 1）'],
     ['02', '选择错移动遥控器到目标位置（前端测试V4 预标注片段 2）'],
     ['03', '打开或关闭抽屉（前端测试V4 预标注片段 3）'],
-    ['04', '调整纸盒摆放位置（前端测试V4 预标注片段 4）']
+    ['04', '调整纸盒摆放位置（前端测试V4 预标注片段 4）'],
+    ['05', '拿起桌面上的书本（前端测试V4 预标注片段 5）'],
+    ['06', '将书本移动到书架前方（前端测试V4 预标注片段 6）'],
+    ['07', '调整书本方向与书架保持一致（前端测试V4 预标注片段 7）'],
+    ['08', '将书本放入指定层架（前端测试V4 预标注片段 8）'],
+    ['09', '拿起散落的笔记本（前端测试V4 预标注片段 9）'],
+    ['10', '移动笔记本到收纳区域（前端测试V4 预标注片段 10）'],
+    ['11', '调整笔记本摆放顺序（前端测试V4 预标注片段 11）'],
+    ['12', '将笔记本竖直放置（前端测试V4 预标注片段 12）'],
+    ['13', '检查书本和笔记本排列状态（前端测试V4 预标注片段 13）'],
+    ['14', '机械臂回到初始位置（前端测试V4 预标注片段 14）']
   ];
   fillArea.querySelector('.fill-area__content').innerHTML = `<article class="fill-area__acceptance-item is-open"><div class="fill-area__tree-parent"><button class="fill-area__tree-badge fill-area__tree-toggle" type="button" aria-expanded="true" aria-controls="semantic-acceptance-01" aria-label="收起 01 子片段"><img src="../../components/fill-area/assets/icon-tree-chevron.svg" alt="" />01</button><time>06:15~06:15(4:40:47)</time><button type="button" aria-label="删除"><img src="../../components/fill-area/assets/icon-trash.svg" alt="" /></button></div><div class="fill-area__acceptance-branch"><div class="fill-area__description">完成整段录制的前端测试V4预标注抽验任务</div><button class="fill-area__field is-placeholder" type="button">选择错误原因</button></div><div class="fill-area__acceptance-children" id="semantic-acceptance-01">${acceptanceChildren.map(([id, description]) => `<div class="fill-area__acceptance-child"><div class="fill-area__review-child-top"><span>${id}</span><time>06:15~06:15(4:40:47)</time><button type="button" aria-label="删除"><img src="../../components/fill-area/assets/icon-trash.svg" alt="" /></button></div><div class="fill-area__description${id === '02' ? ' fill-area__description--wrap' : ''}">${description}</div><button class="fill-area__field is-placeholder" type="button">选择错误原因</button></div>`).join('')}</div></article>`;
   const fillFooter = fillArea.querySelector('.fill-area__footer');
   fillFooter.className = 'fill-area__footer fill-area__footer--three';
   fillFooter.innerHTML = '<button class="fill-area__button fill-area__button--primary" type="button">通过</button><button class="fill-area__button" type="button">采集-不合格</button><button class="fill-area__button" type="button">暂离</button>';
+  setupAcceptanceListInteractions(timeline, fillArea);
 }
 
 document.querySelectorAll('.fill-area__footer').forEach((footer) => {
