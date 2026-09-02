@@ -2,37 +2,37 @@ const workbenchPages = [
   {
     id: 'action-quality-check',
     name: '动作质检',
-    href: '../action-quality-check/index.html?page=action-quality-check'
+    href: './index.html?page=action-quality-check'
   },
   {
     id: 'quality-spot-check',
     name: '动作质检-质检抽检',
-    href: '../action-quality-check/index.html?page=quality-spot-check'
+    href: './index.html?page=quality-spot-check'
   },
   {
     id: 'action-annotation',
     name: '动作标注',
-    href: '../action-quality-check/index.html?page=action-annotation'
+    href: './index.html?page=action-annotation'
   },
   {
     id: 'action-spot-check',
     name: '动作标注-抽检',
-    href: '../action-quality-check/index.html?page=action-spot-check'
+    href: './index.html?page=action-spot-check'
   },
   {
     id: 'semantic-segmentation',
     name: '语义切分',
-    href: '../action-quality-check/index.html?page=semantic-segmentation'
+    href: './index.html?page=semantic-segmentation'
   },
   {
     id: 'semantic-segmentation-spot-check',
     name: '切分抽检',
-    href: '../action-quality-check/index.html?page=semantic-segmentation-spot-check'
+    href: './index.html?page=semantic-segmentation-spot-check'
   },
   {
     id: 'semantic-annotation-acceptance',
     name: '标注验收',
-    href: '../action-quality-check/index.html?page=semantic-annotation-acceptance'
+    href: './index.html?page=semantic-annotation-acceptance'
   }
 ];
 
@@ -45,7 +45,7 @@ document.body.dataset.pageId = currentPageId;
 
 function getPageHref(pageHref) {
   const url = new URL(pageHref, window.location.href);
-  if (new URLSearchParams(window.location.search).get('mode') === 'workbench') {
+  if (document.body.dataset.view === 'workbench' || new URLSearchParams(window.location.search).get('mode') === 'workbench') {
     url.searchParams.set('mode', 'workbench');
   } else {
     url.searchParams.delete('mode');

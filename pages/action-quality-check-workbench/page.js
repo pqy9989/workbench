@@ -725,7 +725,11 @@ function applyTheme(theme) {
   });
 }
 
-setPageView(new URLSearchParams(window.location.search).get('mode') === 'workbench' ? 'workbench' : 'task-list', { updateHistory: false });
+const urlView = new URLSearchParams(window.location.search).get('mode') === 'workbench' ? 'workbench' : '';
+const declaredView = document.body.dataset.view === 'workbench' || document.body.dataset.view === 'task-list'
+  ? document.body.dataset.view
+  : '';
+setPageView(urlView || declaredView || 'task-list', { updateHistory: false });
 
 themeButtons.forEach((button) => {
   button.addEventListener('click', () => {
@@ -737,17 +741,28 @@ themeButtons.forEach((button) => {
 });
 
 document.querySelectorAll('.task-list-view__start').forEach((button) => {
-  button.addEventListener('click', () => setPageView('workbench'));
+  button.addEventListener('click', (event) => {
+    if (button.tagName === 'A') return;
+    event.preventDefault();
+    window.location.href = '../action-quality-check-workbench/index.html?page=action-annotation';
+  });
 });
 
-document.addEventListener('task-header-close', () => setPageView('task-list'));
+document.addEventListener('task-header-close', () => {
+  window.location.href = '../action-quality-check/index.html';
+});
 
 document.querySelectorAll('.platform-sidebar__item').forEach((button) => {
-  if (button.textContent.trim() === '标注工作台') button.addEventListener('click', () => setPageView('task-list'));
+  if (button.textContent.trim() === '标注工作台') button.addEventListener('click', () => {
+    window.location.href = '../action-quality-check/index.html';
+  });
 });
 
 window.addEventListener('popstate', () => {
-  setPageView(new URLSearchParams(window.location.search).get('mode') === 'workbench' ? 'workbench' : 'task-list', { updateHistory: false });
+  const view = new URLSearchParams(window.location.search).get('mode') === 'workbench'
+    ? 'workbench'
+    : (document.body.dataset.view || 'task-list');
+  setPageView(view, { updateHistory: false });
 });
 
 if (pageId === 'quality-spot-check') {

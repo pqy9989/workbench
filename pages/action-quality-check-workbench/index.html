@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>动作标注</title>
+  <link rel="stylesheet" href="../../components/task-header/task-header.css?v=compact-task-name-1" />
+  <script src="../../components/task-header/task-header.js?v=countdown-mmss-1" defer></script>
+  <link rel="stylesheet" href="../../components/media-viewer/media-viewer.css" />
+  <script src="../../components/media-viewer/media-viewer.js" defer></script>
+  <link rel="stylesheet" href="../../components/annotation-timeline/annotation-timeline.css?v=linked-acceptance-items-1" />
+  <script src="../../components/annotation-timeline/annotation-timeline.js" defer></script>
+  <link rel="stylesheet" href="../../components/fill-area/fill-area.css?v=action-row-keyboard-selected-1" />
+  <script src="../../components/fill-area/fill-area.js?v=no-default-active-1" defer></script>
+  <link rel="stylesheet" href="./page.css?v=split-pages-4" />
+</head>
+<body data-page-id="action-annotation" data-view="workbench" data-theme="dark">
+  <div class="page-shell">
+    <main class="page-workspace">
+      <nav class="page-tabs" data-page-tabs aria-label="页面切换"></nav>
+
+      <header class="page-header" data-block="task-header">
+        <task-header data-variant="quality-check" aria-label="任务信息-质检"></task-header>
+      </header>
+
+      <div class="page-content">
+        <section class="media-block" data-block="media-viewer">
+          <div class="media-slot">
+            <media-viewer data-variant="one-large-two-stacked" aria-label="视频区-左一右二"></media-viewer>
+          </div>
+        </section>
+
+        <section class="playback-block" data-block="playback-controls">
+          <annotation-timeline data-variant="manual-quality-check" aria-label="人工质检-动作质检"></annotation-timeline>
+        </section>
+
+        <aside class="fill-block" data-block="fill-area">
+          <button class="fill-resizer" type="button" role="separator" aria-label="调整右侧操作区宽度" aria-orientation="vertical" aria-valuemin="360" aria-valuenow="450"></button>
+          <div class="fill-slot">
+            <fill-area data-variant="manual-quality-check" aria-label="动作质检"></fill-area>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+  <script src="../page-tabs.js?v=split-pages-3" defer></script>
+  <script src="./page.js?v=split-pages-4" defer></script>
+</body>
+</html>
