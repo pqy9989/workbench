@@ -1732,7 +1732,7 @@
   <main class="page">
     <header class="topbar">
       <div class="topbar__left">
-        <button class="icon-button" aria-label="关闭"><img src="./assets/icon-close.svg" alt="" /></button>
+        <button class="icon-button" type="button" aria-label="关闭" data-action="exit-workbench"><img src="./assets/icon-close.svg" alt="" /></button>
         <div class="task-identity">
           <span class="task-identity__label">任务ID</span><span class="task-identity__value">17782</span>
         </div>
@@ -1872,6 +1872,10 @@
     const playhead = document.querySelector('.playhead');
     const playButton = document.querySelector('.play');
     const playbackCurrent = document.querySelector('.playback-time__current');
+    const exitWorkbenchButton = document.querySelector('[data-action="exit-workbench"]');
+    exitWorkbenchButton.addEventListener('click', () => {
+      window.location.assign('../action-quality-check/index.html');
+    });
     let playing = false;
     let playPosition = 8.2;
     let lastFrame = 0;
