@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>工作台组件</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <link rel="stylesheet" href="../component-preview.css">
+  <link rel="stylesheet" href="./segmented-track.css">
+  <script src="./segmented-track.js" defer></script>
+</head>
+<body class="component-preview">
+  <main class="component-gallery">
+    <header class="component-gallery__header">
+      <h1>工作台</h1>
+      <p>标注工作台相关组件</p>
+      <button class="component-theme-toggle" type="button" data-component-theme aria-label="切换深浅主题" aria-pressed="false"><span></span></button>
+    </header>
+    <section class="component-gallery__group">
+      <h2>任务信息栏</h2>
+      <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed"><workbench-task-header></workbench-task-header></div>
+    </section>
+    <section class="component-gallery__group">
+      <h2>采集指令栏</h2>
+      <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed"><workbench-instruction></workbench-instruction></div>
+    </section>
+    <section class="component-gallery__group">
+      <h2>媒体预览</h2>
+      <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed"><workbench-media-viewer></workbench-media-viewer></div>
+    </section>
+    <section class="component-gallery__group component-gallery__group--overflow">
+      <h2>片段编辑器</h2>
+      <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed"><workbench-segment-editor></workbench-segment-editor></div>
+    </section>
+    <section class="component-gallery__group">
+      <h2>片段列表</h2>
+      <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--review"><workbench-segment-list></workbench-segment-list></div>
+    </section>
+    <section class="component-gallery__group">
+      <h2>底部操作栏</h2>
+      <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed"><workbench-footer-actions></workbench-footer-actions></div>
+    </section>
+    <section class="component-gallery__group">
+      <h2>时间刻度与范围选择</h2>
+      <div class="component-gallery__stage component-gallery__stage--track"><div class="segmented-timeline segmented-timeline--sample"><div class="segmented-timeline__body"><timeline-range-ruler></timeline-range-ruler></div></div></div>
+    </section>
+    <section class="component-gallery__group">
+      <h2>标注轨道</h2>
+      <div class="component-gallery__stage component-gallery__stage--track"><div class="segmented-timeline segmented-timeline--sample segmented-timeline--row-sample"><div class="segmented-timeline__body"><annotation-segment-row label="14"></annotation-segment-row><annotation-base-row label="1"></annotation-base-row></div></div></div>
+    </section>
+    <section class="component-gallery__group">
+      <h2>播放与工具栏</h2>
+      <div class="component-gallery__stage component-gallery__stage--track"><div class="segmented-timeline segmented-timeline--sample"><timeline-controls></timeline-controls></div></div>
+    </section>
+    <section class="component-gallery__group">
+      <h2>完整组合</h2>
+      <div class="component-gallery__stage component-gallery__stage--track">
+        <segmented-track label="14" position="19"></segmented-track>
+      </div>
+      <h3 class="segment-color-palette__title">连续色值</h3>
+      <segment-color-palette count="50"></segment-color-palette>
+    </section>
+  </main>
+  <script src="../component-preview.js"></script>
+</body>
+</html>

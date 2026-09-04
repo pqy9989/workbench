@@ -3,7 +3,7 @@
   --platform-sidebar-border: #232a32;
   --platform-sidebar-active-bg: rgba(0, 149, 182, 0.1);
   --platform-sidebar-active: #02c1cd;
-  --platform-sidebar-muted: #8f9ca8;
+  --platform-sidebar-muted: var(--platform-sidebar-text);
   --platform-sidebar-text: #e7edf3;
 }
 
@@ -55,7 +55,7 @@ platform-sidebar.is-resizing-host { transition: none; }
 .platform-sidebar__profile { display: flex; align-items: center; gap: 0; }
 .platform-sidebar__profile { order: 2; }
 .platform-sidebar__avatar { width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle at 36% 35%, #f5e594 0 15%, #3fd0d8 16% 38%, #517fc9 39% 63%, #0b354a 64%); }
-.platform-sidebar__username { max-width: 0; overflow: hidden; color: #c2ccd5; font-size: 12px; opacity: 0; transition: max-width 220ms ease, opacity 160ms ease; white-space: nowrap; }
+.platform-sidebar__username { max-width: 0; overflow: hidden; color: var(--platform-sidebar-text); font-size: 12px; opacity: 0; transition: max-width 220ms ease, opacity 160ms ease; white-space: nowrap; }
 .platform-sidebar__version { display: flex; flex-direction: column; padding: 2px; border: 1px solid var(--platform-sidebar-border); border-radius: 8px; background: #171c22; }
 .platform-sidebar__version { order: 1; }
 .platform-sidebar__version button { width: 32px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: #bac5ce; font: 500 10px/14px Inter, sans-serif; cursor: pointer; }

@@ -45,9 +45,11 @@ components/button/
 
 组合预览位于 `components/task-list-components-preview.html`。
 
-### 分段轨道子组件
+### 工作台组件
 
-`segmented-track` 由四个内部子组件组合，定义与演示均收纳在 `components/segmented-track/` 现有文件中：
+工作台组件的定义与演示均收纳在 `components/workbench/` 中。`workbench-task-header`、`workbench-instruction`、`workbench-media-viewer`、`workbench-segment-editor`、`workbench-segment-list` 和 `workbench-footer-actions` 已逐项复刻。
+
+时间轴继续由 `segmented-track` 及四个内部子组件组合：
 
 - `timeline-range-ruler`：时间刻度与范围选择。
 - `annotation-segment-row`：彩色分段轨道与告警标记。
