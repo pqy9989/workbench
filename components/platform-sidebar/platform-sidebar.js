@@ -4,10 +4,15 @@
   const COLLAPSED_WIDTH = 80;
   const EXPANDED_WIDTH = 230;
   const EXPANDED_THRESHOLD = 170;
+  const currentPage = document.body?.dataset.pageId || "";
+  const pageRoutes = {
+    "action-annotation": "../../pages/action-quality-check/index.html",
+    "process-management": "../../pages/process-management/index.html"
+  };
   const navGroups = [
     ["任务管理", [["任务处理", "icon-task-list.svg"], ["分配管理", "icon-assignment.svg"]]],
-    ["工作台", [["标注工作台", "icon-annotation.svg", true]]],
-    ["工作流", [["流程管理", "icon-workflow.svg"], ["算子管理", "icon-operator.svg"]]],
+    ["工作台", [["标注工作台", "icon-annotation.svg", "action-annotation"]]],
+    ["工作流", [["流程管理", "icon-workflow.svg", "process-management"], ["算子管理", "icon-operator.svg"]]],
     ["配置管理", [["规则管理", "icon-rules.svg"], ["工作台管理", "icon-workbench.svg"]]],
     ["运营管理", [["用户组管理", "icon-users.svg"], ["供应商管理", "icon-store.svg"], ["权限管理", "icon-shield.svg"]]]
   ];
@@ -19,10 +24,13 @@
         <section class="platform-sidebar__group">
           ${index ? '<span class="platform-sidebar__divider" aria-hidden="true"></span>' : ''}
           <button class="platform-sidebar__group-title" type="button" aria-expanded="true"><span>${label}</span><span class="platform-sidebar__group-chevron" aria-hidden="true"><img src="${assetBase}icon-sidebar-section-chevron.svg" alt="" /></span></button>
-          <div class="platform-sidebar__group-items">${items.map(([itemLabel, icon, active]) => `
-            <button class="platform-sidebar__item${active ? ' platform-sidebar__item--active' : ''}" type="button" title="${itemLabel}"${active ? ' aria-current="page"' : ''}>
+          <div class="platform-sidebar__group-items">${items.map(([itemLabel, icon, pageId]) => {
+            const active = pageId === currentPage;
+            return `
+            <button class="platform-sidebar__item${active ? ' platform-sidebar__item--active' : ''}" type="button" title="${itemLabel}"${pageId ? ` data-page-id="${pageId}"` : ''}${active ? ' aria-current="page"' : ''}>
               <span class="platform-sidebar__icon"><img src="${assetBase}${icon}" alt="" /></span><span class="platform-sidebar__label">${itemLabel}</span>
-            </button>`).join('')}</div>
+            </button>`;
+          }).join('')}</div>
         </section>`).join('');
 
       this.innerHTML = `
@@ -46,7 +54,7 @@
       this.resizeHandle = this.querySelector('.platform-sidebar__resize-handle');
       this.platformButton = this.querySelector('.platform-sidebar__platform');
       this.platformMenu = this.querySelector('.platform-sidebar__platform-menu');
-      this.setWidth(EXPANDED_WIDTH);
+      this.setWidth(this.hasAttribute('collapsed') ? COLLAPSED_WIDTH : EXPANDED_WIDTH);
       this.setupInteractions();
     }
 
@@ -96,6 +104,13 @@
         const collapsed = group.classList.toggle('is-collapsed');
         button.setAttribute('aria-expanded', String(!collapsed));
       }));
+      this.querySelectorAll('.platform-sidebar__item[data-page-id]').forEach((button) => {
+        button.addEventListener('click', () => {
+          if (this.hasAttribute('demo')) return;
+          const route = pageRoutes[button.dataset.pageId];
+          if (route && button.dataset.pageId !== currentPage) window.location.assign(new URL(route, scriptUrl).href);
+        });
+      });
 
       const setPlatformMenuOpen = (open) => {
         this.platformMenu.hidden = !open;

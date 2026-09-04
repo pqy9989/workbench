@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>分段轨道组件</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <link rel="stylesheet" href="../component-preview.css">
+  <link rel="stylesheet" href="./segmented-track.css">
+  <script src="./segmented-track.js" defer></script>
+</head>
+<body class="component-preview">
+  <main class="component-gallery">
+    <header class="component-gallery__header">
+      <h1>分段轨道</h1>
+      <p>时间轴中的多色任务片段、警告标记与播放指针</p>
+      <button class="component-theme-toggle" type="button" data-component-theme aria-label="切换深浅主题" aria-pressed="false"><span></span></button>
+    </header>
+    <section class="component-gallery__group">
+      <h2>时间刻度与范围选择</h2>
+      <div class="component-gallery__stage component-gallery__stage--track"><div class="segmented-timeline segmented-timeline--sample"><div class="segmented-timeline__body"><timeline-range-ruler></timeline-range-ruler></div></div></div>
+    </section>
+    <section class="component-gallery__group">
+      <h2>彩色分段轨道</h2>
+      <div class="component-gallery__stage component-gallery__stage--track"><div class="segmented-timeline segmented-timeline--sample segmented-timeline--row-sample"><div class="segmented-timeline__body"><annotation-segment-row label="14"></annotation-segment-row></div></div></div>
+    </section>
+    <section class="component-gallery__group">
+      <h2>连续基础轨道</h2>
+      <div class="component-gallery__stage component-gallery__stage--track"><div class="segmented-timeline segmented-timeline--sample"><div class="segmented-timeline__body"><annotation-base-row label="1"></annotation-base-row></div></div></div>
+    </section>
+    <section class="component-gallery__group">
+      <h2>播放与工具栏</h2>
+      <div class="component-gallery__stage component-gallery__stage--track"><div class="segmented-timeline segmented-timeline--sample"><timeline-controls></timeline-controls></div></div>
+    </section>
+    <section class="component-gallery__group">
+      <h2>完整组合</h2>
+      <div class="component-gallery__stage component-gallery__stage--track">
+        <segmented-track label="14" position="19"></segmented-track>
+      </div>
+      <h3 class="segment-color-palette__title">连续色值（前段引用轨道色，后段柔和错位，深色列置后）</h3>
+      <segment-color-palette count="50"></segment-color-palette>
+    </section>
+  </main>
+  <script src="../component-preview.js"></script>
+</body>
+</html>

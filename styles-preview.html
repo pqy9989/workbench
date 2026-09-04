@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>颜色变量预览</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--color-bg-canvas);
+      color: var(--color-text-primary);
+      font: 14px/1.5 Inter, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      transition: background .2s ease, color .2s ease;
+    }
+    button { font: inherit; }
+    .page { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 48px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
+    h1 { margin: 0; font-size: 24px; }
+    .subtitle { margin: 4px 0 0; color: var(--color-text-muted); }
+    .switcher { display: flex; gap: 6px; padding: 4px; border: 1px solid var(--color-border); border-radius: 9px; background: var(--color-bg-surface); }
+    .switcher button { padding: 7px 18px; border: 0; border-radius: 6px; background: transparent; color: var(--color-text-muted); cursor: pointer; }
+    .switcher button.active { background: var(--color-brand-soft); color: var(--color-brand); }
+    .panel { margin-top: 14px; overflow: hidden; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-bg-surface); box-shadow: 0 8px 28px var(--color-shadow); }
+    .panel-title { padding: 13px 16px; background: var(--color-bg-section-header, var(--color-bg-surface-raised)); font-weight: 600; }
+    .content { padding: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+    .swatch { overflow: hidden; border: 1px solid var(--color-border); border-radius: 9px; background: var(--color-bg-surface); }
+    .swatch-color { height: 74px; background: var(--swatch); }
+    .swatch-info { padding: 10px 12px; }
+    .swatch-name { display: block; margin-bottom: 3px; font-weight: 600; }
+    code { color: var(--color-text-muted); font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .sample-list { display: grid; gap: 0; overflow: hidden; border: 1px solid var(--color-border); border-radius: 9px; }
+    .sample-row { display: grid; grid-template-columns: minmax(150px, .75fr) 1fr; align-items: center; gap: 18px; min-height: 54px; padding: 10px 14px; border-bottom: 1px solid var(--color-divider); }
+    .sample-row:last-child { border-bottom: 0; }
+    .sample-row code { overflow-wrap: anywhere; }
+    .text-primary { color: var(--color-text-primary); }
+    .text-secondary { color: var(--color-text-secondary); }
+    .text-muted { color: var(--color-text-muted); }
+    .text-placeholder { color: var(--color-text-placeholder); }
+    .line-sample { display: block; width: 100%; height: 18px; border-radius: 4px; background: var(--line-color); }
+    @media (max-width: 720px) { .topbar { display: grid; } .switcher { width: max-content; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div><h1>颜色变量预览</h1><p class="subtitle">直接读取 styles.css，切换查看深色与浅色主题。</p></div>
+      <div class="switcher" aria-label="主题切换">
+        <button type="button" data-theme-button="dark">深色</button>
+        <button type="button" class="active" data-theme-button="light">浅色</button>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="panel-title">背景与结构色</div>
+      <div class="content grid">
+        <div class="swatch"><div class="swatch-color" style="--swatch:var(--color-bg-canvas)"></div><div class="swatch-info"><span class="swatch-name">Canvas</span><code>--color-bg-canvas</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="--swatch:var(--color-bg-surface)"></div><div class="swatch-info"><span class="swatch-name">Surface</span><code>--color-bg-surface</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="--swatch:var(--color-bg-surface-raised)"></div><div class="swatch-info"><span class="swatch-name">Raised</span><code>--color-bg-surface-raised</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="--swatch:var(--color-bg-surface-subtle)"></div><div class="swatch-info"><span class="swatch-name">Subtle</span><code>--color-bg-surface-subtle</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="--swatch:var(--color-bg-section-header,var(--color-bg-surface-raised))"></div><div class="swatch-info"><span class="swatch-name">Section header</span><code>--color-bg-section-header</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="--swatch:var(--color-bg-group-header,var(--color-bg-surface-subtle))"></div><div class="swatch-info"><span class="swatch-name">Group header</span><code>--color-bg-group-header</code></div></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">文字颜色</div>
+      <div class="content sample-list">
+        <div class="sample-row"><span class="text-primary">主要文字 Primary</span><code>--color-text-primary</code></div>
+        <div class="sample-row"><span class="text-secondary">次要文字 Secondary</span><code>--color-text-secondary</code></div>
+        <div class="sample-row"><span class="text-muted">辅助文字 Muted</span><code>--color-text-muted</code></div>
+        <div class="sample-row"><span class="text-placeholder">请输入内容 Placeholder</span><code>--color-text-placeholder</code></div>
+        <div class="sample-row"><span style="display:inline-flex;width:max-content;padding:4px 8px;border-radius:5px;background:var(--color-brand);color:var(--color-text-inverse)">反白文字 Inverse</span><code>--color-text-inverse</code></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">描边与分割线</div>
+      <div class="content sample-list">
+        <div class="sample-row"><span class="line-sample" style="--line-color:var(--color-border)"></span><code>--color-border</code></div>
+        <div class="sample-row"><span class="line-sample" style="--line-color:var(--color-border-strong)"></span><code>--color-border-strong</code></div>
+        <div class="sample-row"><span class="line-sample" style="--line-color:var(--color-divider)"></span><code>--color-divider</code></div>
+        <div class="sample-row"><span class="line-sample" style="--line-color:var(--color-border-media,var(--color-border))"></span><code>--color-border-media</code></div>
+        <div class="sample-row"><span class="line-sample" style="--line-color:var(--color-border-track,var(--color-border-strong))"></span><code>--color-border-track</code></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">品牌色与状态色</div>
+      <div class="content grid">
+        <div class="swatch"><div class="swatch-color" style="--swatch:var(--color-brand)"></div><div class="swatch-info"><span class="swatch-name">Brand</span><code>--color-brand</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="--swatch:var(--color-brand-selected)"></div><div class="swatch-info"><span class="swatch-name">Selected</span><code>--color-brand-selected</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="--swatch:var(--color-success)"></div><div class="swatch-info"><span class="swatch-name">Success</span><code>--color-success</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="--swatch:var(--color-range)"></div><div class="swatch-info"><span class="swatch-name">Range</span><code>--color-range</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="--swatch:var(--color-warning)"></div><div class="swatch-info"><span class="swatch-name">Warning</span><code>--color-warning</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="--swatch:var(--color-danger)"></div><div class="swatch-info"><span class="swatch-name">Danger</span><code>--color-danger</code></div></div>
+      </div>
+    </section>
+
+  </main>
+  <script>
+    const root = document.documentElement;
+    const buttons = document.querySelectorAll('[data-theme-button]');
+    buttons.forEach(button => button.addEventListener('click', () => {
+      root.dataset.theme = button.dataset.themeButton;
+      buttons.forEach(item => item.classList.toggle('active', item === button));
+    }));
+  </script>
+</body>
+</html>

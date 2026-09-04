@@ -3,7 +3,7 @@
   --platform-sidebar-border: #232a32;
   --platform-sidebar-active-bg: rgba(0, 149, 182, 0.1);
   --platform-sidebar-active: #02c1cd;
-  --platform-sidebar-muted: #5d6a76;
+  --platform-sidebar-muted: #8f9ca8;
   --platform-sidebar-text: #e7edf3;
 }
 
@@ -37,7 +37,7 @@ platform-sidebar.is-resizing-host { transition: none; }
 
 .platform-sidebar__nav { width: 54px; flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 8px; overflow: visible; }
 .platform-sidebar__group { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 0; }
-.platform-sidebar__group-title { width: 100%; max-height: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; overflow: hidden; border: 0; background: transparent; color: #69747f; font-family: Inter, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif; font-size: 11px; font-weight: 400; line-height: 16.5px; letter-spacing: 0.275px; opacity: 0; cursor: pointer; text-align: left; transition: max-height 220ms ease, padding 220ms ease, opacity 160ms ease; }
+.platform-sidebar__group-title { width: 100%; max-height: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; overflow: hidden; border: 0; background: transparent; color: #8a97a3; font-family: Inter, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif; font-size: 11px; font-weight: 400; line-height: 16.5px; letter-spacing: 0.275px; opacity: 0; cursor: pointer; text-align: left; transition: max-height 220ms ease, padding 220ms ease, opacity 160ms ease; }
 .platform-sidebar__group-items { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .platform-sidebar__divider { display: none; }
 .platform-sidebar__item { position: relative; width: 54px; height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 12px 4px; border: 0; border-radius: 8px; background: transparent; color: var(--platform-sidebar-muted); cursor: pointer; font: inherit; box-sizing: border-box; }
@@ -46,19 +46,19 @@ platform-sidebar.is-resizing-host { transition: none; }
 .platform-sidebar__item--active:hover, .platform-sidebar__item[aria-current="page"]:hover { background: #0095b6; }
 .platform-sidebar__item--active::before, .platform-sidebar__item[aria-current="page"]::before { content: none; }
 .platform-sidebar__icon { width: 20px; height: 20px; flex: 0 0 20px; display: block; }
-.platform-sidebar__icon img { width: 100%; height: 100%; display: block; object-fit: contain; }
+.platform-sidebar__icon img { width: 100%; height: 100%; display: block; object-fit: contain; filter: none; opacity: 1; }
 .platform-sidebar__item--active .platform-sidebar__icon img,
-.platform-sidebar__item[aria-current="page"] .platform-sidebar__icon img { filter: brightness(0) invert(1); }
+.platform-sidebar__item[aria-current="page"] .platform-sidebar__icon img { filter: brightness(0) invert(1); opacity: 1; }
 .platform-sidebar__label { font-size: 10px; line-height: 14px; white-space: nowrap; }
 .platform-sidebar__footer { position: relative; z-index: 2; width: 100%; flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 16px; background: var(--platform-sidebar-bg); }
 .platform-sidebar__footer-divider { position: absolute; top: 0; left: -10px; right: -10px; height: 1px; display: block; background: var(--platform-sidebar-border); }
 .platform-sidebar__profile { display: flex; align-items: center; gap: 0; }
 .platform-sidebar__profile { order: 2; }
 .platform-sidebar__avatar { width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle at 36% 35%, #f5e594 0 15%, #3fd0d8 16% 38%, #517fc9 39% 63%, #0b354a 64%); }
-.platform-sidebar__username { max-width: 0; overflow: hidden; color: #9aa6b2; font-size: 12px; opacity: 0; transition: max-width 220ms ease, opacity 160ms ease; white-space: nowrap; }
+.platform-sidebar__username { max-width: 0; overflow: hidden; color: #c2ccd5; font-size: 12px; opacity: 0; transition: max-width 220ms ease, opacity 160ms ease; white-space: nowrap; }
 .platform-sidebar__version { display: flex; flex-direction: column; padding: 2px; border: 1px solid var(--platform-sidebar-border); border-radius: 8px; background: #171c22; }
 .platform-sidebar__version { order: 1; }
-.platform-sidebar__version button { width: 32px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: #9aa6b2; font: 500 10px/14px Inter, sans-serif; cursor: pointer; }
+.platform-sidebar__version button { width: 32px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: #bac5ce; font: 500 10px/14px Inter, sans-serif; cursor: pointer; }
 .platform-sidebar__version button.is-active { background: rgba(0, 149, 182, 0.12); color: #0095b6; }
 .platform-sidebar__resize-handle { position: absolute; z-index: 10; top: 0; right: -4px; width: 8px; height: 100%; cursor: col-resize; outline: none; }
 .platform-sidebar__resize-handle::after { content: ""; position: absolute; top: 12px; bottom: 12px; right: 3px; width: 2px; border-radius: 2px; background: transparent; transition: background 120ms ease; }

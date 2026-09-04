@@ -4,9 +4,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>供应商复核 · 独立红色测试版</title>
+  <script>
+    try {
+      if (localStorage.getItem('workbench-theme') === 'light') {
+        document.documentElement.classList.add('theme-light');
+      }
+    } catch (_) {}
+  </script>
+  <link rel="stylesheet" href="../../styles.css" />
   <link rel="stylesheet" href="./optimized.css" />
 </head>
-<body>
+<body class="theme-pending">
+  <script>
+    if (document.documentElement.classList.contains('theme-light')) {
+      document.body.classList.add('theme-light');
+    }
+  </script>
   <main class="page">
     <header class="topbar">
       <div class="topbar__left">
@@ -22,9 +35,6 @@
         </div>
         <div class="reject-notice" title="驳回原因：High-level片段范围需要调整">驳回原因：High-level片段范围需要调整</div>
       </div>
-      <div class="topbar__right">
-        <div class="countdown"><span class="countdown__label">倒计时</span><span class="countdown__time">10:00</span></div>
-      </div>
     </header>
 
     <section class="main">
@@ -36,10 +46,12 @@
             <img src="./assets/icon-chevron.svg" alt="" />
           </div>
           <div class="video-grid">
-            <figure class="feed"><img src="./assets/frame.png" alt="" /><figcaption class="feed__tag">左臂视角 <img src="./assets/icon-fullscreen.svg" alt="" /></figcaption></figure>
-            <figure class="feed"><img src="./assets/frame.png" alt="" /><figcaption class="feed__tag">右臂视角 <img src="./assets/icon-fullscreen.svg" alt="" /></figcaption></figure>
-            <figure class="feed"><img src="./assets/frame.png" alt="" /><figcaption class="feed__tag">头部视角 <img src="./assets/icon-fullscreen.svg" alt="" /></figcaption></figure>
-            <figure class="feed"><img src="./assets/frame.png" alt="" /><figcaption class="feed__tag">头部结束帧 <img src="./assets/icon-fullscreen.svg" alt="" /></figcaption></figure>
+            <div class="video-grid__arms">
+              <figure class="feed feed--arm"><img src="./assets/frame.png" alt="" /><figcaption class="feed__tag">左臂视角 <img src="./assets/icon-fullscreen.svg" alt="" /></figcaption></figure>
+              <figure class="feed feed--arm"><img src="./assets/frame.png" alt="" /><figcaption class="feed__tag">右臂视角 <img src="./assets/icon-fullscreen.svg" alt="" /></figcaption></figure>
+            </div>
+            <figure class="feed feed--head"><img src="./assets/frame.png" alt="" /><figcaption class="feed__tag">头部视角 <img src="./assets/icon-fullscreen.svg" alt="" /></figcaption></figure>
+            <figure class="feed feed--head"><img src="./assets/frame.png" alt="" /><figcaption class="feed__tag">头部结束帧 <img src="./assets/icon-fullscreen.svg" alt="" /></figcaption></figure>
           </div>
         </section>
 
@@ -80,17 +92,31 @@
             <div class="tool-group">
               <button class="timeline-tool timeline-tool--2x" aria-label="倍速"><img src="./assets/figma-2x.svg" alt="" /></button>
               <button class="timeline-tool" aria-label="添加"><img src="./assets/figma-plus.svg" alt="" /></button>
-              <button class="timeline-tool" aria-label="添加并定位"><img src="./assets/figma-plus-arrow.svg" alt="" /></button>
-              <button class="timeline-tool" aria-label="前移"><img src="./assets/figma-forward.svg" alt="" /></button>
-              <button class="timeline-tool" aria-label="删除"><img src="./assets/figma-trash.svg" alt="" /></button>
-              <button class="timeline-tool" aria-label="双向调整"><img src="./assets/figma-forward-alt.svg" alt="" /></button>
-              <button class="timeline-tool timeline-tool--rotate-neg" aria-label="剪切"><img src="./assets/figma-scissors-rotate.svg" alt="" /></button>
-              <button class="timeline-tool timeline-tool--small" aria-label="分割"><img src="./assets/figma-scissors.svg" alt="" /></button>
+              <button class="timeline-tool" aria-label="添加并前进"><img src="./assets/figma-plus-arrow.svg" alt="" /></button>
+              <button class="timeline-tool" aria-label="仅前进"><img src="./assets/figma-forward.svg" alt="" /></button>
+              <button class="timeline-tool" aria-label="清空"><img src="./assets/figma-trash.svg" alt="" /></button>
+              <button class="timeline-tool" aria-label="拖动"><img src="./assets/figma-forward-alt.svg" alt="" /></button>
+              <button class="timeline-tool timeline-tool--rotate-neg" aria-label="分割"><img src="./assets/figma-scissors-rotate.svg" alt="" /></button>
+              <button class="timeline-tool timeline-tool--small" aria-label="父级分割"><img src="./assets/figma-scissors.svg" alt="" /></button>
               <button class="timeline-tool" aria-label="合并"><img src="./assets/figma-merge.svg" alt="" /></button>
               <button class="timeline-tool" aria-label="向上合并"><img src="./assets/figma-merge-up.svg" alt="" /></button>
               <button class="timeline-tool timeline-tool--rotate-180" aria-label="向下合并"><img src="./assets/figma-merge-down.svg" alt="" /></button>
-              <button class="timeline-tool" aria-label="键盘快捷键"><img src="./assets/figma-keyboard.svg" alt="" /></button>
-              <button class="timeline-tool" aria-label="设置"><img src="./assets/figma-settings.svg" alt="" /></button>
+              <button class="timeline-tool" aria-label="快捷键"><img src="./assets/figma-keyboard.svg" alt="" /></button>
+              <span class="settings-anchor">
+                <button class="timeline-tool settings-trigger" type="button" aria-label="设置" aria-expanded="false" aria-controls="timeline-settings"><img src="./assets/figma-settings.svg" alt="" /></button>
+                <span class="settings-popover" id="timeline-settings" role="dialog" aria-label="播放设置" hidden>
+                  <span class="settings-popover__row">
+                    <span>源视频优先</span>
+                    <button class="settings-switch is-on" type="button" role="switch" aria-checked="true"><span></span></button>
+                  </span>
+                  <span class="settings-popover__divider"></span>
+                  <span class="settings-popover__label">界面主题</span>
+                  <span class="theme-options" role="group" aria-label="界面主题">
+                    <button class="theme-option is-active" type="button" data-theme="dark">深色</button>
+                    <button class="theme-option" type="button" data-theme="light">浅色</button>
+                  </span>
+                </span>
+              </span>
             </div>
             <span class="mark-link">标注标准</span>
           </div>
@@ -107,16 +133,16 @@
               <button class="segment-action" type="button" data-action="unavailable">无法标注 <kbd>⌘/</kbd></button>
             </div>
           </div>
-          <div class="form-row"><span class="field-label">描述</span><div class="input-like" data-field="description">选择错移动遥控器到目标位置（前端测试V4 预标注片段 2）</div></div>
-          <div class="form-row form-row--error"><span class="field-label">错误原因</span><div class="input-like"><span data-field="error">片段范围错位</span> <img src="./assets/icon-chevron.svg" alt="" /></div></div>
+          <div class="form-row"><span class="field-label">描述</span><div class="input-like input-like--description"><span class="description-value" data-field="description">选择错移动遥控器到目标位置（前端测试V4 预标注片段 2）</span><span class="unavailable-tag" data-unavailable-tag hidden>无法标注<button type="button" data-action="clear-unavailable" aria-label="关闭无法标注状态">×</button></span></div></div>
+          <div class="form-row form-row--error"><span class="field-label">错误原因</span><div class="input-like error-trigger" data-error-trigger role="button" tabindex="0" aria-haspopup="listbox" aria-expanded="false"><span data-field="error">片段范围错位</span> <img src="./assets/icon-chevron.svg" alt="" /></div></div>
         </section>
       </div>
 
       <aside class="review">
         <section class="card review-panel">
           <div>
-            <div class="section-header"><span>片段列表</span></div>
-            <div class="review-list">
+            <div class="section-header"><span data-review-title>片段列表</span></div>
+            <div class="review-list" data-review-view="segments">
               <div class="review-row review-row--head" role="button" tabindex="0" aria-expanded="true" aria-controls="review-children-01">
                 <div class="review-index review-index--badge"><span class="review-badge">01 <span class="parent-toggle" aria-hidden="true">⌄</span></span></div>
                 <div class="review-cell">
@@ -126,26 +152,61 @@
               </div>
               <div class="review-children" id="review-children-01">
               <div class="review-row"><div class="review-index">01</div><div class="review-cell"><p>观察并整理桌面物品（前端测试V4 预标注片段 1）</p><span class="reason">错误原因：片段范围错误</span></div></div>
-              <div class="review-row review-row--active"><div class="review-index">02</div><div class="review-cell"><div class="review-time"><span>06:15~14:15(8:47)</span><img src="./assets/icon-trash.svg" alt="" width="16" height="16" /></div><p>选择错移动遥控器到目标位置（前端测试V4 预标注片段 2）</p></div></div>
+              <div class="review-row review-row--active"><div class="review-index">02</div><div class="review-cell"><div class="review-time"><span>06:15~14:15(8:47)</span><img src="./assets/icon-trash.svg?v=2" alt="" width="16" height="16" /></div><p>选择错移动遥控器到目标位置（前端测试V4 预标注片段 2）</p></div></div>
               <div class="review-row"><div class="review-index">03</div><div class="review-cell"><p>打开或关闭抽屉（前端测试V4 预标注片段 3）</p></div></div>
               <div class="review-row"><div class="review-index">04</div><div class="review-cell"><p>调整纸盒摆放位置（前端测试V4 预标注片段 4）</p><span class="reason">错误原因：片段范围错误</span></div></div>
               <div class="review-row"><div class="review-index">05</div><div class="review-cell"><p>观察并整理桌面物品（前端测试V4 预标注片段 5）</p></div></div>
               <div class="review-row"><div class="review-index">06</div><div class="review-cell"><p>观察并整理桌面物品（前端测试V4 预标注片段 6）</p></div></div>
               </div>
             </div>
+            <div class="review-log" data-review-view="log" hidden>
+              <div class="review-log__summary"><span>当前数据处理记录</span><span>共 2 条</span></div>
+              <div class="review-log__table" aria-label="当前数据处理记录">
+                <article class="review-log__card">
+                  <header><time>2026-08-03 10:42</time><span class="review-log__action">提交</span></header>
+                  <dl><div><dt>操作人</dt><dd>供应商 A-017</dd></div><div><dt>节点</dt><dd>供应商抽验</dd></div><div><dt>说明</dt><dd>完成首次切分标注并提交</dd></div></dl>
+                </article>
+                <article class="review-log__card">
+                  <header><time>2026-08-03 11:02</time><span class="review-log__action">提交</span></header>
+                  <dl><div><dt>操作人</dt><dd>供应商 A-017</dd></div><div><dt>节点</dt><dd>供应商抽验</dd></div><div><dt>说明</dt><dd>补充调整后再次提交</dd></div></dl>
+                </article>
+              </div>
+            </div>
+            <div class="review-info" data-review-view="info" hidden>
+              <dl class="review-info__list">
+                <div><dt>任务 ID</dt><dd class="review-info__code">20455</dd></div>
+                <div><dt>处理任务</dt><dd>端到端切分标注供应商 A 任务</dd></div>
+                <div><dt>序列号</dt><dd class="review-info__code">UDAS-00002-2983</dd></div>
+                <div><dt>采集员</dt><dd>柳少龙</dd></div>
+                <div><dt>数据 ID</dt><dd class="review-info__code">3298698</dd></div>
+                <div><dt>版本</dt><dd>第1版</dd></div>
+              </dl>
+            </div>
           </div>
-          <footer class="review-footer"><button>提交</button><button>驳回</button><button>保存</button></footer>
+          <footer class="review-footer" data-review-footer><button>提交</button><button>驳回</button><button>保存</button></footer>
         </section>
         <nav class="rail" aria-label="复核侧栏">
           <button>质检</button>
-          <button class="active">标注</button>
+          <button class="active" data-review-tab="segments" aria-pressed="true">标注</button>
           <button>标签</button>
-          <button>日志</button>
-          <button>基本信息</button>
+          <button data-review-tab="log" aria-pressed="false">日志</button>
+          <button data-review-tab="info" aria-pressed="false">基本信息</button>
         </nav>
       </aside>
     </section>
   </main>
+  <div class="error-popover" data-error-popover role="dialog" aria-label="选择错误原因" hidden>
+    <div class="error-options" role="listbox">
+      <button type="button" class="error-option" data-error-option="片段范围错误" role="option">片段范围错误<span>✓</span></button>
+      <button type="button" class="error-option" data-error-option="片段范围错位" role="option">片段范围错位<span>✓</span></button>
+      <button type="button" class="error-option" data-error-option="动作开始边界偏早" role="option">动作开始边界偏早<span>✓</span></button>
+      <button type="button" class="error-option" data-error-option="动作开始边界偏晚" role="option">动作开始边界偏晚<span>✓</span></button>
+      <button type="button" class="error-option" data-error-option="动作结束边界偏早" role="option">动作结束边界偏早<span>✓</span></button>
+      <button type="button" class="error-option" data-error-option="动作结束边界偏晚" role="option">动作结束边界偏晚<span>✓</span></button>
+      <button type="button" class="error-option" data-error-option="描述与画面不一致" role="option">描述与画面不一致<span>✓</span></button>
+    </div>
+    <button type="button" class="error-popover__clear" data-error-clear>清除错误原因</button>
+  </div>
   <script src="./optimized.js"></script>
 </body>
 </html>
