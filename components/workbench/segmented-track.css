@@ -99,7 +99,8 @@ workbench-task-header{display:block;width:100%;min-width:720px;--task-bg:#10161d
 .workbench-task-info__identity,.workbench-task-info__workflow,.workbench-task-info__step{display:flex;align-items:center;gap:6px;white-space:nowrap}
 .workbench-task-info__identity span,.workbench-task-info__step span{color:var(--task-label);font-size:13px;font-weight:400}
 .workbench-task-info__identity b,.workbench-task-info__step b{min-height:26px;display:inline-flex;align-items:center;padding:0 7px;border:0;border-radius:6px;background:var(--task-chip-bg);color:var(--task-text);font-size:13px;font-weight:400}
-.workbench-task-info__workflow{min-width:0}
+.workbench-task-info__workflow{min-width:0;flex-shrink:0}
+.workbench-component-preview .component-gallery{width:min(1360px,100%)}
 .workbench-task-info__divider{width:.5px;height:22px;flex:0 0 .5px;background:var(--task-divider)}
 .workbench-task-info__step em{color:var(--task-dot);font-size:15px;font-style:normal}
 .workbench-task-info__reject{min-width:0;height:26px;display:flex;align-items:center;padding:0 7px;overflow:hidden;border-radius:6px;background:var(--task-warn-bg);color:var(--task-warn);font-size:13px;font-weight:400;text-overflow:ellipsis;white-space:nowrap}
