@@ -1,0 +1,26 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>流程编辑器组件</title>
+<link rel="stylesheet" href="../component-preview.css"><link rel="stylesheet" href="./process-editor.css">
+<link rel="stylesheet" href="../button/button.css"><link rel="stylesheet" href="../task-filter-bar/search-input.css"><link rel="stylesheet" href="../input/input.css"><link rel="stylesheet" href="../task-status-tabs/task-status-tabs.css">
+<script src="../button/button.js" defer></script><script src="../task-filter-bar/search-input.js" defer></script><script src="../input/input.js" defer></script><script src="../task-status-tabs/task-status-tabs.js" defer></script><script src="./process-editor.js" defer></script><script src="./controller.js" defer></script>
+<style>
+.process-editor-components.component-gallery{height:auto;overflow:visible;width:min(1400px,100%);margin:0 auto;background:transparent}
+.process-editor-components .component-gallery__group{overflow:visible}
+.process-editor-components .canvas{height:420px;min-height:420px;width:100%}
+.process-editor-components .left-panel{height:650px;width:267px}
+.process-editor-components .right-panel{height:650px;width:380px}
+.process-editor-components .header{width:100%}
+.process-editor-preview-frame{width:100%;border:1px solid var(--line,#e2e9ee);border-radius:10px;background:#fff;box-sizing:content-box;overflow:hidden;box-shadow:none}
+.process-editor-preview-frame>process-editor-header>.header{border-bottom:0}
+.process-editor-preview-frame>process-node-library>.left-panel{border-right:0}
+.process-editor-preview-frame>process-node-properties>.right-panel{border-left:0}
+.process-editor-preview-frame--library{width:267px;overflow:visible}
+.process-editor-preview-frame--library .left-panel{border-radius:10px}
+.process-editor-preview-frame--library .palette{border-radius:0 0 10px 10px}
+.process-editor-preview-frame--properties{width:380px}
+</style></head><body class="component-preview"><main class="component-gallery process-editor-components">
+<header class="component-gallery__header"><h1>流程编辑器组件</h1></header>
+<section class="component-gallery__group"><h2>顶部信息栏</h2><div class="process-editor-preview-frame"><process-editor-header></process-editor-header></div></section>
+<section class="component-gallery__group"><h2>左侧节点栏</h2><h3>默认</h3><div class="process-editor-preview-frame process-editor-preview-frame--library"><process-node-library></process-node-library></div><h3>三节点变体</h3><div class="process-editor-preview-frame process-editor-preview-frame--library"><process-node-library variant="basic"></process-node-library></div></section>
+<section class="component-gallery__group"><h2>流程画布</h2><h3>默认</h3><div class="process-editor-preview-frame"><process-flow-canvas></process-flow-canvas></div><h3>三节点变体</h3><iframe src="basic.html" title="流程画布三节点变体" style="display:block;width:100%;height:420px;border:1px solid #e2e9ee;border-radius:10px;background:#fff"></iframe></section>
+<section class="component-gallery__group"><h2>右侧属性面板</h2><h3>默认</h3><div class="process-editor-preview-frame process-editor-preview-frame--properties"><process-node-properties></process-node-properties></div><h3>人工节点</h3><div class="process-editor-preview-frame process-editor-preview-frame--properties"><process-node-properties variant="basic"></process-node-properties></div></section>
+<div class="toast" role="status"></div></main></body></html>

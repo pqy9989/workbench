@@ -1,0 +1,10 @@
+form-input{display:block;width:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+.form-input{display:block}
+.form-input__label{display:block;margin-bottom:6px;color:#3d5561;font-size:14px;font-weight:500;line-height:20px}
+.form-input__control{display:block;box-sizing:border-box;width:100%;height:38px;padding:8px 12px;border:1px solid #e2e9ee;border-radius:8px;background:#fff;color:#0f1d24;font-family:inherit;font-size:14px;line-height:20px;outline:none}
+.form-input__control::placeholder{color:#9aacb6}
+textarea.form-input__control{height:81px;min-height:81px;resize:vertical}
+.form-input__control:focus{border-color:#0095b6;box-shadow:0 0 0 2px #e6f6fa}
+.form-input__control:disabled{background:#f3f6f8;color:#9aacb6;cursor:not-allowed}
+html[data-theme=dark] .form-input__label{color:#b8c4d0}
+html[data-theme=dark] .form-input__control{background:#10161d;border-color:#34475b;color:#dfe7ef}

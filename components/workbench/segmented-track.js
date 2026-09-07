@@ -1,6 +1,5 @@
 (()=>{
   const assets=new URL("../../pages/workbench/assets/",document.currentScript?.src||location.href).href;
-  const componentAssets=new URL("./",document.currentScript?.src||location.href).href;
   const segments=[['15','#42a8d2'],['5.5','#ff9559'],['4.6','#9850d7'],['4.2','#48c98a'],['8.5','#8fd04c'],['6.5','#d7a23b'],['4.3','#3d8fd8'],['8.5','#4c63df'],['8.2','#42bd7d'],['8.7','#4eabe0'],['4.8','#dd8b43'],['4.4','#45c97b'],['6.3','#db405f'],['4','#cf3ba8']];
   const tools=[['figma-2x.svg','倍速',' is-2x'],['figma-plus.svg','添加',''],['figma-plus-arrow.svg','添加并前进',''],['figma-forward.svg','仅前进',''],['figma-trash.svg','清空',''],['figma-forward-alt.svg','拖动',''],['figma-scissors-rotate.svg','分割',' is-rotate-neg'],['figma-scissors.svg','父级分割',''],['figma-merge.svg','合并',''],['figma-merge-up.svg','向上合并',''],['figma-merge-down.svg','向下合并',' is-rotate-180'],['figma-keyboard.svg','快捷键',''],['figma-settings.svg','设置','']];
 
@@ -16,7 +15,7 @@
       this._start=this._marked?17.8:0;
       this._end=this._marked?33.7:14.28;
       this._snapPoints=[];
-      this.innerHTML=`<div class="segmented-timeline__range${this._marked?' segmented-timeline__range--marked':''}"><span class="segmented-timeline__range-label is-start">00:00s</span><span class="segmented-timeline__range-label is-end">00:10s</span>${this._marked?`<span class="segmented-timeline__selection-label">00:10:79-3:04:58</span><img class="segmented-timeline__location-markers" src="${componentAssets}range-location-markers.svg" alt="定位标记">`:''}<div class="segmented-timeline__range-rail"><span class="segmented-timeline__range-fill"></span>${this._marked?'<span class="segmented-timeline__range-selection"></span>':''}<button type="button" class="segmented-timeline__range-handle is-start" aria-label="调整开始时间"></button><button type="button" class="segmented-timeline__range-handle is-end" aria-label="调整结束时间"></button></div></div>`;
+      this.innerHTML=`<div class="segmented-timeline__range${this._marked?' segmented-timeline__range--marked':''}"><span class="segmented-timeline__range-label is-start">00:00s</span><span class="segmented-timeline__range-label is-end">00:10s</span>${this._marked?'<span class="segmented-timeline__selection-label">00:10:79-3:04:58</span>':''}<div class="segmented-timeline__range-rail"><span class="segmented-timeline__range-fill"></span>${this._marked?'<span class="segmented-timeline__range-fragment is-orange"></span><span class="segmented-timeline__range-fragment is-red"></span><span class="segmented-timeline__range-selection"></span>':''}<button type="button" class="segmented-timeline__range-handle is-start" aria-label="调整开始时间"></button><button type="button" class="segmented-timeline__range-handle is-end" aria-label="调整结束时间"></button></div></div>`;
       this._rail=this.querySelector('.segmented-timeline__range-rail');
       this._fill=this.querySelector('.segmented-timeline__range-fill');
       this._startHandle=this.querySelector('.segmented-timeline__range-handle.is-start');
@@ -156,6 +155,8 @@
     _positionPopover(){const bounds=this._trigger.getBoundingClientRect(),width=Math.min(bounds.width,window.innerWidth-bounds.left-12);this._popover.style.width=`${width}px`;this._popover.style.left=`${Math.max(12,bounds.left)}px`;this._popover.style.top=`${Math.max(12,bounds.top-this._popover.offsetHeight-8)}px`;}
     _setOpen(open){this._popover.hidden=!open;this._trigger.setAttribute('aria-expanded',String(open));this._trigger.classList.toggle('is-open',open);if(open)requestAnimationFrame(()=>this._positionPopover());}
     _emitChange(){this.dispatchEvent(new CustomEvent('multi-select-change',{bubbles:true,detail:{values:[...this._selected]}}));}
+    get values(){return [...this._selected];}
+    setValues(values,emit=false){this._selected=new Set((values||[]).filter(value=>this._options.includes(value)));this._renderValue();if(emit)this._emitChange();}
   }
 
   class WorkbenchTaskHeader extends HTMLElement{
@@ -188,7 +189,7 @@
       this.setMode(this.getAttribute('mode')||'segments');
     }
     disconnectedCallback(){document.removeEventListener('click',this._outsideClick);document.removeEventListener('keydown',this._escapeKey);window.removeEventListener('resize',this._viewportChange);window.removeEventListener('scroll',this._viewportChange,true);if(this._popover?.parentNode===document.body)this._setOpen(false);}
-    setMode(mode){const label=this.querySelector('[data-instruction-mode]');if(label)label.textContent=mode==='quality'?'质检视频':'标注视频';}
+    setMode(mode){const label=this.querySelector('[data-instruction-mode]');if(label)label.textContent=mode==='quality'?'质检视频':mode==='action'?'动作标注视频':'语义标注视频';}
     _setOpen(open){
       if(!this._popover)return;
       if(open){
@@ -276,12 +277,24 @@
         return;
       }
       if(this.getAttribute('variant')==='variant-3'){
-        this.innerHTML=`<div class="segment-editor-component"><section class="card form-card"><div class="form-row form-row--meta"><div class="segment-meta"><span class="segment-current segment-current--code">01-<b class="current-segment-value" data-number>02</b></span><span>开始时间</span><b data-start>00:11</b><span>结束时间</span><b data-end>00:15</b><span>时长</span><b data-duration>00:04</b><span>颜色</span><i class="workbench-segment-color" data-segment-color aria-label="当前片段颜色"></i></div><div class="segment-actions" aria-label="片段操作"><button class="segment-action segment-action--navigate" type="button" data-action="previous">上一段 <kbd>⌘↑</kbd></button><button class="segment-action segment-action--navigate" type="button" data-action="next">下一段 <kbd>⌘↓</kbd></button><button class="segment-action segment-action--danger" type="button" data-action="delete">删除 <kbd>⌘⌫</kbd></button><button class="segment-action" type="button" data-action="unavailable" aria-pressed="false">无法标注 <kbd>⌘/</kbd></button></div></div><div class="form-row"><span class="field-label">描述</span><div class="workbench-editor-selects"><workbench-multi-select aria-label="动作元素" placeholder="请选择动作元素" options="遥控器|纸盒|书本|笔记本" value="书本"></workbench-multi-select><workbench-multi-select aria-label="动作描述" placeholder="请选择动作描述" options="拿起|移动|放置|整理"></workbench-multi-select></div></div><div class="form-row form-row--error"><label class="field-label">错误原因</label><div class="workbench-select-control"><select class="input-like" required aria-label="错误原因"><option value="" selected disabled>请选择错误原因</option>${reasons.map(reason=>`<option value="${reason}">${reason}</option>`).join('')}</select><img src="${assets}icon-chevron.svg" alt=""></div></div></section></div>`;
-        this._variantClick=event=>{const action=event.target.closest('[data-action]')?.dataset.action;if(action==='previous')this._setSeveritySegment(this._index-1,true);if(action==='next')this._setSeveritySegment(this._index+1,true);if(action==='delete'){const button=this.querySelector('[data-action=delete]');button.classList.add('is-active');window.setTimeout(()=>button.classList.remove('is-active'),260);}if(action==='unavailable'){const button=this.querySelector('[data-action=unavailable]'),active=button.getAttribute('aria-pressed')!=='true';button.classList.toggle('is-active',active);button.setAttribute('aria-pressed',String(active));}};
+        this.innerHTML=`<div class="segment-editor-component"><section class="card form-card"><div class="form-row form-row--meta"><div class="segment-meta"><span class="segment-current segment-current--code">01-<b class="current-segment-value" data-number>02</b></span><span>开始时间</span><b data-start>00:11</b><span>结束时间</span><b data-end>00:15</b><span>时长</span><b data-duration>00:04</b><span>颜色</span><i class="workbench-segment-color" data-segment-color aria-label="当前片段颜色"></i></div><div class="segment-actions" aria-label="片段操作"><button class="segment-action segment-action--navigate" type="button" data-action="previous">上一段 <kbd>⌘↑</kbd></button><button class="segment-action segment-action--navigate" type="button" data-action="next">下一段 <kbd>⌘↓</kbd></button><button class="segment-action segment-action--danger" type="button" data-action="delete">删除 <kbd>⌘⌫</kbd></button><button class="segment-action" type="button" data-action="unavailable" aria-pressed="false">无法标注 <kbd>⌘/</kbd></button></div></div><div class="form-row"><span class="field-label">描述</span><div class="workbench-editor-selects"><workbench-multi-select aria-label="动作元素" placeholder="请选择动作元素" options="遥控器|纸盒|书本|笔记本|桌面|抽屉|把手|书架" value="书本"></workbench-multi-select><span class="field-label workbench-action-description-label">动作描述</span><workbench-multi-select aria-label="动作描述" placeholder="请选择动作描述" options="观察并整理桌面物品|选择并移动遥控器到目标位置|打开或关闭抽屉|调整纸盒摆放位置|整理散落书本|将书本竖直放回书架|按类别整理笔记本|放回指定位置|拿起|移动|放置|整理"></workbench-multi-select></div></div><div class="form-row form-row--error"><span class="field-label">错误原因</span>${errorSelector}</div>`;
+        this._actionData=[
+          {elements:['书本','桌面'],descriptions:['观察并整理桌面物品']},
+          {elements:['遥控器'],descriptions:['选择并移动遥控器到目标位置']},
+          {elements:['抽屉','把手'],descriptions:['打开或关闭抽屉']},
+          {elements:['纸盒'],descriptions:['调整纸盒摆放位置']},
+          {elements:['书本','书架'],descriptions:['整理散落书本','将书本竖直放回书架']},
+          {elements:['笔记本'],descriptions:['按类别整理笔记本','放回指定位置']}
+        ];
+        this._variantClick=event=>{const action=event.target.closest('[data-action]')?.dataset.action;if(action==='previous')this._setSeveritySegment(this._index-1,true);if(action==='next')this._setSeveritySegment(this._index+1,true);if(action==='delete'){const button=this.querySelector('[data-action=delete]');button.classList.add('is-active');window.setTimeout(()=>button.classList.remove('is-active'),260);}if(action==='unavailable'){const button=this.querySelector('[data-action=unavailable]'),active=button.getAttribute('aria-pressed')!=='true';button.classList.toggle('is-active',active);button.setAttribute('aria-pressed',String(active));}if(action==='error')this._setErrorOpen(this.querySelector('.error-popover').hidden);if(action==='clear-error'){this._segments[this._index-1].error='';this._setSeveritySegment(this._index,false);this._emitUpdate();this._setErrorOpen(false);}const reason=event.target.closest('[data-reason]')?.dataset.reason;if(reason){this._segments[this._index-1].error=reason;this._setSeveritySegment(this._index,false);this._emitUpdate();this._setErrorOpen(false);}};
         this.addEventListener('click',this._variantClick);
+        this._multiSelectChange=()=>{const elements=this.querySelector('workbench-multi-select[aria-label="动作元素"]')?.values||[],descriptions=this.querySelector('workbench-multi-select[aria-label="动作描述"]')?.values||[];this._actionData[this._index-1]={elements:[...elements],descriptions:[...descriptions]};this.dispatchEvent(new CustomEvent('action-annotation-change',{bubbles:true,detail:{index:this._index,elements,descriptions}}));};
+        this.addEventListener('multi-select-change',this._multiSelectChange);
         this._externalChange=event=>{if(event.target!==this&&event.detail?.index)this._setSeveritySegment(event.detail.index,false);};
-        this._documentKeydown=event=>{if(!event.metaKey)return;const action=event.key==='ArrowUp'?'previous':event.key==='ArrowDown'?'next':event.key==='Backspace'?'delete':event.key==='/'?'unavailable':'';if(!action)return;event.preventDefault();this.querySelector(`[data-action="${action}"]`)?.click();};
-        document.addEventListener('segment-change',this._externalChange);document.addEventListener('keydown',this._documentKeydown);this._setSeveritySegment(2,false);
+        this._documentKeydown=event=>{if(event.key==='Escape')this._setErrorOpen(false);if(!event.metaKey)return;const action=event.key==='ArrowUp'?'previous':event.key==='ArrowDown'?'next':event.key==='Backspace'?'delete':event.key==='/'?'unavailable':'';if(!action)return;event.preventDefault();this.querySelector(`[data-action="${action}"]`)?.click();};
+        this._documentClick=event=>{if(!this.contains(event.target))this._setErrorOpen(false);};
+        this._windowResize=()=>{if(!this.querySelector('.error-popover').hidden)this._positionErrorPopover();};
+        document.addEventListener('segment-change',this._externalChange);document.addEventListener('click',this._documentClick);document.addEventListener('keydown',this._documentKeydown);window.addEventListener('resize',this._windowResize);this._setSeveritySegment(2,false);
         return;
       }
       this.innerHTML=`<div class="segment-editor-component"><section class="card form-card"><div class="form-row form-row--meta"><div class="segment-meta"><span class="segment-current segment-current--code">01-<b class="current-segment-value" data-number>02</b></span><span>开始时间</span><b data-start>00:11</b><span>结束时间</span><b data-end>00:15</b><span>时长</span><b data-duration>00:04</b></div><div class="segment-actions" aria-label="片段操作"><button class="segment-action segment-action--navigate" type="button" data-action="previous">上一段 <kbd>⌘↑</kbd></button><button class="segment-action segment-action--navigate" type="button" data-action="next">下一段 <kbd>⌘↓</kbd></button><button class="segment-action segment-action--danger" type="button" data-action="delete">删除 <kbd>⌘⌫</kbd></button><button class="segment-action" type="button" data-action="unavailable" aria-pressed="false">无法标注 <kbd>⌘/</kbd></button></div></div><div class="form-row"><span class="field-label">描述</span><div class="input-like input-like--description"><span class="description-value" data-description></span><span class="unavailable-tag" hidden>无法标注<button type="button" data-action="clear-unavailable" aria-label="关闭无法标注状态">×</button></span></div></div><div class="form-row form-row--error"><span class="field-label">错误原因</span><button type="button" class="input-like error-trigger" data-action="error" aria-haspopup="listbox" aria-expanded="false"><span data-error></span><img src="${assets}icon-chevron.svg" alt=""></button></div></section><div class="error-popover" role="dialog" aria-label="选择错误原因" hidden><div class="error-options" role="listbox">${reasons.map(reason=>`<button class="error-option" type="button" data-reason="${reason}" role="option">${reason}<span>✓</span></button>`).join('')}</div><button class="error-popover__clear" type="button" data-action="clear-error">清除错误原因</button></div></div>`;
@@ -303,8 +316,8 @@
       window.addEventListener('resize',this._windowResize);
       this.setSegment(2,false);
     }
-    disconnectedCallback(){document.removeEventListener('segment-change',this._externalChange);document.removeEventListener('click',this._documentClick);document.removeEventListener('keydown',this._documentKeydown);window.removeEventListener('resize',this._windowResize);if(this._variantClick)this.removeEventListener('click',this._variantClick);}
-    _setSeveritySegment(index,emit=true){const safe=Math.max(1,Math.min(this._segments.length,Number(index)||1)),{start,end,duration,error}=this._segments[safe-1],colors=['#42a8d2','#ff9559','#9850d7','#48c98a','#8fd04c','#d7a23b'];this._index=safe;this.querySelector('[data-number]').textContent=String(safe).padStart(2,'0');this.querySelector('[data-start]').textContent=start;this.querySelector('[data-end]').textContent=end;this.querySelector('[data-duration]').textContent=duration;const trigger=this.querySelector('.error-trigger');if(trigger){trigger.querySelector('[data-error]').textContent=error||'请选择错误原因';trigger.classList.toggle('is-placeholder',!error);this.querySelectorAll('[data-reason]').forEach(button=>button.classList.toggle('is-selected',button.dataset.reason===error));}const color=this.querySelector('[data-segment-color]');if(color){color.style.backgroundColor=colors[safe-1];color.setAttribute('aria-label',`当前片段颜色 ${colors[safe-1]}`);}if(emit)this.dispatchEvent(new CustomEvent('segment-change',{bubbles:true,detail:{index:safe}}));}
+    disconnectedCallback(){document.removeEventListener('segment-change',this._externalChange);document.removeEventListener('click',this._documentClick);document.removeEventListener('keydown',this._documentKeydown);window.removeEventListener('resize',this._windowResize);if(this._variantClick)this.removeEventListener('click',this._variantClick);if(this._multiSelectChange)this.removeEventListener('multi-select-change',this._multiSelectChange);}
+    _setSeveritySegment(index,emit=true){const safe=Math.max(1,Math.min(this._segments.length,Number(index)||1)),{start,end,duration,error}=this._segments[safe-1],colors=['#42a8d2','#ff9559','#9850d7','#48c98a','#8fd04c','#d7a23b'];this._index=safe;this.querySelector('[data-number]').textContent=String(safe).padStart(2,'0');this.querySelector('[data-start]').textContent=start;this.querySelector('[data-end]').textContent=end;this.querySelector('[data-duration]').textContent=duration;const trigger=this.querySelector('.error-trigger');if(trigger){trigger.querySelector('[data-error]').textContent=error||'请选择错误原因';trigger.classList.toggle('is-placeholder',!error);this.querySelectorAll('[data-reason]').forEach(button=>button.classList.toggle('is-selected',button.dataset.reason===error));}const color=this.querySelector('[data-segment-color]');if(color){color.style.backgroundColor=colors[safe-1];color.setAttribute('aria-label',`当前片段颜色 ${colors[safe-1]}`);}if(this.getAttribute('variant')==='variant-3'&&this._actionData){const data=this._actionData[safe-1];this.querySelector('workbench-multi-select[aria-label="动作元素"]')?.setValues(data.elements);this.querySelector('workbench-multi-select[aria-label="动作描述"]')?.setValues(data.descriptions);}if(emit)this.dispatchEvent(new CustomEvent('segment-change',{bubbles:true,detail:{index:safe}}));}
     _handleClick(event){
       const action=event.target.closest('[data-action]')?.dataset.action;
       if(action==='previous')this.setSegment(this._index-1,true);
@@ -317,7 +330,7 @@
       const reason=event.target.closest('[data-reason]')?.dataset.reason;
       if(reason){this._segments[this._index-1].error=reason;this.setSegment(this._index,false);this._emitUpdate();this._setErrorOpen(false);}
     }
-    _setUnavailable(value,persist=true){this._unavailable=value;if(persist)this._segments[this._index-1].unavailable=value;this.querySelector('.unavailable-tag').hidden=!value;const button=this.querySelector('[data-action=unavailable]');button.classList.toggle('is-active',value);button.setAttribute('aria-pressed',String(value));if(persist)this._emitUpdate();}
+    _setUnavailable(value,persist=true){this._unavailable=value;if(persist)this._segments[this._index-1].unavailable=value;const description=this.querySelector('.input-like--description'),descriptionValue=description?.querySelector('[data-description]');description?.classList.toggle('is-unavailable',value);descriptionValue?.setAttribute('aria-disabled',String(value));this.querySelector('.unavailable-tag').hidden=!value;const button=this.querySelector('[data-action=unavailable]');button.classList.toggle('is-active',value);button.setAttribute('aria-pressed',String(value));if(persist)this._emitUpdate();}
     _positionErrorPopover(){const trigger=this.querySelector('.error-trigger'),popover=this.querySelector('.error-popover'),bounds=trigger.getBoundingClientRect(),left=Math.max(12,bounds.left),width=Math.min(bounds.width,window.innerWidth-left-12);popover.style.width=`${width}px`;popover.style.left=`${left}px`;popover.style.top=`${Math.max(12,bounds.top-popover.offsetHeight-8)}px`;}
     _setErrorOpen(open){const popover=this.querySelector('.error-popover'),trigger=this.querySelector('.error-trigger');popover.hidden=!open;trigger.classList.toggle('is-open',open);trigger.setAttribute('aria-expanded',String(open));this.querySelectorAll('[data-reason]').forEach(button=>button.setAttribute('aria-selected',String(button.classList.contains('is-selected'))));if(open)requestAnimationFrame(()=>this._positionErrorPopover());}
     _emitUpdate(){const data=this._segments[this._index-1];this.dispatchEvent(new CustomEvent('segment-update',{bubbles:true,detail:{index:this._index,error:data.error,unavailable:data.unavailable}}));}
@@ -364,7 +377,7 @@
       if(emit)this.dispatchEvent(new CustomEvent('review-variant-change',{bubbles:true,detail:{variant}}));
     }
     selectSegment(activeIndex,emit=true){
-      this._children.innerHTML=this._segments.map(([start,end,duration,description,error,unavailable],index)=>`<button class="workbench-review__row${index+1===activeIndex?' is-active':''}" type="button" data-index="${index+1}"><span class="workbench-review__index">${String(index+1).padStart(2,'0')}</span><span class="workbench-review__cell">${index+1===activeIndex?`<span class="workbench-review__time"><span>${start}~${end}（${duration}）</span><img src="${assets}icon-trash.svg?v=2" alt="删除片段"></span>`:''}<b>${description}</b>${error||unavailable?`<span class="workbench-review__tags">${error?`<em>错误原因：${error}</em>`:''}${unavailable?'<em class="workbench-review__unavailable">无法标注</em>':''}</span>`:''}</span></button>`).join('');
+      this._children.innerHTML=this._segments.map(([start,end,duration,description,error,unavailable],index)=>`<button class="workbench-review__row${index+1===activeIndex?' is-active':''}" type="button" data-index="${index+1}"><span class="workbench-review__index">${String(index+1).padStart(2,'0')}</span><span class="workbench-review__cell">${index+1===activeIndex?`<span class="workbench-review__time"><span>${start}~${end}（${duration}）</span><img src="${assets}icon-trash.svg?v=2" alt="删除片段"></span>`:''}${unavailable?'':`<b>${description}</b>`}${error||unavailable?`<span class="workbench-review__tags">${unavailable?'<em class="workbench-review__unavailable">无法标注</em>':''}${error?`<em>错误原因：${error}</em>`:''}</span>`:''}</span></button>`).join('');
       this._children.querySelectorAll('.workbench-review__row').forEach(row=>row.addEventListener('click',()=>this.selectSegment(Number(row.dataset.index),true)));
       if(emit)this.dispatchEvent(new CustomEvent('segment-change',{bubbles:true,detail:{index:activeIndex}}));
     }
@@ -435,15 +448,20 @@
         {color:'#ff9254',elements:['遥控器'],description:'选择并移动遥控器到目标位置',reason:'片段范围错位',start:'00:11',end:'00:15',duration:'00:04'},
         {color:'#8d52ca',elements:['抽屉','把手'],description:'打开或关闭抽屉',reason:'',start:'00:15',end:'00:18',duration:'00:03'},
         {color:'#50bf83',elements:['纸盒'],description:'调整纸盒摆放位置',reason:'动作结束边界偏晚',start:'00:18',end:'00:21',duration:'00:03'},
-        {color:'#8cc84b',elements:['书本','书架'],description:'将散落书本整理并竖直放回书架',reason:'动作执行错误',start:'00:21',end:'00:28',duration:'00:07'},
-        {color:'#c99a38',elements:['笔记本'],description:'将笔记本按类别放回指定位置',reason:'',start:'00:28',end:'00:34',duration:'00:06'}
+        {color:'#8cc84b',elements:['书本','书架'],description:['整理散落书本','将书本竖直放回书架'],reason:'动作执行错误',start:'00:21',end:'00:28',duration:'00:07'},
+        {color:'#c99a38',elements:['笔记本'],description:['按类别整理笔记本','放回指定位置'],reason:'',start:'00:28',end:'00:34',duration:'00:06'}
       ];
       this._activeIndex=0;
       this.render();
+      this._actionAnnotationChange=event=>{const item=this._items[event.detail?.index-1];if(!item)return;item.elements=[...event.detail.elements];item.description=[...event.detail.descriptions];this.render();};
+      this._segmentUpdate=event=>{if(event.target?.getAttribute?.('variant')!=='variant-3')return;const item=this._items[event.detail?.index-1];if(!item)return;item.reason=event.detail.error||'';this.render();};
+      document.addEventListener('action-annotation-change',this._actionAnnotationChange);
+      document.addEventListener('segment-update',this._segmentUpdate);
     }
+    disconnectedCallback(){document.removeEventListener('action-annotation-change',this._actionAnnotationChange);document.removeEventListener('segment-update',this._segmentUpdate);}
     render(){
       const title=this.getAttribute('title')||'质检列表';
-      this.innerHTML=`<section class="workbench-flat-list workbench-quality-list"><header class="workbench-flat-list__header">${title}</header><div class="workbench-flat-list__body">${this._items.map((item,index)=>`<article class="workbench-flat-list__row workbench-quality-list__row${index+1===this._activeIndex?' is-active':''}" data-index="${index+1}" tabindex="0"><span class="workbench-flat-list__index">${String(index+1).padStart(2,'0')}</span><span class="workbench-flat-list__content">${index+1===this._activeIndex?`<span class="workbench-quality-list__time"><span>${item.start}~${item.end}（${item.duration}）</span><button type="button" class="workbench-quality-list__delete" aria-label="删除质检项"><img src="${assets}icon-trash.svg?v=2" alt=""></button></span>`:''}<span class="workbench-quality-list__summary"><span class="workbench-quality-list__element-line"><i class="workbench-quality-list__color" style="--quality-color:${item.color}" aria-label="颜色 ${item.color}"></i><span class="workbench-quality-list__elements">${item.elements.map(name=>`<span class="workbench-quality-list__element">${name}</span>`).join('')}</span></span><span class="workbench-quality-list__description">${item.description}</span>${item.reason?`<em class="workbench-quality-list__reason">错误原因：${item.reason}</em>`:''}</span></span></article>`).join('')}</div></section>`;
+      this.innerHTML=`<section class="workbench-flat-list workbench-quality-list"><header class="workbench-flat-list__header">${title}</header><div class="workbench-flat-list__body">${this._items.map((item,index)=>`<article class="workbench-flat-list__row workbench-quality-list__row${index+1===this._activeIndex?' is-active':''}" data-index="${index+1}" tabindex="0"><span class="workbench-flat-list__index">${String(index+1).padStart(2,'0')}</span><span class="workbench-flat-list__content">${index+1===this._activeIndex?`<span class="workbench-quality-list__time"><span>${item.start}~${item.end}（${item.duration}）</span><button type="button" class="workbench-quality-list__delete" aria-label="删除标注"><img src="${assets}icon-trash.svg?v=2" alt=""></button></span>`:''}<span class="workbench-quality-list__summary"><span class="workbench-quality-list__element-line"><i class="workbench-quality-list__color" style="--quality-color:${item.color}" aria-label="颜色 ${item.color}"></i><span class="workbench-quality-list__elements">${item.elements.map(name=>`<span class="workbench-quality-list__element">${name}</span>`).join('')}</span></span><span class="workbench-quality-list__description">${Array.isArray(item.description)?item.description.join('、'):item.description}</span>${item.reason?`<em class="workbench-quality-list__reason">错误原因：${item.reason}</em>`:''}</span></span></article>`).join('')}</div></section>`;
       this.querySelectorAll('.workbench-quality-list__row').forEach(row=>{
         row.addEventListener('click',()=>this.selectSegment(Number(row.dataset.index),true));
         row.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();this.selectSegment(Number(row.dataset.index),true);}});
@@ -472,11 +490,11 @@
     connectedCallback(){
       if(this.dataset.rendered)return;
       this.dataset.rendered='true';
-      this.innerHTML='<nav class="workbench-review__tabs" aria-label="复核侧栏"><button type="button" data-review-variant="quality">质检</button><button type="button" data-review-variant="segments">标注</button><button type="button">标签</button><button type="button" data-review-variant="log">日志</button><button type="button" data-review-variant="info">基本信息</button></nav>';
+      this.innerHTML='<nav class="workbench-review__tabs" aria-label="复核侧栏"><button type="button" data-review-variant="quality">质检</button><button type="button" data-review-variant="segments">语义标注</button><button type="button" data-review-variant="action">动作标注</button><button type="button">标签</button><button type="button" data-review-variant="log">日志</button><button type="button" data-review-variant="info">基本信息</button></nav>';
       this.querySelectorAll('[data-review-variant]').forEach(tab=>tab.addEventListener('click',()=>this.setActive(tab.dataset.reviewVariant,true)));
       this.setActive(this.getAttribute('active')||'segments',false);
     }
-    _normalize(value){return value==='quality'||value==='log'||value==='info'?value:'segments';}
+    _normalize(value){return value==='quality'||value==='action'||value==='log'||value==='info'?value:'segments';}
     setActive(value,emit=true){const active=this._normalize(value);if(this.getAttribute('active')!==active)this.setAttribute('active',active);this.querySelectorAll('[data-review-variant]').forEach(tab=>{const selected=tab.dataset.reviewVariant===active;tab.classList.toggle('is-active',selected);tab.setAttribute('aria-pressed',String(selected));});if(emit)this.dispatchEvent(new CustomEvent('review-variant-change',{bubbles:true,detail:{variant:active}}));}
   }
 
@@ -488,9 +506,10 @@
       if(this.hasAttribute('hydrate')){this.dataset.rendered='true';return;}
       this.dataset.rendered='true';
       const variant=this._normalizeVariant(this.getAttribute('variant'));
-      this.innerHTML=`<aside class="workbench-review"><div class="workbench-review__main"><workbench-segment-list-panel variant="${variant}"></workbench-segment-list-panel><workbench-annotation-list title="质检列表" data-quality-list hidden></workbench-annotation-list><div class="workbench-quality-actions" data-quality-actions hidden><workbench-quality-conclusion></workbench-quality-conclusion><workbench-footer-actions variant="quality"></workbench-footer-actions></div><workbench-footer-actions></workbench-footer-actions></div><workbench-segment-tabs active="${variant}"></workbench-segment-tabs></aside>`;
+      this.innerHTML=`<aside class="workbench-review"><div class="workbench-review__main"><workbench-segment-list-panel variant="${variant}"></workbench-segment-list-panel><workbench-annotation-list title="质检列表" data-quality-list hidden></workbench-annotation-list><workbench-quality-list title="标注列表" data-action-list hidden></workbench-quality-list><div class="workbench-quality-actions" data-quality-actions hidden><workbench-quality-conclusion></workbench-quality-conclusion><workbench-footer-actions variant="quality"></workbench-footer-actions></div><workbench-footer-actions></workbench-footer-actions></div><workbench-segment-tabs active="${variant}"></workbench-segment-tabs></aside>`;
       this._panel=this.querySelector('workbench-segment-list-panel');
       this._quality=this.querySelector('[data-quality-list]');
+      this._action=this.querySelector('[data-action-list]');
       this._qualityActions=this.querySelector('[data-quality-actions]');
       this._tabs=this.querySelector('workbench-segment-tabs');
       this._footer=this.querySelector('.workbench-review__main > workbench-footer-actions');
@@ -498,9 +517,9 @@
     }
     get variant(){return this.getAttribute('variant')||'segments';}
     set variant(value){this.setAttribute('variant',this._normalizeVariant(value));}
-    _normalizeVariant(value){return value==='quality'||value==='log'||value==='info'?value:'segments';}
-    setVariant(value,emit=true){const variant=this._normalizeVariant(value);if(this.getAttribute('variant')!==variant)this.setAttribute('variant',variant);const quality=variant==='quality';if(this._panel){this._panel.hidden=quality;if(!quality)this._panel.setVariant(variant,false);}if(this._quality)this._quality.hidden=!quality;if(this._qualityActions)this._qualityActions.hidden=!quality;this._tabs?.setActive(variant,false);if(this._footer)this._footer.hidden=variant!=='segments';if(emit)this.dispatchEvent(new CustomEvent('review-variant-change',{bubbles:true,detail:{variant}}));}
-    selectSegment(index,emit=true){if(this.variant==='quality')this._quality?.selectSegment(index,emit);else this._panel?.selectSegment(index,emit);}
+    _normalizeVariant(value){return value==='quality'||value==='action'||value==='log'||value==='info'?value:'segments';}
+    setVariant(value,emit=true){const variant=this._normalizeVariant(value);if(this.getAttribute('variant')!==variant)this.setAttribute('variant',variant);const quality=variant==='quality',action=variant==='action';if(this._panel){this._panel.hidden=quality||action;if(!quality&&!action)this._panel.setVariant(variant,false);}if(this._quality)this._quality.hidden=!quality;if(this._action)this._action.hidden=!action;if(this._qualityActions)this._qualityActions.hidden=!quality;this._tabs?.setActive(variant,false);if(this._footer)this._footer.hidden=quality||variant==='log'||variant==='info';if(emit)this.dispatchEvent(new CustomEvent('review-variant-change',{bubbles:true,detail:{variant}}));}
+    selectSegment(index,emit=true){if(this.variant==='quality')this._quality?.selectSegment(index,emit);else if(this.variant==='action')this._action?.selectSegment(index,emit);else this._panel?.selectSegment(index,emit);}
   }
 
   class WorkbenchFooterActions extends HTMLElement{
@@ -540,7 +559,8 @@
       if(this.dataset.rendered)return;
       this.dataset.rendered="true";
       const position=Math.max(0,Math.min(100,Number(this.getAttribute('position')||19)))/100;
-      this.innerHTML=`<section class="segmented-timeline" style="--play-position:${position}"><div class="segmented-timeline__body"><timeline-time-scale></timeline-time-scale><timeline-range-selector></timeline-range-selector><annotation-segment-row label="${this.getAttribute('label')||'14'}"></annotation-segment-row><annotation-base-row label="1"></annotation-base-row><i class="segmented-timeline__playhead" role="slider" aria-label="播放位置" tabindex="0"></i></div><timeline-controls></timeline-controls></section>`;
+      const action=this.getAttribute('variant')==='action';
+      this.innerHTML=`<section class="segmented-timeline" aria-label="${action?'动作标注':'语义标注'}" style="--play-position:${position}"><div class="segmented-timeline__body"><timeline-time-scale></timeline-time-scale><timeline-range-selector></timeline-range-selector><annotation-segment-row label="${this.getAttribute('label')||'14'}"></annotation-segment-row>${action?'':'<annotation-base-row label="1"></annotation-base-row>'}<i class="segmented-timeline__playhead" role="slider" aria-label="播放位置" tabindex="0"></i></div><timeline-controls></timeline-controls></section>`;
       requestAnimationFrame(()=>this._connectInteractions());
     }
     _connectInteractions(){
@@ -621,6 +641,24 @@
     selectSegment(index,emit=true){if(!this._row||!this._syncRange){requestAnimationFrame(()=>this.selectSegment(index,emit));return;}const safe=Math.max(0,Math.min(this._row.buttons.length-1,Number(index)||0));this._row.selectIndex(safe,false);this._syncRange(safe,emit);}
   }
 
+  class SemanticAnnotationTrack extends HTMLElement{
+    connectedCallback(){
+      if(this.dataset.rendered)return;
+      this.dataset.rendered='true';
+      this.innerHTML=`<segmented-track label="${this.getAttribute('label')||'14'}" position="${this.getAttribute('position')||'19'}"></segmented-track>`;
+    }
+    selectSegment(index,emit=true){this.querySelector('segmented-track')?.selectSegment(index,emit);}
+  }
+
+  class ActionAnnotationTrack extends HTMLElement{
+    connectedCallback(){
+      if(this.dataset.rendered)return;
+      this.dataset.rendered='true';
+      this.innerHTML=`<segmented-track variant="action" label="${this.getAttribute('label')||'14'}" position="${this.getAttribute('position')||'19'}"></segmented-track>`;
+    }
+    selectSegment(index,emit=true){this.querySelector('segmented-track')?.selectSegment(index,emit);}
+  }
+
   class SegmentColorPalette extends HTMLElement{
     connectedCallback(){
       if(this.dataset.rendered)return;
@@ -687,5 +725,7 @@
   if(!customElements.get('workbench-quality-track'))customElements.define('workbench-quality-track',WorkbenchQualityTrack);
   if(!customElements.get('workbench-footer-actions'))customElements.define('workbench-footer-actions',WorkbenchFooterActions);
   if(!customElements.get('segmented-track'))customElements.define('segmented-track',SegmentedTrack);
+  if(!customElements.get('semantic-annotation-track'))customElements.define('semantic-annotation-track',SemanticAnnotationTrack);
+  if(!customElements.get('action-annotation-track'))customElements.define('action-annotation-track',ActionAnnotationTrack);
   if(!customElements.get('segment-color-palette'))customElements.define('segment-color-palette',SegmentColorPalette);
 })();

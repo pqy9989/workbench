@@ -1,0 +1,25 @@
+/* Workflow action button variant. */
+process-actions{display:block;font-family:Inter,-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+.process-actions{display:flex;align-items:center;gap:8px}
+.process-actions__button{height:38px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 14px;border:1px solid #c8d5e6;border-radius:12px;background:#fff;color:#405b68;line-height:20px;font-family:inherit;font-size:14px;font-weight:600;white-space:nowrap;cursor:pointer;box-sizing:border-box}
+.process-actions__button img{width:16px;height:16px}
+.process-actions__button--primary{height:36px;background:#009bb6;border-color:#009bb6;color:#fff}
+.process-actions__button--icon{width:36px;height:36px;padding:0}
+.process-actions__button:hover{filter:brightness(.96)}
+.process-actions__button:focus-visible{outline:2px solid #009bb6;outline-offset:3px}
+.process-actions__button:disabled{opacity:.45;cursor:not-allowed}
+.process-actions__button:active:not(:disabled){filter:brightness(.9)}
+text-button{display:inline-flex;vertical-align:middle}
+text-button .text-button{gap:6px}
+.text-button svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.text-button{--button-bg:#fff;--button-fg:#405b68;--button-border:#c8d5e6;--button-hover:#f1f6f8;--button-active:#e2edf2;display:inline-flex;align-items:center;justify-content:center;min-width:76px;height:38px;padding:0 16px;border:1px solid var(--button-border);border-radius:12px;background:var(--button-bg);color:var(--button-fg);font:600 14px/20px Inter,-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;cursor:pointer;box-sizing:border-box;transition:background-color .15s,border-color .15s}
+.text-button--primary{--button-bg:#009bb6;--button-fg:#fff;--button-border:transparent;--button-hover:#008ba4;--button-active:#00768c}
+.text-button--secondary{--button-bg:#e6f6fa;--button-fg:#008ba4;--button-border:transparent;--button-hover:#d1eef5;--button-active:#b9e4ef}
+.text-button--text{--button-bg:transparent;--button-fg:#0095b6;--button-border:transparent;--button-hover:transparent;--button-active:transparent}
+.text-button--danger{--button-bg:#fff;--button-fg:#ce4051;--button-border:#efc7cd;--button-hover:#fff0f2;--button-active:#f9dde2}
+.text-button:hover:not(:disabled),text-button[data-preview-state="hover"] .text-button{background:var(--button-hover)}
+.text-button:active:not(:disabled),text-button[data-preview-state="active"] .text-button{background:var(--button-active)}
+.text-button:focus-visible{outline:2px solid #009bb6;outline-offset:3px}
+.text-button:disabled{opacity:.45;cursor:not-allowed}
+.text-button--text:hover:not(:disabled),text-button[data-preview-state="hover"] .text-button--text{color:#007f9b}
+.text-button--text:active:not(:disabled),text-button[data-preview-state="active"] .text-button--text{color:#00677e}

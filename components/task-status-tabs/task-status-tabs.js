@@ -2,8 +2,10 @@ class TaskStatusTabs extends HTMLElement {
   connectedCallback() {
     if (this.dataset.ready) return;
     this.dataset.ready = "true";
-    this.innerHTML = `<div class="task-status-tabs" role="tablist"><button type="button" role="tab" data-value="pool">任务池</button><button type="button" role="tab" data-value="todo">待办项</button></div>`;
-    this.setActive(this.getAttribute("active") || "pool", false);
+    const process = this.getAttribute('variant') === 'process';
+    const items = process ? [['settings','设置'],['recent','最近运行']] : [['pool','任务池'],['todo','待办项']];
+    this.innerHTML = `<div class="task-status-tabs" role="tablist">${items.map(([value,label])=>`<button type="button" role="tab" data-value="${value}">${label}</button>`).join('')}</div>`;
+    this.setActive(this.getAttribute("active") || items[0][0], false);
     this.addEventListener("click", event => { const button=event.target.closest("button[data-value]"); if(button) this.setActive(button.dataset.value,true); });
   }
   setActive(value, emit) {

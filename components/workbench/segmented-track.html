@@ -58,8 +58,8 @@
       <h2>片段列表区</h2>
       <div class="component-gallery__variants">
         <div class="component-gallery__variant"><h3>语义标注</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--review-panel"><workbench-segment-list-panel variant="segments"></workbench-segment-list-panel></div></div>
-        <div class="component-gallery__variant"><h3>质检</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--review-panel"><workbench-quality-list title="质检列表" rows="6"></workbench-quality-list></div></div>
-        <div class="component-gallery__variant"><h3>动作标注</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--review-panel"><workbench-annotation-list title="标注列表" rows="6"></workbench-annotation-list></div></div>
+        <div class="component-gallery__variant"><h3>动作标注</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--review-panel"><workbench-quality-list title="标注列表" rows="6"></workbench-quality-list></div></div>
+        <div class="component-gallery__variant"><h3>质检</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--review-panel"><workbench-annotation-list title="质检列表" rows="6"></workbench-annotation-list></div></div>
         <div class="component-gallery__variant"><h3>日志</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--review-panel"><workbench-segment-list-panel variant="log"></workbench-segment-list-panel></div></div>
         <div class="component-gallery__variant"><h3>基本信息</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--review-panel"><workbench-segment-list-panel variant="info"></workbench-segment-list-panel></div></div>
       </div>
@@ -94,7 +94,7 @@
       </div>
     </section>
     <section class="component-gallery__group">
-      <h2>标注轨道</h2>
+      <h2>动作标注轨道</h2>
       <div class="component-gallery__stage component-gallery__stage--track"><div class="segmented-timeline segmented-timeline--sample segmented-timeline--row-sample"><div class="segmented-timeline__body"><annotation-segment-row label="14"></annotation-segment-row><annotation-base-row label="1"></annotation-base-row></div></div></div>
     </section>
     <section class="component-gallery__group">
@@ -102,9 +102,13 @@
       <div class="component-gallery__stage component-gallery__stage--track"><div class="segmented-timeline segmented-timeline--sample"><timeline-controls></timeline-controls></div></div>
     </section>
     <section class="component-gallery__group">
-      <h2>标注</h2>
+      <h2>语义标注</h2>
       <div class="component-gallery__stage component-gallery__stage--track">
-        <segmented-track label="14" position="19"></segmented-track>
+        <semantic-annotation-track label="14" position="19"></semantic-annotation-track>
+      </div>
+      <h2 class="track-gallery-quality-title">动作标注</h2>
+      <div class="component-gallery__stage component-gallery__stage--track">
+        <action-annotation-track label="14" position="19"></action-annotation-track>
       </div>
       <h2 class="track-gallery-quality-title">质检</h2>
       <div class="component-gallery__stage component-gallery__stage--track">

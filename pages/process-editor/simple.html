@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>端到端切分标注简洁版</title>
+  <link rel="stylesheet" href="../../components/platform-sidebar/platform-sidebar.css?v=native-icons-4">
+  <link rel="stylesheet" href="./page.css">
+  <link rel="stylesheet" href="../../components/input/input.css">
+  <link rel="stylesheet" href="../../components/task-filter-bar/search-input.css">
+  <link rel="stylesheet" href="../../components/button/button.css">
+  <script src="../../components/input/input.js" defer></script>
+  <script src="../../components/task-filter-bar/search-input.js" defer></script>
+  <script src="../../components/button/button.js" defer></script>
+  <script src="../../components/platform-sidebar/platform-sidebar.js?v=native-icons-4" defer></script>
+  <script src="../../components/process-editor/process-editor.js" defer></script>
+  <script src="./simple.js" defer></script>
+  <script src="../../components/process-editor/controller.js" defer></script>
+</head>
+<body data-page-id="process-management">
+  <div class="editor-page process-editor-components">
+    <aside class="editor-page__sidebar"><platform-sidebar collapsed></platform-sidebar></aside>
+    <main class="workspace">
+      <process-editor-header></process-editor-header>
+      <div class="body">
+        <process-node-library variant="basic"></process-node-library>
+        <process-flow-canvas variant="basic"></process-flow-canvas>
+        <process-node-properties variant="basic"></process-node-properties>
+      </div>
+    </main>
+    <div class="toast" role="status" aria-live="polite"></div>
+  </div>
+</body>
+</html>

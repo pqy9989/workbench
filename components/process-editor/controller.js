@@ -1,0 +1,576 @@
+(() => {
+    const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+    const loopMembers = (root) => [...root.querySelectorAll('.graph-node')].filter(node => !['start', 'wait', 'end'].includes(node.dataset.node));
+    function updateLoopBounds(root) {
+      const nodes = loopMembers(root);
+      const box = root.querySelector('.loop-box');
+      if (!box || !nodes.length) return;
+      const contentPadding = 14;
+      const stage = box.querySelector('.loop-stage');
+      const stageStyle = getComputedStyle(stage);
+      const boxStyle = getComputedStyle(box);
+      const topInset = parseFloat(stageStyle.top) + parseFloat(boxStyle.borderTopWidth);
+      const bottomInset = parseFloat(stageStyle.bottom) + parseFloat(boxStyle.borderBottomWidth);
+      const left = Math.min(...nodes.map(node => node.offsetLeft)) - 22;
+      const top = Math.min(...nodes.map(node => node.offsetTop)) - topInset - contentPadding;
+      const right = Math.max(...nodes.map(node => node.offsetLeft + node.offsetWidth)) + 22;
+      const bottom = Math.max(...nodes.map(node => node.offsetTop + node.offsetHeight)) + bottomInset + contentPadding;
+      Object.assign(box.style, { left: `${left}px`, top: `${top}px`, width: `${right-left}px`, height: `${bottom-top}px` });
+    }
+
+    const graphConnections = [
+      ['start', 0, 'wait', 0],
+      ['wait', 1, 'nav-grasp', 0],
+      ['wait', 1, 'pose', 0],
+      ['wait', 1, 'grasp', 0],
+      ['nav-grasp', 1, 'human-1', 0],
+      ['pose', 1, 'human-1', 0],
+      ['human-1', 1, 'human-2', 0],
+      ['human-2', 1, 'nav-place-1', 0],
+      ['grasp', 1, 'scan', 0],
+      ['scan', 1, 'condition', 0],
+      ['condition', 1, 'nav-place-2', 0],
+      ['nav-place-1', 1, 'place', 0],
+      ['nav-place-2', 1, 'place', 0],
+      ['place', 1, 'human-3', 0],
+      ['place', 2, 'continue', 0],
+      ['human-3', 1, 'end', 0],
+      ['continue', 1, 'end', 0],
+    ];
+
+    function renderGraphEdges(root) {
+      updateLoopBounds(root);
+      const layer = root.querySelector('.edge-layer');
+      if (!layer) return;
+      layer.querySelectorAll('.edge, .edge-interaction').forEach((edge) => edge.remove());
+
+      const portPoint = (nodeName, portIndex) => {
+        const node = root.querySelector(`.graph-node[data-node="${nodeName}"]`);
+        const port = node?.querySelectorAll('.port')[portIndex];
+        if (!node || !port) return null;
+        return {
+          x: node.offsetLeft + port.offsetLeft + port.offsetWidth / 2,
+          y: node.offsetTop + port.offsetTop + port.offsetHeight / 2,
+        };
+      };
+
+      const appendPath = (d, withArrow = true) => {
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('class', withArrow ? 'edge' : 'edge edge--branch');
+        path.setAttribute('d', d);
+        layer.append(path);
+        const ns = 'http://www.w3.org/2000/svg';
+        const group = document.createElementNS(ns, 'g');
+        group.setAttribute('class', 'edge-interaction');
+        const hit = document.createElementNS(ns, 'path');
+        hit.setAttribute('d', d); hit.setAttribute('class', 'edge-hit');
+        const point = path.getPointAtLength(path.getTotalLength()/2);
+        const add = document.createElementNS(ns, 'g');
+        add.setAttribute('class', 'edge-add');
+        add.setAttribute('transform', `translate(${point.x},${point.y})`);
+        add.setAttribute('role','button'); add.setAttribute('aria-label','在连线中添加节点'); add.setAttribute('tabindex','0');
+        add.innerHTML = '<circle r="9"/><path d="M-5 0H5M0-5V5"/>';
+        group.append(hit,add);
+        // Keep the visible path last for branch styling below.
+        layer.insertBefore(group,path);
+        group.addEventListener('pointerdown', event => event.stopPropagation());
+        add.addEventListener('click', event => { event.stopPropagation(); root.querySelector('[data-action="add"]')?.click(); });
+        add.addEventListener('keydown', event => { if(event.key==='Enter'||event.key===' '){event.preventDefault();add.dispatchEvent(new MouseEvent('click',{bubbles:true}));} });
+      };
+
+      // Route each connection independently so moving a node backwards remains valid.
+      const connections = root.querySelector('process-flow-canvas[variant="basic"]')
+        ? [['start', 0, 'split', 0], ['split', 1, 'sample', 0], ['sample', 1, 'review', 0], ['review', 1, 'accept', 0], ['accept', 1, 'condition', 0], ['condition', 1, 'internal', 0], ['internal', 1, 'end', 0], ['condition', 2, 'end', 0]] : graphConnections;
+      connections.forEach(([source, sourcePort, target, targetPort]) => {
+        const from = portPoint(source, sourcePort), to = portPoint(target, targetPort);
+        if (!from || !to) return;
+        // Leave a small gap outside both ports (including the arrow tip).
+        from.x += 5;
+        to.x -= 6;
+        if (source === 'condition' && sourcePort === 2) {
+          const bottom = Math.max(from.y, to.y) + 85;
+          const left = from.x + 24;
+          const right = to.x - 12;
+          const direction = right >= left ? 1 : -1;
+          const radius = Math.min(6, Math.abs(right - left) / 2);
+          appendPath(`M ${from.x} ${from.y}
+            L ${left-radius} ${from.y} Q ${left} ${from.y} ${left} ${from.y+radius}
+            L ${left} ${bottom-radius} Q ${left} ${bottom} ${left+direction*radius} ${bottom}
+            L ${right-direction*radius} ${bottom} Q ${right} ${bottom} ${right} ${bottom-radius}
+            L ${right} ${to.y+radius} Q ${right} ${to.y} ${right+radius} ${to.y}
+            L ${to.x} ${to.y}`);
+          layer.lastElementChild.style.strokeDasharray = '5 4';
+          return;
+        }
+        const horizontalGap = to.x - from.x;
+        if (horizontalGap > 0) {
+          const dy = to.y - from.y;
+          const mid = (from.x + to.x) / 2;
+          const direction = Math.sign(dy);
+          const radius = Math.min(4, horizontalGap / 4, Math.abs(dy) / 2);
+          if (Math.abs(dy) < 1) {
+            appendPath(`M ${from.x} ${from.y} L ${to.x} ${to.y}`);
+          } else {
+            appendPath(`M ${from.x} ${from.y} L ${mid-radius} ${from.y}
+              Q ${mid} ${from.y} ${mid} ${from.y+direction*radius}
+              L ${mid} ${to.y-direction*radius}
+              Q ${mid} ${to.y} ${mid+radius} ${to.y}
+              L ${to.x} ${to.y}`);
+          }
+          return;
+        }
+        // Forward edges must keep their controls inside the available gap.
+        // A fixed minimum bends short connections back on themselves.
+        const bend = horizontalGap >= 0
+          ? horizontalGap / 2
+          : Math.max(32, Math.abs(horizontalGap) / 2);
+        appendPath(`M ${from.x} ${from.y} C ${from.x+bend} ${from.y}, ${to.x-bend} ${to.y}, ${to.x} ${to.y}`);
+      });
+      root.querySelectorAll('.graph-node').forEach(node => {
+        const connected = connections.some(([source,,target]) =>
+          (source === node.dataset.node || target === node.dataset.node) &&
+          root.querySelector(`.graph-node[data-node="${source}"]`) && root.querySelector(`.graph-node[data-node="${target}"]`));
+        node.classList.toggle('has-connections', connected);
+      });
+      // SVG paints in DOM order: keep all interactive plus buttons above edges.
+      layer.querySelectorAll('.edge-interaction').forEach(group => layer.append(group));
+    }
+
+    function updateCanvasTransform(canvas, zoomText) {
+      const scale = Number(canvas.dataset.zoom || '1');
+      const panX = Number(canvas.dataset.panX || '0');
+      const panY = Number(canvas.dataset.panY || '0');
+      canvas.style.setProperty('--scene-scale', scale.toFixed(3));
+      canvas.style.setProperty('--scene-x', `${panX.toFixed(1)}px`);
+      canvas.style.setProperty('--scene-y', `${panY.toFixed(1)}px`);
+      if (zoomText) zoomText.textContent = `${Math.round(scale * 100)}%`;
+    }
+
+    function zoomCanvas(canvas, zoomText, nextScale, anchorX, anchorY) {
+      const currentScale = Number(canvas.dataset.zoom || '1');
+      const scale = clamp(nextScale, 0.35, 1.75);
+      const rect = canvas.getBoundingClientRect();
+      const localX = anchorX - rect.left;
+      const localY = anchorY - rect.top;
+      const panX = Number(canvas.dataset.panX || '0');
+      const panY = Number(canvas.dataset.panY || '0');
+      const worldX = (localX - panX) / currentScale;
+      const worldY = (localY - panY) / currentScale;
+      const nextPanX = localX - worldX * scale;
+      const nextPanY = localY - worldY * scale;
+      canvas.dataset.zoom = String(scale);
+      canvas.dataset.panX = String(nextPanX);
+      canvas.dataset.panY = String(nextPanY);
+      updateCanvasTransform(canvas, zoomText);
+    }
+
+    function fitCanvas(canvas, zoomText, fixedScale) {
+      const root = canvas.closest(".process-editor-components");
+      const rect = canvas.getBoundingClientRect();
+      updateLoopBounds(root);
+      const items = [...canvas.querySelectorAll('.graph-node, .loop-box')];
+      const left = Math.min(...items.map(node => node.offsetLeft));
+      const top = Math.min(...items.map(node => node.offsetTop));
+      const contentWidth = Math.max(...items.map(node => node.offsetLeft + node.offsetWidth)) - left;
+      const contentHeight = Math.max(...items.map(node => node.offsetTop + node.offsetHeight)) - top;
+      const scale = fixedScale ?? Math.min(1, (rect.width-48)/contentWidth, (rect.height-48)/contentHeight);
+      const panX = (rect.width-contentWidth*scale)/2-left*scale;
+      const panY = (rect.height-contentHeight*scale)/2-top*scale;
+      canvas.dataset.zoom = String(scale);
+      canvas.dataset.panX = String(panX);
+      canvas.dataset.panY = String(panY);
+      updateCanvasTransform(canvas, zoomText);
+    }
+
+    function initializeEditor(root) {
+      const canvas = root.querySelector('.canvas-stage');
+      const zoomText = root.querySelector('.zoom-text');
+      const zoomMinus = root.querySelector('[data-action="zoom-out"]');
+      const zoomPlus = root.querySelector('[data-action="zoom-in"]');
+      const fitBtn = root.querySelector('[data-action="fit"]');
+      const handBtn = root.querySelector('[data-action="hand"]');
+      const selectBtn = root.querySelector('.tool-btn[title="选择"]');
+      const toast = root.querySelector('.toast');
+      const searchInput = root.querySelector('search-input');
+      const undoBtn = root.querySelector('[data-action="undo"]');
+      const redoBtn = root.querySelector('[data-action="redo"]');
+
+      if (!canvas) return;
+
+      requestAnimationFrame(() => renderGraphEdges(root));
+
+      let toastTimer;
+      const notify = (message) => {
+        if (!toast) return;
+        toast.textContent = message;
+        toast.classList.add('is-visible');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('is-visible'), 1800);
+      };
+
+      const snapshot = () => ({
+        nodes: [...root.querySelectorAll('.graph-node:not(.placement-ghost)')].map(node => ({id: node.dataset.node, x: node.offsetLeft, y: node.offsetTop, html: node.outerHTML})),
+      });
+      const history = { past: [], future: [] };
+      const record = () => {
+        const current = snapshot();
+        const previous = history.past[history.past.length - 1];
+        if (previous && JSON.stringify(previous) === JSON.stringify(current)) return;
+        history.past.push(current);
+        history.future = [];
+        updateHistoryButtons();
+      };
+      const restore = (state) => {
+        root.querySelectorAll('.graph-node').forEach(node => { if (!state.nodes.some(saved => saved.id === node.dataset.node)) node.remove(); });
+        state.nodes.forEach(saved => {
+          let node = root.querySelector(`[data-node="${saved.id}"]`);
+          if (!node) { canvas.querySelector('.scene').insertAdjacentHTML('beforeend', saved.html); node = root.querySelector(`[data-node="${saved.id}"]`); }
+          node.style.left = `${saved.x}px`; node.style.top = `${saved.y}px`;
+        });
+        renderGraphEdges(root);
+      };
+      const updateHistoryButtons = () => {
+        if (undoBtn) undoBtn.disabled = history.past.length < 2;
+        if (redoBtn) redoBtn.disabled = history.future.length === 0;
+      };
+
+      canvas.dataset.zoom = '0.7';
+      canvas.dataset.panX = '30';
+      canvas.dataset.panY = '260';
+      updateCanvasTransform(canvas, zoomText);
+      fitCanvas(canvas, zoomText, 1);
+      history.past.push(snapshot());
+      updateHistoryButtons();
+
+      const state = {
+        dragging: false,
+        startX: 0,
+        startY: 0,
+        startPanX: 0,
+        startPanY: 0,
+        handMode: true,
+        spaceMode: false,
+      };
+
+      const isInteractiveTarget = (target) => Boolean(target.closest('.tool-btn, .zoom-btn, .graph-node, button, a'));
+
+      let nodeDrag = null;
+      canvas.addEventListener('pointerdown', event => {
+        if (pendingNode || event.target.closest('.node-hover-actions')) return;
+        const node = event.target.closest('.graph-node');
+        const group = event.target.closest('.loop-title');
+        if (event.button !== 0 || (!node && !group) || state.spaceMode) return;
+        event.preventDefault(); event.stopPropagation();
+        const targets = node ? [node] : loopMembers(root);
+        root.querySelectorAll('.graph-node.selected').forEach(item => item.classList.remove('selected'));
+        targets.forEach(item => item.classList.add('selected'));
+        nodeDrag = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, scale: Number(canvas.dataset.zoom), targets: targets.map(item => ({node:item, x:item.offsetLeft, y:item.offsetTop})) };
+        canvas.setPointerCapture(event.pointerId);
+      }, true);
+      canvas.addEventListener('pointermove', event => {
+        if (!nodeDrag || event.pointerId !== nodeDrag.pointerId) return;
+        const dx = (event.clientX-nodeDrag.x)/nodeDrag.scale, dy = (event.clientY-nodeDrag.y)/nodeDrag.scale;
+        nodeDrag.targets.forEach(({node,x,y}) => {node.style.left=`${x+dx}px`;node.style.top=`${y+dy}px`;});
+        renderGraphEdges(root);
+      });
+      const finishNodeDrag = event => {
+        if (!nodeDrag || event.pointerId !== nodeDrag.pointerId) return;
+        nodeDrag=null;
+        record();
+        if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+      };
+      canvas.addEventListener('pointerup', finishNodeDrag);
+      canvas.addEventListener('pointercancel', finishNodeDrag);
+
+      canvas.addEventListener('pointerdown', (event) => {
+        if (event.button !== 0) return;
+        if (isInteractiveTarget(event.target)) return;
+        if (!state.handMode && !state.spaceMode) return;
+        state.dragging = true;
+        state.startX = event.clientX;
+        state.startY = event.clientY;
+        state.startPanX = Number(canvas.dataset.panX || '0');
+        state.startPanY = Number(canvas.dataset.panY || '0');
+        canvas.classList.add('is-dragging');
+        canvas.setPointerCapture(event.pointerId);
+      });
+
+      canvas.addEventListener('pointermove', (event) => {
+        if (!state.dragging) return;
+        const nextPanX = state.startPanX + (event.clientX - state.startX);
+        const nextPanY = state.startPanY + (event.clientY - state.startY);
+        canvas.dataset.panX = String(nextPanX);
+        canvas.dataset.panY = String(nextPanY);
+        updateCanvasTransform(canvas, zoomText);
+      });
+
+      const endDrag = (event) => {
+        if (!state.dragging) return;
+        state.dragging = false;
+        canvas.classList.remove('is-dragging');
+        if (event && canvas.hasPointerCapture && canvas.hasPointerCapture(event.pointerId)) {
+          canvas.releasePointerCapture(event.pointerId);
+        }
+      };
+
+      canvas.addEventListener('pointerup', endDrag);
+      canvas.addEventListener('pointercancel', endDrag);
+      canvas.addEventListener('pointerleave', endDrag);
+
+      const isTypingTarget = (target) => target instanceof HTMLElement
+        && Boolean(target.closest('input, textarea, select, [contenteditable="true"]'));
+
+      document.addEventListener('keydown', (event) => {
+        if (isTypingTarget(event.target)) return;
+        if (!event.isComposing && !event.altKey && (event.metaKey || event.ctrlKey)) {
+          const key = event.key.toLowerCase();
+          const undo = key === 'z' && !event.shiftKey;
+          const redo = (key === 'z' && event.shiftKey) || (key === 'y' && event.ctrlKey && !event.shiftKey);
+          if (undo || redo) {
+            event.preventDefault();
+            if (!nodeDrag && !state.dragging) (undo ? undoBtn : redoBtn)?.click();
+            return;
+          }
+        }
+        if (event.code === 'Space') {
+          event.preventDefault();
+          state.spaceMode = true;
+          canvas.classList.add('is-space-panning');
+          return;
+        }
+        if (state.spaceMode && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+          event.preventDefault();
+          const direction = event.key === 'ArrowLeft' ? 1 : -1;
+          canvas.dataset.panX = String(Number(canvas.dataset.panX || '0') + direction * 120);
+          updateCanvasTransform(canvas, zoomText);
+        }
+      });
+
+      document.addEventListener('keyup', (event) => {
+        if (event.code !== 'Space') return;
+        state.spaceMode = false;
+        canvas.classList.remove('is-space-panning');
+      });
+
+      window.addEventListener('blur', () => {
+        state.spaceMode = false;
+        canvas.classList.remove('is-space-panning');
+      });
+
+      canvas.addEventListener('wheel', (event) => {
+        event.preventDefault();
+        if (state.spaceMode) {
+          const horizontalDelta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+          canvas.dataset.panX = String(Number(canvas.dataset.panX || '0') - horizontalDelta);
+          updateCanvasTransform(canvas, zoomText);
+          return;
+        }
+        const currentScale = Number(canvas.dataset.zoom || '1');
+        const factor = event.deltaY < 0 ? 1.08 : 0.92;
+        zoomCanvas(canvas, zoomText, currentScale * factor, event.clientX, event.clientY);
+      }, { passive: false });
+
+      zoomMinus?.addEventListener('click', (event) => {
+        event.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const next = (Math.ceil(Number(canvas.dataset.zoom || '1') * 10 - 1e-6) - 1) / 10;
+        zoomCanvas(canvas, zoomText, next, rect.left + rect.width / 2, rect.top + rect.height / 2);
+      });
+
+      zoomPlus?.addEventListener('click', (event) => {
+        event.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const next = (Math.floor(Number(canvas.dataset.zoom || '1') * 10 + 1e-6) + 1) / 10;
+        zoomCanvas(canvas, zoomText, next, rect.left + rect.width / 2, rect.top + rect.height / 2);
+      });
+
+      fitBtn?.addEventListener('click', (event) => {
+        event.preventDefault();
+        fitCanvas(canvas, zoomText);
+      });
+
+      handBtn?.addEventListener('click', (event) => {
+        event.preventDefault();
+        state.handMode = !state.handMode;
+        handBtn.classList.toggle('active', state.handMode);
+        canvas.style.cursor = state.handMode ? 'grab' : 'default';
+        notify(state.handMode ? '已启用拖拽平移' : '已切换选择模式');
+      });
+      selectBtn?.addEventListener('click', (event) => {
+        event.preventDefault();
+        state.handMode = false;
+        handBtn?.classList.remove('active');
+        selectBtn.classList.add('active');
+        canvas.style.cursor = 'default';
+        notify('已切换选择模式');
+      });
+
+      undoBtn?.setAttribute('data-action', 'undo');
+      redoBtn?.setAttribute('data-action', 'redo');
+      undoBtn?.setAttribute('title', '撤销（⌘/Ctrl+Z）');
+      redoBtn?.setAttribute('title', '重做（⌘/Ctrl+Shift+Z）');
+      undoBtn?.addEventListener('click', (event) => {
+        event.preventDefault();
+        if (history.past.length < 2) return;
+        history.future.push(history.past.pop());
+        restore(history.past[history.past.length - 1]);
+        updateHistoryButtons();
+        notify('已撤销');
+      });
+      redoBtn?.addEventListener('click', (event) => {
+        event.preventDefault();
+        const next = history.future.pop();
+        if (!next) return;
+        history.past.push(next);
+        restore(next);
+        updateHistoryButtons();
+        notify('已重做');
+      });
+
+      root.querySelectorAll('.graph-node').forEach((node) => {
+        node.addEventListener('click', (event) => {
+          event.stopPropagation();
+          root.querySelectorAll('.graph-node.selected').forEach((item) => item.classList.remove('selected'));
+          node.classList.add('selected');
+          const title = node.querySelector('.graph-title')?.textContent?.trim();
+          const propTitle = root.querySelector('.prop-title h2');
+          if (propTitle && title) propTitle.textContent = title;
+          notify(`已选择：${title || '节点'}`);
+        });
+      });
+
+      root.querySelectorAll('.rail-item').forEach((item) => {
+        item.addEventListener('click', () => {
+          root.querySelectorAll('.rail-item').forEach((entry) => entry.classList.toggle('active', entry === item));
+          notify(`已切换至：${item.querySelector('span')?.textContent?.trim() || '平台'}`);
+        });
+      });
+
+      root.querySelector('task-status-tabs')?.addEventListener('tab-change', event => {
+          const name = event.detail.value;
+          root.querySelectorAll('.panel-scroll[data-tab]').forEach((panel) => {
+            panel.style.display = panel.dataset.tab === name ? 'block' : 'none';
+          });
+      });
+
+      root.querySelectorAll('.group-head').forEach((head) => {
+        head.addEventListener('click', () => head.closest('.palette-group')?.classList.toggle('is-collapsed'));
+      });
+      root.querySelectorAll('.flow-label').forEach((label) => {
+        label.addEventListener('click', () => label.closest('.flow-section')?.classList.toggle('is-collapsed'));
+      });
+
+      searchInput?.addEventListener('search-change', () => {
+        const query = searchInput.value.trim().toLowerCase();
+        root.querySelectorAll('.palette-item').forEach((item) => {
+          item.classList.toggle('is-hidden', query && !item.textContent.toLowerCase().includes(query));
+        });
+      });
+
+      let pendingNode = null;
+      const decorate = node => {
+        if (node.querySelector('.node-hover-actions')) return;
+        const actions = document.createElement('div'); actions.className='node-hover-actions';
+        node.querySelectorAll(':scope > .port').forEach(port => {
+          const button=document.createElement('button'); button.type='button';
+          const left=port.style.left!=='';
+          button.className=left?'node-add-before':'node-add-after';
+          button.setAttribute('aria-label',left?'添加前置节点':'添加后置节点');
+          button.style.top=`${port.offsetTop+port.offsetHeight/2}px`;
+          if(left) button.style.left=`${port.offsetLeft+port.offsetWidth/2-9}px`;
+          else {button.style.right='auto';button.style.left=`${port.offsetLeft+port.offsetWidth/2-9}px`;}
+          actions.append(button);
+        });
+        actions.insertAdjacentHTML('beforeend','<button type="button" class="node-more" aria-label="更多节点操作">···</button>');
+        for (const side of ['before','after']) {
+          if (actions.querySelector(`.node-add-${side}`)) continue;
+          const button = document.createElement('button'); button.type='button';
+          button.className=`node-add-${side}`;
+          button.setAttribute('aria-label',side==='before'?'添加前置节点':'添加后置节点');
+          button.style.top=`${node.offsetHeight/2}px`;
+          button.style.left=side==='before'?'-9px':`${node.offsetWidth-9}px`;
+          button.style.right='auto'; actions.append(button);
+        }
+        node.append(actions);
+      };
+      canvas.querySelectorAll('.graph-node').forEach(decorate);
+      const positionPending = (x, y) => {
+        const rect = canvas.getBoundingClientRect();
+        const scale = Number(canvas.dataset.zoom);
+        pendingNode.style.left = `${(x-rect.left-Number(canvas.dataset.panX))/scale-64}px`;
+        pendingNode.style.top = `${(y-rect.top-Number(canvas.dataset.panY))/scale-19}px`;
+      };
+      const pickNode = detail => {
+        pendingNode?.remove();
+        pendingNode = document.createElement('div');
+        pendingNode.className = 'graph-node placement-ghost';
+        pendingNode.dataset.node = `added-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
+        const icon = document.createElement('span'); icon.className = detail.color.replace('node-icon', 'mini'); icon.innerHTML = detail.icon;
+        const title = document.createElement('div'); title.className = 'graph-title'; title.textContent = detail.label;
+        pendingNode.append(icon, title);
+        pendingNode.insertAdjacentHTML('beforeend', '<span class="port" style="left:-4px;top:15px"></span><span class="port" style="right:-4px;top:15px"></span>');
+        if (['开始节点', 'Start', 'start'].includes(detail.label)) {
+          pendingNode.classList.add('start-main');
+          const image = icon.querySelector('img');
+          if (image) { image.style.width='23px'; image.style.height='23px'; image.style.flex='none'; icon.replaceWith(image); }
+          const text = document.createElement('div'); text.className='node-text';
+          title.textContent='start'; title.replaceWith(text); text.append(title);
+          text.insertAdjacentHTML('beforeend','<div class="graph-sub">Start</div>');
+          pendingNode.querySelector('.port[style*="left"]')?.remove();
+          pendingNode.querySelector('.port').style.top='24px';
+        }
+        canvas.querySelector('.scene').append(pendingNode);
+        const rect = canvas.getBoundingClientRect(); positionPending(rect.left+rect.width/2, rect.top+rect.height/2);
+      };
+      root.addEventListener('node-pick', event => pickNode(event.detail));
+      root.addEventListener('click', event => {
+        const item = event.target.closest('process-node-library .palette-item');
+        if (item) pickNode({ label:item.textContent.trim(), icon:item.querySelector('.node-icon').innerHTML, color:item.querySelector('.node-icon').className });
+      });
+      canvas.addEventListener('pointermove', event => { if (pendingNode) positionPending(event.clientX, event.clientY); });
+      canvas.addEventListener('pointerdown', event => {
+        if (!pendingNode || event.button !== 0 || event.target.closest('button,.canvas-add-menu')) return;
+        event.preventDefault(); event.stopImmediatePropagation();
+        positionPending(event.clientX,event.clientY);
+        pendingNode.classList.remove('placement-ghost'); decorate(pendingNode); pendingNode = null; record();
+      }, true);
+      document.addEventListener('keydown', event => { if (event.key === 'Escape' && pendingNode) { pendingNode.remove(); pendingNode=null; } });
+      canvas.addEventListener('click', event => {
+        const action = event.target.closest('.node-hover-actions button');
+        if (!action) return;
+        event.stopPropagation();
+        if (!action.classList.contains('node-more')) { canvas.querySelector('[data-action="add"]')?.click(); return; }
+        const node = action.closest('.graph-node');
+        const old = node.querySelector('.node-context-menu');
+        if (old) { old.remove(); return; }
+        const menu = document.createElement('div'); menu.className='node-context-menu';
+        const remove = document.createElement('button'); remove.type='button'; remove.textContent='删除节点';
+        remove.onclick = e => { e.stopPropagation(); node.remove(); renderGraphEdges(root); record(); };
+        menu.append(remove); node.querySelector('.node-hover-actions').append(menu);
+      });
+
+      root.querySelector('process-actions')?.addEventListener('process-action', event => {
+        const labels = {preview:'预览',functions:'功能',publish:'发布',history:'历史'};
+        notify(`${labels[event.detail.action]}操作已触发`);
+      });
+      root.querySelectorAll('.prop-tools button').forEach((button) => {
+        button.addEventListener('click', () => {
+          if (button.dataset.propertyAction === 'close') return;
+          const label = button.textContent.trim() || button.getAttribute('aria-label') || '操作';
+          if (button.classList.contains('primary')) notify('发布操作已触发');
+          else notify(`${label}已触发`);
+        });
+      });
+
+      window.addEventListener('resize', () => {
+        fitCanvas(canvas, zoomText, Number(canvas.dataset.zoom || 1));
+        renderGraphEdges(root);
+      });
+    }
+    const initialize = () => document.querySelectorAll(".process-editor-components").forEach(initializeEditor);
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initialize, {once:true});
+    else initialize();
+
+
+})();

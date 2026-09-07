@@ -1,5 +1,26 @@
 # 组件文件组织规范
 
+搜索框与筛选框统一放在 `components/task-filter-bar/`，共同预览入口为 `task-filter-bar.html`。搜索框仍使用 `<search-input>`，资源为同目录下 `search-input.css`、`search-input.js`，保留 `search-change` 事件。
+
+### 流程编辑器组件
+
+完整页面使用 `<process-editor-page>` 组合入口，内部引用顶部信息栏、节点栏、画布、属性面板及平台侧栏；按钮、搜索、输入和 Tab 继续复用公共组件。预览专用外框不进入页面组件。
+
+统一放在 `components/process-editor/`，预览入口为 `process-editor.html`，模板为 `process-editor.js`，样式为 `process-editor.css`，交互为 `controller.js`。
+
+- `process-editor-header`：顶部信息栏，复用 button 中的流程按钮。
+- `process-node-library`：左侧流程与节点栏，复用 search-input。
+- `process-flow-canvas`：可拖拽流程画布，默认包含操作栏与缩放控件；`external-controls` 可使用外置控件。
+- `process-node-properties`：右侧属性面板，复用 input 与 task-status-tabs。
+- `process-canvas-tools`：选择、平移、撤销、重做。
+- `process-canvas-zoom`：缩放比例与加减按钮。
+
+将组合包裹在 `.process-editor-components` 容器中，加载模板和控制器即可初始化交互；样式限定在该容器内。原流程编辑器页面使用相同组件，保留节点拖拽、循环框自适应及键盘撤销。
+
+输入框统一放在 `components/input/`，预览页为 `input.html`。使用 `<form-input label="模型路径" value="Spirit-v1.6">`；`multiline` 属性切换多行输入，支持 `placeholder`、`name`、`disabled`、`readonly` 及 `.value`。输入时触发 `value-change`，携带 `detail.name` 与 `detail.value`。
+
+所有新增按钮组件及其变体统一放在 `components/button/`，预览页为 `button.html`，样式和行为入口为 `button.css`、`button.js`。流程操作按钮作为其中一个变体，使用 `<process-actions>`，点击触发 `process-action` 事件，`detail.action` 分别为 `preview`、`functions`、`publish`、`history`。流程编辑器已引用该组件。
+
 所有组件统一放在 `components/` 目录中。每个组件（包含其所有变体）使用一个独立文件夹管理。
 
 ## 目录结构
@@ -51,11 +72,13 @@ components/button/
 
 实际工作台 `pages/workbench/optimized.html` 通过上述六个自定义元素承载原页面结构；生产页面继续使用 `optimized.css` 与 `optimized.js`，保证组件宿主不改变原样式和既有联动。
 
-时间轴继续由 `segmented-track` 及四个内部子组件组合：
+动作标注时间轴由 `segmented-track` 及四个内部子组件组合：
 
 - `timeline-time-scale`：独立时间刻度。
 - `timeline-range-selector`：独立范围选择、拖动与吸附；`variant="marked"` 增加选取高亮与定位标记。
 - `timeline-range-ruler`：兼容旧引用的时间刻度与范围选择组合壳。
 - `annotation-segment-row`：彩色分段轨道与告警标记。
-- `annotation-base-row`：连续绿色基础轨道。
+- `annotation-base-row`：动作标注的连续绿色基础轨道。
 - `timeline-controls`：播放时间、编辑工具与标注标准入口。
+
+`semantic-annotation-track` 是三轨语义标注组件；`action-annotation-track` 是独立的两轨动作标注组件，不包含连续绿色基础轨道。
