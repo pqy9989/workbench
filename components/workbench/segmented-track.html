@@ -4,6 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>工作台组件</title>
+  <script>
+    (() => {
+      let theme = 'light';
+      try { theme = localStorage.getItem('workbench-component-theme') || theme; } catch (_) {}
+      const dark = theme === 'dark';
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      document.documentElement.classList.toggle('component-dark', dark);
+    })();
+  </script>
   <link rel="stylesheet" href="../../styles.css">
   <link rel="stylesheet" href="../component-preview.css">
   <link rel="stylesheet" href="./segmented-track.css">
