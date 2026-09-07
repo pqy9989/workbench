@@ -129,7 +129,21 @@
     disconnectedCallback(){document.removeEventListener('click',this._outsideClick);document.removeEventListener('keydown',this._escapeKey);}
     setPlaying(playing){this._play?.setAttribute('aria-label',playing?'暂停':'播放');}
     setCurrentTime(percent){const total=Math.max(0,Math.min(100,percent))*.7,minutes=Math.floor(total/60),seconds=Math.floor(total%60),centiseconds=Math.floor(total%1*100);if(this._current)this._current.textContent=`${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}:${String(centiseconds).padStart(2,'0')}`;}
-    _setSettingsOpen(open){if(!this._settings)return;this._settings.hidden=!open;this._settingsTrigger.setAttribute('aria-expanded',String(open));}
+    _setSettingsOpen(open){
+      if(!this._settings)return;
+      const panel=this._settings;
+      panel.setAttribute('popover','manual');
+      if(!open){if(panel.matches(':popover-open'))panel.hidePopover();panel.hidden=true;}
+      else{
+        panel.hidden=false;
+        Object.assign(panel.style,{position:'fixed',inset:'auto',margin:'0',transform:'none'});
+        if(!panel.matches(':popover-open'))panel.showPopover();
+        const anchor=this._settingsTrigger.getBoundingClientRect();
+        panel.style.left=`${Math.max(8,Math.min(window.innerWidth-panel.offsetWidth-8,anchor.left+anchor.width/2-panel.offsetWidth/2))}px`;
+        panel.style.top=`${Math.max(8,anchor.top-panel.offsetHeight-10)}px`;
+      }
+      this._settingsTrigger.setAttribute('aria-expanded',String(open));
+    }
     _applyTheme(theme,persist){const resolved=theme==='light'?'light':'dark',preview=document.body.classList.contains('component-preview'),themeKey=preview?'workbench-component-theme':'workbench-theme';document.documentElement.classList.toggle('theme-light',resolved==='light');document.documentElement.classList.toggle('component-dark',resolved==='dark'&&preview);document.documentElement.dataset.theme=resolved;document.body.classList.toggle('theme-light',resolved==='light');document.body.classList.toggle('component-dark',resolved==='dark'&&preview);document.body.classList.remove('theme-pending');this.querySelectorAll('[data-theme]').forEach(button=>button.classList.toggle('is-active',button.dataset.theme===resolved));if(persist)try{localStorage.setItem(themeKey,resolved);}catch(_){}}
   }
 

@@ -508,6 +508,7 @@ html[data-theme=light] .workbench-review__tabs button.is-active{background:#e5f5
 timeline-controls{position:relative;z-index:100}
 .segmented-timeline__settings-popover{position:absolute;z-index:60;bottom:calc(100% + 10px);left:50%;width:196px;display:flex;flex-direction:column;gap:10px;padding:12px;border:.5px solid #354555;border-radius:8px;background:#17202a;color:#dfe7ef;box-shadow:0 12px 30px rgba(0,0,0,.34);transform:translateX(-50%);box-sizing:border-box}
 .segmented-timeline__settings-popover[hidden]{display:none}
+.segmented-timeline__settings-popover[popover]{overflow:visible;max-height:none;max-width:none}
 .segmented-timeline__settings-popover::after{position:absolute;top:100%;left:50%;width:8px;height:8px;border-right:.5px solid #354555;border-bottom:.5px solid #354555;background:#17202a;content:"";transform:translate(-50%,-50%) rotate(45deg)}
 .segmented-timeline__settings-row{display:flex;align-items:center;justify-content:space-between;font-size:13px}
 .segmented-timeline__settings-popover>i{height:.5px;background:#344252}
