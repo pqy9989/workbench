@@ -87,7 +87,8 @@
           const columnPositions = new Map();
           let columnX = columns[0] * 1.65;
           columns.forEach((left, index) => {
-            if (index) columnX += 210 + Math.max(24, (left-columns[index-1])*1.65-210-23);
+            const minimumGap = 62;
+            if (index) columnX += 210 + Math.max(minimumGap, (left-columns[index-1])*1.65-210-23);
             columnPositions.set(left, columnX);
           });
           this.querySelectorAll('.graph-node').forEach(node => {

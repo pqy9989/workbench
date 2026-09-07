@@ -1,7 +1,10 @@
 (() => {
     const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
-    const loopMembers = (root) => [...root.querySelectorAll('.graph-node')].filter(node => !['start', 'wait', 'end'].includes(node.dataset.node));
+    const loopMembers = (root) => [...root.querySelectorAll('.graph-node')].filter(node =>
+      !node.dataset.node?.startsWith('added-')
+      && !node.classList.contains('placement-ghost')
+      && !['start', 'wait', 'end'].includes(node.dataset.node));
     function updateLoopBounds(root) {
       const nodes = loopMembers(root);
       const box = root.querySelector('.loop-box');
@@ -49,9 +52,12 @@
         const node = root.querySelector(`.graph-node[data-node="${nodeName}"]`);
         const port = node?.querySelectorAll('.port')[portIndex];
         if (!node || !port) return null;
+        const rect = port.getBoundingClientRect();
+        const sceneRect = node.closest('.scene').getBoundingClientRect();
+        const scale = Number(node.closest('.canvas-stage').dataset.zoom || 1);
         return {
-          x: node.offsetLeft + port.offsetLeft + port.offsetWidth / 2,
-          y: node.offsetTop + port.offsetTop + port.offsetHeight / 2,
+          x: (rect.left + rect.width / 2 - sceneRect.left) / scale,
+          y: (rect.top + rect.height / 2 - sceneRect.top) / scale,
         };
       };
 
@@ -636,7 +642,23 @@
       document.addEventListener('pointerup', event => {
         if (!connectionDrag) return;
         const {button,moved}=connectionDrag;
-        const target=document.elementFromPoint(event.clientX,event.clientY)?.closest('.node-add-before,.node-add-after');
+        let target=document.elementFromPoint(event.clientX,event.clientY)?.closest('.node-add-before,.node-add-after');
+        // Hidden hover controls must not make a valid node impossible to connect.
+        // Accept the node body or a small margin around its compatible port.
+        if (!target) {
+          const selector=button.classList.contains('node-add-before')?'.node-add-after':'.node-add-before';
+          const source=button.closest('.graph-node');
+          let closestDistance=Infinity;
+          canvas.querySelectorAll('.graph-node:not(.placement-ghost)').forEach(node=>{
+            if(node===source)return;
+            const rect=node.getBoundingClientRect();
+            const distance=Math.hypot(Math.max(rect.left-event.clientX,0,event.clientX-rect.right),Math.max(rect.top-event.clientY,0,event.clientY-rect.bottom));
+            if(distance<=18 && distance<closestDistance){
+              const candidate=node.querySelector(selector);
+              if(candidate){target=candidate;closestDistance=distance;}
+            }
+          });
+        }
         clearConnectionDrag();
         if (!moved) return;
         suppressConnectionClick=true;
