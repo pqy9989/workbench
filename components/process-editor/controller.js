@@ -75,13 +75,20 @@
         // Keep the visible path last for branch styling below.
         layer.insertBefore(group,path);
         group.addEventListener('pointerdown', event => event.stopPropagation());
-        add.addEventListener('click', event => { event.stopPropagation(); root.querySelector('[data-action="add"]')?.click(); });
+        add.addEventListener('click', event => {
+          event.stopPropagation();
+          root.querySelector('[data-action="add"]')?.dispatchEvent(new CustomEvent('click', {
+            detail: { anchor: add.getBoundingClientRect() }
+          }));
+        });
         add.addEventListener('keydown', event => { if(event.key==='Enter'||event.key===' '){event.preventDefault();add.dispatchEvent(new MouseEvent('click',{bubbles:true}));} });
       };
 
       // Route each connection independently so moving a node backwards remains valid.
       const connections = root.querySelector('process-flow-canvas[variant="basic"]')
-        ? [['start', 0, 'split', 0], ['split', 1, 'sample', 0], ['sample', 1, 'review', 0], ['review', 1, 'accept', 0], ['accept', 1, 'condition', 0], ['condition', 1, 'internal', 0], ['internal', 1, 'end', 0], ['condition', 2, 'end', 0]] : graphConnections;
+        ? [['start', 0, 'split', 0], ['split', 1, 'sample', 0], ['sample', 1, 'review', 0], ['review', 1, 'accept', 0], ['accept', 1, 'condition', 0], ['condition', 1, 'internal', 0], ['internal', 1, 'end', 0], ['condition', 2, 'end', 0]] : [...graphConnections];
+      connections.push(...(root.customConnections || []).filter(([source,,target]) =>
+        root.querySelector(`[data-node="${source}"]`) && root.querySelector(`[data-node="${target}"]`)));
       connections.forEach(([source, sourcePort, target, targetPort]) => {
         const from = portPoint(source, sourcePort), to = portPoint(target, targetPort);
         if (!from || !to) return;
@@ -210,6 +217,7 @@
       };
 
       const snapshot = () => ({
+        connections: (root.customConnections || []).map(connection => [...connection]),
         nodes: [...root.querySelectorAll('.graph-node:not(.placement-ghost)')].map(node => ({id: node.dataset.node, x: node.offsetLeft, y: node.offsetTop, html: node.outerHTML})),
       });
       const history = { past: [], future: [] };
@@ -222,6 +230,7 @@
         updateHistoryButtons();
       };
       const restore = (state) => {
+        root.customConnections = (state.connections || []).map(connection => [...connection]);
         root.querySelectorAll('.graph-node').forEach(node => { if (!state.nodes.some(saved => saved.id === node.dataset.node)) node.remove(); });
         state.nodes.forEach(saved => {
           let node = root.querySelector(`[data-node="${saved.id}"]`);
@@ -256,8 +265,45 @@
       const isInteractiveTarget = (target) => Boolean(target.closest('.tool-btn, .zoom-btn, .graph-node, button, a'));
 
       let nodeDrag = null;
+      const clearAlignmentGuides = () => canvas.querySelectorAll('.alignment-guide').forEach(line => line.remove());
+      const snapNode = (node, x, y, disabled = false) => {
+        clearAlignmentGuides();
+        if (disabled) return {x,y};
+        const threshold = 6 / Number(canvas.dataset.zoom || 1);
+        const peers = [...canvas.querySelectorAll('.graph-node:not(.placement-ghost)')].filter(peer => peer !== node);
+        const best = {};
+        for (const peer of peers) {
+          for (const axis of ['x','y']) {
+            const position = axis === 'x' ? x : y;
+            const size = axis === 'x' ? node.offsetWidth : node.offsetHeight;
+            const otherPosition = axis === 'x' ? peer.offsetLeft : peer.offsetTop;
+            const otherSize = axis === 'x' ? peer.offsetWidth : peer.offsetHeight;
+            for (const fraction of [0,0.5,1]) {
+              const coordinate = otherPosition + otherSize * fraction;
+              const delta = coordinate - (position + size * fraction);
+              if (Math.abs(delta) <= threshold && (!best[axis] || Math.abs(delta) < Math.abs(best[axis].delta))) {
+                best[axis] = {delta,coordinate,peer};
+              }
+            }
+          }
+        }
+        x += best.x?.delta || 0; y += best.y?.delta || 0;
+        for (const axis of ['x','y']) {
+          if (!best[axis]) continue;
+          const {coordinate,peer} = best[axis];
+          const line = document.createElement('div'); line.className='alignment-guide';
+          const vertical = axis === 'x';
+          const start = Math.min(vertical ? y : x, vertical ? peer.offsetTop : peer.offsetLeft)-20;
+          const end = Math.max(vertical ? y+node.offsetHeight : x+node.offsetWidth, vertical ? peer.offsetTop+peer.offsetHeight : peer.offsetLeft+peer.offsetWidth)+20;
+          Object.assign(line.style, {position:'absolute',pointerEvents:'none',background:'#4285ff',zIndex:'10',
+            left:`${vertical?coordinate:start}px`, top:`${vertical?start:coordinate}px`,
+            width:vertical?'1px':`${end-start}px`,height:vertical?`${end-start}px`:'1px'});
+          canvas.querySelector('.scene').append(line);
+        }
+        return {x,y};
+      };
       canvas.addEventListener('pointerdown', event => {
-        if (pendingNode || event.target.closest('.node-hover-actions')) return;
+        if (pendingNode || pendingConnection || event.target.closest('.node-hover-actions')) return;
         const node = event.target.closest('.graph-node');
         const group = event.target.closest('.loop-title');
         if (event.button !== 0 || (!node && !group) || state.spaceMode) return;
@@ -271,12 +317,16 @@
       canvas.addEventListener('pointermove', event => {
         if (!nodeDrag || event.pointerId !== nodeDrag.pointerId) return;
         const dx = (event.clientX-nodeDrag.x)/nodeDrag.scale, dy = (event.clientY-nodeDrag.y)/nodeDrag.scale;
-        nodeDrag.targets.forEach(({node,x,y}) => {node.style.left=`${x+dx}px`;node.style.top=`${y+dy}px`;});
+        nodeDrag.targets.forEach(({node,x,y}) => {
+          const position = nodeDrag.targets.length === 1 ? snapNode(node,x+dx,y+dy,event.altKey) : {x:x+dx,y:y+dy};
+          node.style.left=`${position.x}px`;node.style.top=`${position.y}px`;
+        });
         renderGraphEdges(root);
       });
       const finishNodeDrag = event => {
         if (!nodeDrag || event.pointerId !== nodeDrag.pointerId) return;
         nodeDrag=null;
+        clearAlignmentGuides();
         record();
         if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
       };
@@ -319,10 +369,21 @@
       canvas.addEventListener('pointerleave', endDrag);
 
       const isTypingTarget = (target) => target instanceof HTMLElement
-        && Boolean(target.closest('input, textarea, select, [contenteditable="true"]'));
+        && (target.isContentEditable || Boolean(target.closest('input, textarea, select')));
 
       document.addEventListener('keydown', (event) => {
-        if (isTypingTarget(event.target)) return;
+        if (event.composedPath().some(isTypingTarget) || event.isComposing) return;
+        if ((event.key === 'Delete' || event.key === 'Backspace')
+          && !event.metaKey && !event.ctrlKey && !event.altKey) {
+          if (nodeDrag || state.dragging || pendingNode) return;
+          const selectedNodes = canvas.querySelectorAll('.graph-node.selected:not(.placement-ghost)');
+          if (!selectedNodes.length) return;
+          event.preventDefault();
+          selectedNodes.forEach(node => node.remove());
+          renderGraphEdges(root);
+          record();
+          return;
+        }
         if (!event.isComposing && !event.altKey && (event.metaKey || event.ctrlKey)) {
           const key = event.key.toLowerCase();
           const undo = key === 'z' && !event.shiftKey;
@@ -469,6 +530,7 @@
       });
 
       let pendingNode = null;
+      let pendingConnection = null;
       const decorate = node => {
         if (node.querySelector('.node-hover-actions')) return;
         const actions = document.createElement('div'); actions.className='node-hover-actions';
@@ -477,7 +539,8 @@
           const left=port.style.left!=='';
           button.className=left?'node-add-before':'node-add-after';
           button.setAttribute('aria-label',left?'添加前置节点':'添加后置节点');
-          button.style.top=`${port.offsetTop+port.offsetHeight/2}px`;
+          button.dataset.portIndex = [...node.querySelectorAll(':scope > .port')].indexOf(port);
+          button.style.top=node.dataset.node.startsWith('added-') ? '50%' : `${port.offsetTop+port.offsetHeight/2}px`;
           if(left) button.style.left=`${port.offsetLeft+port.offsetWidth/2-9}px`;
           else {button.style.right='auto';button.style.left=`${port.offsetLeft+port.offsetWidth/2-9}px`;}
           actions.append(button);
@@ -488,7 +551,7 @@
           const button = document.createElement('button'); button.type='button';
           button.className=`node-add-${side}`;
           button.setAttribute('aria-label',side==='before'?'添加前置节点':'添加后置节点');
-          button.style.top=`${node.offsetHeight/2}px`;
+          button.style.top='50%';
           button.style.left=side==='before'?'-9px':`${node.offsetWidth-9}px`;
           button.style.right='auto'; actions.append(button);
         }
@@ -509,7 +572,7 @@
         const icon = document.createElement('span'); icon.className = detail.color.replace('node-icon', 'mini'); icon.innerHTML = detail.icon;
         const title = document.createElement('div'); title.className = 'graph-title'; title.textContent = detail.label;
         pendingNode.append(icon, title);
-        pendingNode.insertAdjacentHTML('beforeend', '<span class="port" style="left:-4px;top:15px"></span><span class="port" style="right:-4px;top:15px"></span>');
+        pendingNode.insertAdjacentHTML('beforeend', '<span class="port" style="left:-4px;top:calc(50% - 3.5px)"></span><span class="port" style="right:-4px;top:calc(50% - 3.5px)"></span>');
         if (['开始节点', 'Start', 'start'].includes(detail.label)) {
           pendingNode.classList.add('start-main');
           const image = icon.querySelector('img');
@@ -518,7 +581,6 @@
           title.textContent='start'; title.replaceWith(text); text.append(title);
           text.insertAdjacentHTML('beforeend','<div class="graph-sub">Start</div>');
           pendingNode.querySelector('.port[style*="left"]')?.remove();
-          pendingNode.querySelector('.port').style.top='24px';
         }
         canvas.querySelector('.scene').append(pendingNode);
         const rect = canvas.getBoundingClientRect(); positionPending(rect.left+rect.width/2, rect.top+rect.height/2);
@@ -535,12 +597,94 @@
         positionPending(event.clientX,event.clientY);
         pendingNode.classList.remove('placement-ghost'); decorate(pendingNode); pendingNode = null; record();
       }, true);
-      document.addEventListener('keydown', event => { if (event.key === 'Escape' && pendingNode) { pendingNode.remove(); pendingNode=null; } });
+      document.addEventListener('keydown', event => { if (event.key === 'Escape') {
+        if (pendingNode) { pendingNode.remove(); pendingNode=null; }
+        pendingConnection=null; canvas.style.cursor='';
+      } });
+      let connectionDrag = null;
+      let suppressConnectionClick = false;
+      const clearConnectionDrag = () => {
+        connectionDrag?.preview.remove(); connectionDrag = null;
+        canvas.querySelectorAll('.connection-source').forEach(node => node.classList.remove('connection-source'));
+        canvas.classList.remove('is-connecting');
+      };
+      canvas.addEventListener('pointerdown', event => {
+        const button = event.target.closest('.node-add-before,.node-add-after');
+        if (!button || event.button !== 0 || pendingNode) return;
+        event.preventDefault(); event.stopImmediatePropagation();
+        const rect = button.getBoundingClientRect();
+        const preview = document.createElementNS('http://www.w3.org/2000/svg','path');
+        preview.setAttribute('fill','none'); preview.setAttribute('stroke','#009bb5');
+        preview.setAttribute('stroke-width','2'); preview.style.pointerEvents='none';
+        canvas.querySelector('.edge-layer').append(preview);
+        connectionDrag = {button, preview, x:rect.left+rect.width/2, y:rect.top+rect.height/2, moved:false};
+        button.closest('.graph-node').classList.add('connection-source');
+        pendingConnection=null;
+        canvas.classList.add('is-connecting');
+      }, true);
+      document.addEventListener('pointermove', event => {
+        if (!connectionDrag) return;
+        const drag = connectionDrag;
+        if (Math.hypot(event.clientX-drag.x,event.clientY-drag.y)>4) drag.moved=true;
+        const rect=canvas.getBoundingClientRect(), scale=Number(canvas.dataset.zoom);
+        const x=(drag.x-rect.left-Number(canvas.dataset.panX))/scale;
+        const y=(drag.y-rect.top-Number(canvas.dataset.panY))/scale;
+        const tx=(event.clientX-rect.left-Number(canvas.dataset.panX))/scale;
+        const ty=(event.clientY-rect.top-Number(canvas.dataset.panY))/scale;
+        drag.preview.setAttribute('d',`M${x} ${y} C${(x+tx)/2} ${y} ${(x+tx)/2} ${ty} ${tx} ${ty}`);
+      });
+      document.addEventListener('pointerup', event => {
+        if (!connectionDrag) return;
+        const {button,moved}=connectionDrag;
+        const target=document.elementFromPoint(event.clientX,event.clientY)?.closest('.node-add-before,.node-add-after');
+        clearConnectionDrag();
+        if (!moved) return;
+        suppressConnectionClick=true;
+        setTimeout(()=>{suppressConnectionClick=false;},0);
+        if (!target || !canvas.contains(target) || target.closest('.graph-node')===button.closest('.graph-node')) return;
+        const before=button.classList.contains('node-add-before');
+        if (before===target.classList.contains('node-add-before')) return;
+        const output=before?target:button, input=before?button:target;
+        const outputIndex=Number(output.dataset.portIndex ?? -1), inputIndex=Number(input.dataset.portIndex ?? -1);
+        if(outputIndex<0 || inputIndex<0) return;
+        const connection=[output.closest('.graph-node').dataset.node,outputIndex,input.closest('.graph-node').dataset.node,inputIndex];
+        root.customConnections ||= [];
+        if (!root.customConnections.some(item=>JSON.stringify(item)===JSON.stringify(connection))) {
+          root.customConnections.push(connection); renderGraphEdges(root); record();
+        }
+      });
+      document.addEventListener('pointercancel',clearConnectionDrag);
+      document.addEventListener('keydown',event=>{if(event.key==='Escape')clearConnectionDrag();});
+      canvas.addEventListener('click', event => {
+        if(suppressConnectionClick){event.preventDefault();event.stopImmediatePropagation();return;}
+        if (!pendingConnection) return;
+        const target = event.target.closest('.graph-node');
+        if (!target || target === pendingConnection.node || event.target.closest('.node-more')) return;
+        event.preventDefault(); event.stopImmediatePropagation();
+        const {node, before, portIndex} = pendingConnection;
+        const source = before ? target : node;
+        const destination = before ? node : target;
+        const ports = [...source.querySelectorAll(':scope > .port')];
+        const output = before ? ports.findIndex(port => port.style.right !== '') : portIndex;
+        const inputs = [...destination.querySelectorAll(':scope > .port')];
+        const input = before ? portIndex : inputs.findIndex(port => port.style.left !== '');
+        if (output < 0 || input < 0) { notify('该节点没有对应的连接口'); return; }
+        const connection = [source.dataset.node, output, destination.dataset.node, input];
+        root.customConnections ||= [];
+        if (!root.customConnections.some(item => JSON.stringify(item) === JSON.stringify(connection))) {
+          root.customConnections.push(connection); renderGraphEdges(root); record();
+        }
+        pendingConnection=null; canvas.style.cursor='';
+      }, true);
       canvas.addEventListener('click', event => {
         const action = event.target.closest('.node-hover-actions button');
         if (!action) return;
         event.stopPropagation();
-        if (!action.classList.contains('node-more')) { canvas.querySelector('[data-action="add"]')?.click(); return; }
+        if (!action.classList.contains('node-more')) {
+          pendingConnection = {node:action.closest('.graph-node'), before:action.classList.contains('node-add-before'), portIndex:Number(action.dataset.portIndex ?? -1)};
+          canvas.style.cursor='crosshair';
+          notify('点击目标节点完成连接，Esc 取消'); return;
+        }
         const node = action.closest('.graph-node');
         const old = node.querySelector('.node-context-menu');
         if (old) { old.remove(); return; }

@@ -165,6 +165,16 @@
       if(this.hasAttribute('hydrate')){this.dataset.rendered='true';return;}
       this.dataset.rendered='true';
       this.innerHTML=`<header class="workbench-task-info"><div class="workbench-task-info__left"><button class="workbench-task-info__close" type="button" aria-label="关闭"><img src="${assets}icon-close.svg" alt=""></button><div class="workbench-task-info__identity"><span>任务ID</span><b>17782</b></div><i class="workbench-task-info__divider" aria-hidden="true"></i><div class="workbench-task-info__workflow"><div class="workbench-task-info__step"><span>当前节点</span><b>内部验收</b></div><i class="workbench-task-info__divider" aria-hidden="true"></i><div class="workbench-task-info__step"><span>上一节点</span><b>供应商验收</b><em>·</em><b>Aria提交</b><em>·</em></div></div><div class="workbench-task-info__reject" title="驳回原因：High-level片段范围需要调整">驳回原因：High-level片段范围需要调整</div></div></header>`;
+      const taskIdentity=this.querySelector('.workbench-task-info__identity');
+      for(const [label,attribute] of [['数据处理 ID','data-processing-id'],['数据 ID','data-id']]){
+        const identity=document.createElement('div');
+        identity.className='workbench-task-info__identity';
+        const name=document.createElement('span');name.textContent=label;
+        const value=document.createElement('b');value.textContent=this.getAttribute(attribute)||'—';
+        identity.append(name,value);
+        const divider=document.createElement('i');divider.className='workbench-task-info__divider';divider.setAttribute('aria-hidden','true');
+        taskIdentity.before(identity,divider);
+      }
       this.querySelector('.workbench-task-info__close').addEventListener('click',()=>this.dispatchEvent(new CustomEvent('workbench-close',{bubbles:true})));
     }
   }
@@ -357,6 +367,47 @@
       this.dataset.rendered='true';
       this._segments=reviewSegments.map(item=>[...item]);
       this.innerHTML=`<section class="workbench-review__panel"><div class="workbench-review__content"><header class="workbench-review__header" data-review-title>片段列表</header><div class="workbench-review__list" data-workbench-review-view="segments"><button class="workbench-review__parent" type="button" aria-expanded="true"><span class="workbench-review__parent-index">01 <i>⌄</i></span><span class="workbench-review__parent-cell"><b>完成整段录制的前端测试V4预标注抽验任务</b><em>6 个子片段</em></span></button><div class="workbench-review__children"></div></div><div class="review-log" data-workbench-review-view="log" hidden><div class="review-log__summary"><span>当前数据处理记录</span><span>共 2 条</span></div><div class="review-log__table" aria-label="当前数据处理记录"><article class="review-log__card"><header><time>2026-08-03 10:42</time><span class="review-log__action">提交</span></header><dl><div><dt>操作人</dt><dd>供应商 A-017</dd></div><div><dt>节点</dt><dd>供应商抽验</dd></div><div><dt>说明</dt><dd>完成首次切分标注并提交</dd></div></dl></article><article class="review-log__card"><header><time>2026-08-03 11:02</time><span class="review-log__action">提交</span></header><dl><div><dt>操作人</dt><dd>供应商 A-017</dd></div><div><dt>节点</dt><dd>供应商抽验</dd></div><div><dt>说明</dt><dd>补充调整后再次提交</dd></div></dl></article></div></div><div class="review-info" data-workbench-review-view="info" hidden><dl class="review-info__list"><div><dt>任务 ID</dt><dd class="review-info__code">20455</dd></div><div><dt>处理任务</dt><dd>端到端切分标注供应商 A 任务</dd></div><div><dt>序列号</dt><dd class="review-info__code">UDAS-00002-2983</dd></div><div><dt>采集员</dt><dd>柳少龙</dd></div><div><dt>数据 ID</dt><dd class="review-info__code">3298698</dd></div><div><dt>版本</dt><dd>第1版</dd></div></dl></div></div></section>`;
+      this.querySelectorAll('.review-log__card').forEach(card=>{
+        const operatorRow=card.querySelector('dl > div');
+        const nodeRow=operatorRow.nextElementSibling;
+        const operator=document.createElement('span');operator.className='review-log__operator';
+        operator.textContent=nodeRow.querySelector('dd').textContent;
+        const header=card.querySelector('header');
+        header.style.justifyContent='flex-start';
+        header.append(operator);nodeRow.remove();
+      });
+      const logTable=this.querySelector('.review-log__table');
+      const rejected=logTable.lastElementChild.cloneNode(true);
+      rejected.classList.add('review-log__card--rejected');
+      rejected.querySelector('time').textContent='2026-08-03 11:18';
+      rejected.querySelector('.review-log__action').textContent='驳回';
+      rejected.querySelector('.review-log__operator').textContent='内部验收';
+      rejected.querySelector('dl > div dd').textContent='内部验收员 Aria';
+      rejected.querySelector('dl > div:last-child dt').textContent='驳回原因';
+      rejected.querySelector('dl > div:last-child dd').textContent='High-level片段范围需要调整，请修正动作起止边界后重新提交。';
+      logTable.append(rejected);
+      this.querySelector('.review-log__summary > span:last-child').textContent=`共 ${logTable.children.length} 条`;
+      const taskHeader=document.querySelector('workbench-task-header');
+      const information=[
+        ['数据 ID',taskHeader?.getAttribute('data-id')||'DT202609070126'],
+        ['数据处理 ID',taskHeader?.getAttribute('data-processing-id')||'DP202609070018'],
+        ['采集任务 ID','CT202608030042'],
+        ['采集时间','2026-08-03 09:30:00'],
+        ['采集员','柳少龙'],
+        ['设备序列号','UDAS-00002-2983'],
+        ['指令版本','v1.0'],
+        ['处理任务 ID','20455'],
+        ['标注流程','端到端切分标注简洁版'],
+        ['标注规则','端到端切分标注规则 v1.0'],
+        ['标注归档时间','未归档']
+      ];
+      const infoList=this.querySelector('.review-info__list');
+      infoList.replaceChildren(...information.map(([label,value])=>{
+        const row=document.createElement('div'),term=document.createElement('dt'),detail=document.createElement('dd');
+        term.textContent=label;detail.textContent=value;
+        if(label.includes('ID')||label==='设备序列号')detail.className='review-info__code';
+        row.append(term,detail);return row;
+      }));
       this._children=this.querySelector('.workbench-review__children');
       this.selectSegment(2,false);
       const parent=this.querySelector('.workbench-review__parent');
@@ -659,6 +710,32 @@
     selectSegment(index,emit=true){this.querySelector('segmented-track')?.selectSegment(index,emit);}
   }
 
+  class WorkbenchFormControlStates extends HTMLElement{
+    connectedCallback(){
+      if(this.dataset.rendered)return;
+      this.dataset.rendered='true';
+      const chevron=`<img src="${assets}icon-chevron.svg" alt="">`;
+      this.innerHTML=`<div class="workbench-control-showcase">
+        <section class="workbench-control-showcase__group" aria-labelledby="input-states-title">
+          <h3 id="input-states-title">输入框</h3>
+          <div class="workbench-control-showcase__states">
+            <label class="workbench-control-state"><span>默认</span><input class="workbench-control" type="text" placeholder="请输入内容"></label>
+            <label class="workbench-control-state"><span>选择</span><input class="workbench-control is-selected" type="text" value="选择错移动遥控器到目标位置"></label>
+            <label class="workbench-control-state"><span>禁用</span><input class="workbench-control" type="text" value="选择错移动遥控器到目标位置" disabled></label>
+          </div>
+        </section>
+        <section class="workbench-control-showcase__group" aria-labelledby="select-states-title">
+          <h3 id="select-states-title">下拉框</h3>
+          <div class="workbench-control-showcase__states">
+            <div class="workbench-control-state"><span>默认</span><button class="workbench-control workbench-control--select is-placeholder" type="button" aria-haspopup="listbox">请选择错误原因${chevron}</button></div>
+            <div class="workbench-control-state"><span>选择</span><button class="workbench-control workbench-control--select is-selected" type="button" aria-haspopup="listbox">片段范围错位${chevron}</button></div>
+            <div class="workbench-control-state"><span>禁用</span><button class="workbench-control workbench-control--select" type="button" disabled>片段范围错位${chevron}</button></div>
+          </div>
+        </section>
+      </div>`;
+    }
+  }
+
   class SegmentColorPalette extends HTMLElement{
     connectedCallback(){
       if(this.dataset.rendered)return;
@@ -727,5 +804,6 @@
   if(!customElements.get('segmented-track'))customElements.define('segmented-track',SegmentedTrack);
   if(!customElements.get('semantic-annotation-track'))customElements.define('semantic-annotation-track',SemanticAnnotationTrack);
   if(!customElements.get('action-annotation-track'))customElements.define('action-annotation-track',ActionAnnotationTrack);
+  if(!customElements.get('workbench-form-control-states'))customElements.define('workbench-form-control-states',WorkbenchFormControlStates);
   if(!customElements.get('segment-color-palette'))customElements.define('segment-color-palette',SegmentColorPalette);
 })();

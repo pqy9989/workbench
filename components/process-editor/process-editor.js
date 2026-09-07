@@ -145,8 +145,9 @@
             menu.hidden = true;
             addButton.setAttribute('aria-expanded', 'false');
           };
-          addButton.addEventListener('click', () => {
+          addButton.addEventListener('click', (event) => {
             if (!menu.hidden) { closeMenu(); return; }
+            menu.removeAttribute('style');
             const fragment = document.createElement('template');
             fragment.innerHTML = templates['process-node-library'].replace(/src="assets\//g, 'src="' + assets.href);
             if (this.getAttribute('variant') === 'basic') fragment.content.querySelector('.palette').innerHTML = basicPalette();
@@ -176,6 +177,19 @@
               });
             });
             menu.hidden = false;
+            const anchor = event.detail?.anchor;
+            if (anchor) {
+              const bounds = this.closest('.canvas-stage')?.getBoundingClientRect()
+                || {left:0, top:0, right:window.innerWidth, bottom:window.innerHeight};
+              menu.style.position = 'fixed';
+              menu.style.bottom = 'auto';
+              menu.style.maxHeight = `${Math.max(80, bounds.bottom-bounds.top-24)}px`;
+              const rect = menu.getBoundingClientRect();
+              const left = Math.max(bounds.left+12, Math.min(anchor.left, bounds.right-rect.width-12));
+              const top = Math.max(bounds.top+12, Math.min(anchor.bottom+8, bounds.bottom-rect.height-12));
+              menu.style.left = `${left}px`;
+              menu.style.top = `${top}px`;
+            }
             addButton.setAttribute('aria-expanded', 'true');
             this.dispatchEvent(new CustomEvent('canvas-add', { bubbles: true }));
           });

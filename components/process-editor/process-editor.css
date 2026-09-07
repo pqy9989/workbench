@@ -331,6 +331,12 @@
     .graph-node.placement-ghost { opacity:.7; pointer-events:none; outline:1px dashed var(--brand); }
     .graph-node[data-node^="added-"] > .port { visibility:hidden; }
     .node-hover-actions { visibility:hidden; }
+    .canvas-stage.is-connecting .graph-node .node-hover-actions { visibility:hidden; }
+    .canvas-stage.is-connecting .graph-node:hover .node-hover-actions,
+    .canvas-stage.is-connecting .graph-node.connection-source .node-hover-actions { visibility:visible; }
+    .canvas-stage.is-connecting .node-more,
+    .canvas-stage.is-connecting .node-context-menu { display:none; }
+    .canvas-stage.is-connecting .graph-node.has-connections:not(.start-main) .node-add-before { display:grid; }
     .graph-node:hover .node-hover-actions,.graph-node:focus-within .node-hover-actions { visibility:visible; }
     .node-hover-actions button { position:absolute; display:grid; place-items:center; cursor:pointer; }
     .node-hover-actions .node-add-before,.node-hover-actions .node-add-after { top:50%; transform:translateY(-50%); width:18px; height:18px; border-radius:50%; background:var(--brand); color:white; font-size:16px; line-height:1; }

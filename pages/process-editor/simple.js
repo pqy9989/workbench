@@ -27,7 +27,13 @@ function openNodeProperties(node) {
   properties.querySelector('form-input[name="nodeId"]').value = node.dataset.node === 'sample' ? 'human_2' : node.dataset.node;
   properties.querySelector('form-input[name="description"]').value = node.querySelector('.graph-sub')?.textContent.trim() || title;
   const icon = node.querySelector('.mini img, :scope > img');
-  if (icon) properties.querySelector('.human-properties-icon img').src = icon.src;
+  const panelIcon = properties.querySelector('.human-properties-icon');
+  if (icon) {
+    const panelImage = panelIcon.querySelector('img');
+    panelImage.src = icon.src;
+    panelImage.style.filter = getComputedStyle(icon).filter;
+  }
+  panelIcon.style.backgroundColor = getComputedStyle(node.querySelector('.mini') || node).backgroundColor;
   properties.querySelector('[role="status"]').textContent = '';
   panel.style.display = '';
 }

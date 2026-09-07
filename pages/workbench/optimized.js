@@ -11,6 +11,28 @@ const actionEditor = segmentEditors.find(editor => editor.getAttribute('variant'
 const segmentList = document.querySelector('workbench-segment-list');
 let activeWorkbenchMode = 'segments';
 let activeSegmentIndex = 1;
+const qualityList = segmentList.querySelector('[data-quality-list]');
+// Share each record so navigation and error-reason edits use the same data.
+qualityEditor._segments = qualityList._items.map(item => {
+  Object.defineProperty(item, 'error', {get(){return this.reason;},set(value){this.reason=value;}, configurable:true});
+  return item;
+});
+function syncQualityEditor() {
+  const item = qualityList._items[activeSegmentIndex];
+  if (!item) return;
+  qualityEditor.querySelector('.workbench-mistake-description').value = item.description;
+  qualityEditor.querySelectorAll('.workbench-severity-options input').forEach(input => {input.checked=input.value===item.severity;});
+}
+function updateQualityList() {
+  const item=qualityList._items[activeSegmentIndex];
+  if (!item) return;
+  item.description=qualityEditor.querySelector('.workbench-mistake-description').value;
+  item.severity=qualityEditor.querySelector('.workbench-severity-options input:checked')?.value || '轻微';
+  qualityList.render();
+}
+qualityEditor.addEventListener('input',updateQualityList);
+qualityEditor.addEventListener('change',updateQualityList);
+qualityEditor.addEventListener('segment-update',updateQualityList);
 
 taskHeader.addEventListener('workbench-close', () => {
   window.location.assign('../action-quality-check/index.html');
@@ -25,6 +47,7 @@ function selectSegment(index, source = 'page') {
     if (editor !== source) editor.setSegment(safeIndex + 1, false);
   });
   if (source !== 'list') segmentList.selectSegment(safeIndex + 1, false);
+  syncQualityEditor();
 }
 
 [semanticTimeline, actionTimeline].forEach(track => track.addEventListener('track-change', event => {
@@ -54,7 +77,7 @@ segmentList.addEventListener('review-variant-change', event => {
   semanticEditor.hidden = qualityMode || actionMode;
   qualityEditor.hidden = !qualityMode;
   actionEditor.hidden = !actionMode;
-  if (!qualityMode) requestAnimationFrame(() => selectSegment(activeSegmentIndex, 'mode'));
+  requestAnimationFrame(() => selectSegment(activeSegmentIndex, 'mode'));
 });
 
 selectSegment(1);
