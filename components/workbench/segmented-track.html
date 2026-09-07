@@ -26,23 +26,72 @@
     </section>
     <section class="component-gallery__group">
       <h2>媒体预览</h2>
-      <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed"><workbench-media-viewer></workbench-media-viewer></div>
+      <div class="component-gallery__variants">
+        <div class="component-gallery__variant">
+          <h3>默认</h3>
+          <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed"><workbench-media-viewer></workbench-media-viewer></div>
+        </div>
+        <div class="component-gallery__variant">
+          <h3>左二右一 · 3:2</h3>
+          <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed"><workbench-media-viewer variant="three-panel"></workbench-media-viewer></div>
+        </div>
+      </div>
     </section>
     <section class="component-gallery__group component-gallery__group--overflow">
       <h2>片段编辑器</h2>
-      <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed"><workbench-segment-editor></workbench-segment-editor></div>
+      <div class="component-gallery__variants">
+        <div class="component-gallery__variant">
+          <h3>语义标注</h3>
+          <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed"><workbench-segment-editor></workbench-segment-editor></div>
+        </div>
+        <div class="component-gallery__variant">
+          <h3>质检</h3>
+          <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed"><workbench-segment-editor variant="variant-2"></workbench-segment-editor></div>
+        </div>
+        <div class="component-gallery__variant">
+          <h3>动作标注</h3>
+          <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed"><workbench-segment-editor variant="variant-3"></workbench-segment-editor></div>
+        </div>
+      </div>
     </section>
     <section class="component-gallery__group">
-      <h2>片段列表</h2>
-      <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--review"><workbench-segment-list></workbench-segment-list></div>
+      <h2>片段列表区</h2>
+      <div class="component-gallery__variants">
+        <div class="component-gallery__variant"><h3>语义标注</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--review-panel"><workbench-segment-list-panel variant="segments"></workbench-segment-list-panel></div></div>
+        <div class="component-gallery__variant"><h3>质检</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--review-panel"><workbench-quality-list title="质检列表" rows="6"></workbench-quality-list></div></div>
+        <div class="component-gallery__variant"><h3>动作标注</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--review-panel"><workbench-annotation-list title="标注列表" rows="6"></workbench-annotation-list></div></div>
+        <div class="component-gallery__variant"><h3>日志</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--review-panel"><workbench-segment-list-panel variant="log"></workbench-segment-list-panel></div></div>
+        <div class="component-gallery__variant"><h3>基本信息</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--review-panel"><workbench-segment-list-panel variant="info"></workbench-segment-list-panel></div></div>
+      </div>
+    </section>
+    <section class="component-gallery__group">
+      <h2>片段列表 Tab</h2>
+      <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--review-tabs"><workbench-segment-tabs active="segments"></workbench-segment-tabs></div>
+    </section>
+    <section class="component-gallery__group">
+      <h2>质检结论</h2>
+      <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--review-panel"><workbench-quality-conclusion></workbench-quality-conclusion></div>
     </section>
     <section class="component-gallery__group">
       <h2>底部操作栏</h2>
-      <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed"><workbench-footer-actions></workbench-footer-actions></div>
+      <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--review-panel"><workbench-footer-actions></workbench-footer-actions></div>
     </section>
     <section class="component-gallery__group">
-      <h2>时间刻度与范围选择</h2>
-      <div class="component-gallery__stage component-gallery__stage--track"><div class="segmented-timeline segmented-timeline--sample"><div class="segmented-timeline__body"><timeline-range-ruler></timeline-range-ruler></div></div></div>
+      <h2>时间刻度</h2>
+      <div class="component-gallery__stage component-gallery__stage--track"><div class="segmented-timeline segmented-timeline--sample"><div class="segmented-timeline__body"><timeline-time-scale></timeline-time-scale></div></div></div>
+    </section>
+    <section class="component-gallery__group">
+      <h2>范围选择</h2>
+      <div class="component-gallery__variants">
+        <div class="component-gallery__variant">
+          <h3>默认</h3>
+          <div class="component-gallery__stage component-gallery__stage--track"><div class="segmented-timeline segmented-timeline--sample segmented-timeline--range-sample"><div class="segmented-timeline__body"><timeline-range-selector></timeline-range-selector></div></div></div>
+        </div>
+        <div class="component-gallery__variant">
+          <h3>变体 2 · 选取与定位标记</h3>
+          <div class="component-gallery__stage component-gallery__stage--track"><div class="segmented-timeline segmented-timeline--sample segmented-timeline--range-sample"><div class="segmented-timeline__body"><timeline-range-selector variant="marked"></timeline-range-selector></div></div></div>
+        </div>
+      </div>
     </section>
     <section class="component-gallery__group">
       <h2>标注轨道</h2>
@@ -53,9 +102,13 @@
       <div class="component-gallery__stage component-gallery__stage--track"><div class="segmented-timeline segmented-timeline--sample"><timeline-controls></timeline-controls></div></div>
     </section>
     <section class="component-gallery__group">
-      <h2>完整组合</h2>
+      <h2>标注</h2>
       <div class="component-gallery__stage component-gallery__stage--track">
         <segmented-track label="14" position="19"></segmented-track>
+      </div>
+      <h2 class="track-gallery-quality-title">质检</h2>
+      <div class="component-gallery__stage component-gallery__stage--track">
+        <workbench-quality-track></workbench-quality-track>
       </div>
       <h3 class="segment-color-palette__title">连续色值</h3>
       <segment-color-palette count="50"></segment-color-palette>

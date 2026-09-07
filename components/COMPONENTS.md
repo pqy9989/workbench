@@ -47,11 +47,15 @@ components/button/
 
 ### 工作台组件
 
-工作台组件的定义与演示均收纳在 `components/workbench/` 中。`workbench-task-header`、`workbench-instruction`、`workbench-media-viewer`、`workbench-segment-editor`、`workbench-segment-list` 和 `workbench-footer-actions` 已逐项复刻。
+工作台组件的定义与演示均收纳在 `components/workbench/` 中。`workbench-task-header`、`workbench-instruction`、`workbench-media-viewer`、`workbench-segment-editor`、`workbench-segment-list-panel`、`workbench-annotation-list`、`workbench-quality-list`、`workbench-segment-tabs`、`workbench-segment-list` 和 `workbench-footer-actions` 已逐项复刻。`workbench-media-viewer` 的 `three-panel` 变体为左侧两块、右侧一块的三画面布局，所有画面保持 `3:2`；`workbench-segment-editor` 当前展示默认、`variant-2`、`variant-3` 三个变体；`workbench-segment-list-panel` 支持 `segments`（默认）、`log`、`info` 三种内容变体；`workbench-annotation-list` 与 `workbench-quality-list` 是无树结构的并列片段列表骨架；`workbench-segment-tabs` 为独立右侧 Tab，`workbench-segment-list` 是列表与 Tab 保持联动的兼容组合壳。
+
+实际工作台 `pages/workbench/optimized.html` 通过上述六个自定义元素承载原页面结构；生产页面继续使用 `optimized.css` 与 `optimized.js`，保证组件宿主不改变原样式和既有联动。
 
 时间轴继续由 `segmented-track` 及四个内部子组件组合：
 
-- `timeline-range-ruler`：时间刻度与范围选择。
+- `timeline-time-scale`：独立时间刻度。
+- `timeline-range-selector`：独立范围选择、拖动与吸附；`variant="marked"` 增加选取高亮与定位标记。
+- `timeline-range-ruler`：兼容旧引用的时间刻度与范围选择组合壳。
 - `annotation-segment-row`：彩色分段轨道与告警标记。
 - `annotation-base-row`：连续绿色基础轨道。
 - `timeline-controls`：播放时间、编辑工具与标注标准入口。

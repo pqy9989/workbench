@@ -28,7 +28,7 @@
             const active = pageId === currentPage;
             return `
             <button class="platform-sidebar__item${active ? ' platform-sidebar__item--active' : ''}" type="button" title="${itemLabel}"${pageId ? ` data-page-id="${pageId}"` : ''}${active ? ' aria-current="page"' : ''}>
-              <span class="platform-sidebar__icon"><img src="${assetBase}${icon}" alt="" /></span><span class="platform-sidebar__label">${itemLabel}</span>
+              <span class="platform-sidebar__icon"><img src="${assetBase}${icon}?v=native-icons-4" alt="" /></span><span class="platform-sidebar__label">${itemLabel}</span>
             </button>`;
           }).join('')}</div>
         </section>`).join('');
