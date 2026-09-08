@@ -6,19 +6,6 @@ const properties = document.querySelector('process-node-properties');
 const panel = properties.querySelector('.right-panel');
 panel.style.display = 'none';
 const canvas = document.querySelector('.canvas-stage');
-// Double the initial edge-to-edge spacing on this page only.
-const nodes = [...canvas.querySelectorAll('.graph-node')].sort((a,b) => parseFloat(a.style.left)-parseFloat(b.style.left));
-let previousLeft;
-let previousWidth;
-let expandedLeft;
-nodes.forEach(node => {
-  const left = parseFloat(node.style.left);
-  if (previousLeft === undefined) expandedLeft = left;
-  else expandedLeft += previousWidth + Math.max(0, left-previousLeft-previousWidth)*2;
-  node.style.left = `${expandedLeft}px`;
-  previousLeft = left;
-  previousWidth = node.offsetWidth;
-});
 function openNodeProperties(node) {
   if (!node || node.classList.contains('placement-ghost')) return;
   const title = node.querySelector('.graph-title')?.textContent.trim() || '节点';

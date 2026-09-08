@@ -2,6 +2,20 @@
   const assets=new URL("../../pages/workbench/assets/",document.currentScript?.src||location.href).href;
   const segments=[['15','#42a8d2'],['5.5','#ff9559'],['4.6','#9850d7'],['4.2','#48c98a'],['8.5','#8fd04c'],['6.5','#d7a23b'],['4.3','#3d8fd8'],['8.5','#4c63df'],['8.2','#42bd7d'],['8.7','#4eabe0'],['4.8','#dd8b43'],['4.4','#45c97b'],['6.3','#db405f'],['4','#cf3ba8']];
   const tools=[['figma-2x.svg','倍速',' is-2x'],['figma-plus.svg','添加',''],['figma-plus-arrow.svg','添加并前进',''],['figma-forward.svg','仅前进',''],['figma-trash.svg','清空',''],['figma-forward-alt.svg','拖动',''],['figma-scissors-rotate.svg','分割',' is-rotate-neg'],['figma-scissors.svg','父级分割',''],['figma-merge.svg','合并',''],['figma-merge-up.svg','向上合并',''],['figma-merge-down.svg','向下合并',' is-rotate-180'],['figma-keyboard.svg','快捷键',''],['figma-settings.svg','设置','']];
+  const macShortcutItems=[['切分','J'],['拖动模式','⌃ + E'],['分割','⌃ + X'],['多选','⌥ + 点击'],['合并','↵'],['向上合并','⌘ + ←'],['向下合并','⌘ + →'],['上一段','⌘ + ↑'],['下一段','⌘ + ↓'],['删除','⌘ + ⌫'],['无法标注','⌘ + /'],['退出','Esc'],['提交标注','↵ + S'],['添加并前进','⌃ + S'],['仅前进','⌃ + D'],['标记首帧','⌃ + Q'],['标记尾帧','⌃ + W'],['播放/暂停','空格'],['调整时间范围','← →'],['撤销','⌘ + Z'],['重做','⌘ + ⇧ + Z']];
+  const windowsShortcutItems=[['切分','J'],['拖动模式','Alt + E'],['分割','Alt + X'],['多选','Ctrl + 点击'],['合并','Enter'],['向上合并','Alt + ←'],['向下合并','Alt + →'],['上一段','Ctrl + ↑'],['下一段','Ctrl + ↓'],['删除','Ctrl + Backspace'],['无法标注','Ctrl + /'],['退出','Esc'],['提交标注','Enter + S'],['添加并前进','Alt + S'],['仅前进','Alt + D'],['标记首帧','Alt + Q'],['标记尾帧','Alt + W'],['播放/暂停','Space'],['调整时间范围','← →'],['撤销','Ctrl + Z'],['重做','Ctrl + Shift + Z']];
+  const shortcutItems=/Mac|iPhone|iPad|iPod/i.test(navigator.platform||navigator.userAgent)?macShortcutItems:windowsShortcutItems;
+
+  class WorkbenchEmptyState extends HTMLElement{
+    connectedCallback(){
+      if(this.dataset.rendered)return;
+      this.dataset.rendered='true';
+      const variant=this.getAttribute('variant')||'list';
+      const paths={media:'<rect x="8" y="11" width="48" height="36" rx="6"/><path d="m27 22 14 7-14 8Z"/><path d="M22 54h20"/>',editor:'<rect x="12" y="9" width="40" height="46" rx="6"/><path d="M22 22h20M22 31h14M22 40h9"/>',list:'<path d="M10 29 18 13h28l8 16v20a5 5 0 0 1-5 5H15a5 5 0 0 1-5-5Z"/><path d="M10 30h13l4 7h10l4-7h13M24 21h16"/>'};
+      this.innerHTML=`<div class="workbench-empty-state" role="status"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[variant]||paths.list}</svg><span>暂无信息</span></div>`;
+    }
+  }
+  customElements.define('workbench-empty-state',WorkbenchEmptyState);
 
   class TimelineTimeScale extends HTMLElement{
     connectedCallback(){if(this.dataset.rendered)return;this.dataset.rendered="true";this.innerHTML=`<div class="segmented-timeline__ruler">${['00:00','00:10','00:20','00:30','00:40','00:50','01:00','01:10'].map((time,index)=>`<span style="left:${index===7?100:index*14.28}%">${time}</span>`).join('')}</div>`;}
@@ -109,25 +123,29 @@
       if(this.dataset.rendered)return;
       this.dataset.rendered="true";
       const standardLabel=this.getAttribute('standard-label')||'标注标准';
-      const toolButtons=tools.slice(0,-1).map(([icon,label,extra])=>`<button type="button" class="segmented-timeline__tool${extra}" aria-label="${label}"><img src="${assets}${icon}" alt=""></button>`).join('');
-      this.innerHTML=`<div class="segmented-timeline__tools"><div class="segmented-timeline__playback"><button type="button" class="segmented-timeline__play" aria-label="播放"><img src="${assets}icon-play.svg" alt=""></button><span><b data-playback-current>00:06:15</b> <i>/</i> 08:47:00</span></div><div class="segmented-timeline__tool-group">${toolButtons}<span class="segmented-timeline__settings-anchor"><button type="button" class="segmented-timeline__tool segmented-timeline__settings-trigger" aria-label="设置" aria-expanded="false"><img src="${assets}figma-settings.svg" alt=""></button><span class="segmented-timeline__settings-popover" role="dialog" aria-label="播放设置" hidden><span class="segmented-timeline__settings-row"><span>源视频优先</span><button class="segmented-timeline__settings-switch is-on" type="button" role="switch" aria-checked="true"><span></span></button></span><i></i><span class="segmented-timeline__settings-label">界面主题</span><span class="segmented-timeline__theme-options"><button type="button" data-theme="dark">深色</button><button type="button" data-theme="light">浅色</button></span></span></span></div><a href="#" class="segmented-timeline__standard">${standardLabel}</a></div>`;
+      const shortcutMenu=`<span class="segmented-timeline__shortcut-anchor"><button type="button" class="segmented-timeline__tool segmented-timeline__shortcut-trigger" aria-label="快捷键" aria-expanded="false"><img src="${assets}figma-keyboard.svg" alt=""></button><span class="segmented-timeline__shortcut-popover" role="dialog" aria-label="分割模式快捷键" hidden><strong>分割模式快捷键</strong><span class="segmented-timeline__shortcut-list">${shortcutItems.map(([name,key])=>`<span><span>${name}</span><kbd>${key}</kbd></span>`).join('')}</span></span></span>`;
+      const toolButtons=tools.slice(0,-1).map(([icon,label,extra])=>label==='快捷键'?`<i class="segmented-timeline__tool-divider" aria-hidden="true"></i>${shortcutMenu}`:`<button type="button" class="segmented-timeline__tool${extra}" aria-label="${label}"><img src="${assets}${icon}" alt=""></button>`).join('');
+      this.innerHTML=`<div class="segmented-timeline__tools"><div class="segmented-timeline__playback"><button type="button" class="segmented-timeline__play" aria-label="播放"><img src="${assets}icon-play.svg" alt=""></button><span><b data-playback-current>00:06:15</b> <i>/</i> 08:47:00</span></div><div class="segmented-timeline__tool-group">${toolButtons}<span class="segmented-timeline__settings-anchor"><button type="button" class="segmented-timeline__tool segmented-timeline__settings-trigger" aria-label="源视频" aria-expanded="false"><img src="${assets}figma-video.svg" alt=""></button><span class="segmented-timeline__settings-popover" role="dialog" aria-label="源视频设置" hidden><span class="segmented-timeline__settings-row"><span>源视频优先</span><button class="segmented-timeline__settings-switch is-on" type="button" role="switch" aria-checked="true"><span></span></button></span></span></span></div><a href="#" class="segmented-timeline__standard">${standardLabel}</a></div>`;
       this._play=this.querySelector('.segmented-timeline__play');
       this._current=this.querySelector('[data-playback-current]');
       this._settings=this.querySelector('.segmented-timeline__settings-popover');
       this._settingsTrigger=this.querySelector('.segmented-timeline__settings-trigger');
+      this._shortcutMenu=this.querySelector('.segmented-timeline__shortcut-popover');
+      this._shortcutTrigger=this.querySelector('.segmented-timeline__shortcut-trigger');
       this.querySelector('a').addEventListener('click',event=>event.preventDefault());
       this._play.addEventListener('click',()=>{this.setPlaying(this._play.getAttribute('aria-label')!=='暂停');this.dispatchEvent(new CustomEvent('play-toggle',{bubbles:true,detail:{playing:this._play.getAttribute('aria-label')==='暂停'}}));});
       this._settingsTrigger.addEventListener('click',event=>{event.stopPropagation();this._setSettingsOpen(this._settings.hidden);});
+      this._shortcutTrigger.addEventListener('click',event=>{event.stopPropagation();this._setShortcutOpen(this._shortcutMenu.hidden);});
       const sourceSwitch=this.querySelector('.segmented-timeline__settings-switch');
       sourceSwitch.addEventListener('click',()=>{const enabled=sourceSwitch.getAttribute('aria-checked')!=='true';sourceSwitch.setAttribute('aria-checked',String(enabled));sourceSwitch.classList.toggle('is-on',enabled);});
       this.querySelectorAll('[data-theme]').forEach(button=>button.addEventListener('click',()=>this._applyTheme(button.dataset.theme,true)));
-      this._outsideClick=event=>{if(!this.contains(event.target))this._setSettingsOpen(false);};
-      this._escapeKey=event=>{if(event.key==='Escape')this._setSettingsOpen(false);};
+      this._outsideClick=event=>{if(!this.contains(event.target)){this._setSettingsOpen(false);this._setShortcutOpen(false);}};
+      this._escapeKey=event=>{if(event.key==='Escape'){this._setSettingsOpen(false);this._setShortcutOpen(false);}};
       document.addEventListener('click',this._outsideClick);document.addEventListener('keydown',this._escapeKey);
       const themeKey=document.body.classList.contains('component-preview')?'workbench-component-theme':'workbench-theme';let stored=document.documentElement.dataset.theme==='dark'?'dark':'light';try{stored=localStorage.getItem(themeKey)||stored;}catch(_){}this._applyTheme(stored,false);
     }
     disconnectedCallback(){document.removeEventListener('click',this._outsideClick);document.removeEventListener('keydown',this._escapeKey);}
-    setPlaying(playing){this._play?.setAttribute('aria-label',playing?'暂停':'播放');}
+    setPlaying(playing){if(!this._play)return;this._play.setAttribute('aria-label',playing?'暂停':'播放');this._play.setAttribute('aria-pressed',String(playing));this._play.classList.toggle('is-playing',playing);}
     setCurrentTime(percent){const total=Math.max(0,Math.min(100,percent))*.7,minutes=Math.floor(total/60),seconds=Math.floor(total%60),centiseconds=Math.floor(total%1*100);if(this._current)this._current.textContent=`${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}:${String(centiseconds).padStart(2,'0')}`;}
     _setSettingsOpen(open){
       if(!this._settings)return;
@@ -143,6 +161,22 @@
         panel.style.top=`${Math.max(8,anchor.top-panel.offsetHeight-10)}px`;
       }
       this._settingsTrigger.setAttribute('aria-expanded',String(open));
+    }
+    _setShortcutOpen(open){
+      if(!this._shortcutMenu)return;
+      const panel=this._shortcutMenu;
+      panel.setAttribute('popover','manual');
+      if(!open){if(panel.matches(':popover-open'))panel.hidePopover();panel.hidden=true;}
+      else{
+        this._setSettingsOpen(false);
+        panel.hidden=false;
+        Object.assign(panel.style,{position:'fixed',inset:'auto',margin:'0',transform:'none'});
+        if(!panel.matches(':popover-open'))panel.showPopover();
+        const anchor=this._shortcutTrigger.getBoundingClientRect(),width=panel.offsetWidth,height=panel.offsetHeight;
+        panel.style.left=`${Math.max(8,Math.min(window.innerWidth-width-8,anchor.left+anchor.width/2-width/2))}px`;
+        panel.style.top=`${Math.max(8,anchor.top-height-10)}px`;
+      }
+      this._shortcutTrigger.setAttribute('aria-expanded',String(open));
     }
     _applyTheme(theme,persist){const resolved=theme==='light'?'light':'dark',preview=document.body.classList.contains('component-preview'),themeKey=preview?'workbench-component-theme':'workbench-theme';document.documentElement.classList.toggle('theme-light',resolved==='light');document.documentElement.classList.toggle('component-dark',resolved==='dark'&&preview);document.documentElement.dataset.theme=resolved;document.body.classList.toggle('theme-light',resolved==='light');document.body.classList.toggle('component-dark',resolved==='dark'&&preview);document.body.classList.remove('theme-pending');this.querySelectorAll('[data-theme]').forEach(button=>button.classList.toggle('is-active',button.dataset.theme===resolved));if(persist)try{localStorage.setItem(themeKey,resolved);}catch(_){}}
   }
@@ -178,7 +212,9 @@
       if(this.dataset.rendered)return;
       if(this.hasAttribute('hydrate')){this.dataset.rendered='true';return;}
       this.dataset.rendered='true';
-      this.innerHTML=`<header class="workbench-task-info"><div class="workbench-task-info__left"><button class="workbench-task-info__close" type="button" aria-label="关闭"><img src="${assets}icon-close.svg" alt=""></button><div class="workbench-task-info__identity"><span>任务ID</span><b>17782</b></div><i class="workbench-task-info__divider" aria-hidden="true"></i><div class="workbench-task-info__workflow"><div class="workbench-task-info__step"><span>当前节点</span><b>内部验收</b></div><i class="workbench-task-info__divider" aria-hidden="true"></i><div class="workbench-task-info__step"><span>上一节点</span><b>供应商验收</b><em>·</em><b>Aria提交</b><em>·</em></div></div><div class="workbench-task-info__reject" title="驳回原因：High-level片段范围需要调整">驳回原因：High-level片段范围需要调整</div></div></header>`;
+      const isLongReject=this.getAttribute('variant')==='long-reject';
+      const rejectReason=isLongReject?'驳回原因：High-level片段范围需要调整，动作起止边界与任务要求不一致，请重新检查完整操作过程后修正并再次提交':'驳回原因：High-level片段范围需要调整';
+      this.innerHTML=`<header class="workbench-task-info"><div class="workbench-task-info__left"><button class="workbench-task-info__close" type="button" aria-label="关闭"><img src="${assets}icon-close.svg" alt=""></button><div class="workbench-task-info__identity"><span>任务ID</span><b>17782</b></div><i class="workbench-task-info__divider" aria-hidden="true"></i><div class="workbench-task-info__workflow"><div class="workbench-task-info__step"><span>当前节点</span><b>内部验收</b></div><i class="workbench-task-info__divider" aria-hidden="true"></i><div class="workbench-task-info__step"><span>上一节点</span><b>供应商验收</b><em>·</em><b>Aria提交</b><em>·</em></div></div><div class="workbench-task-info__reject"${isLongReject?` tabindex="0" aria-label="${rejectReason}" data-tooltip="${rejectReason}"`:` title="${rejectReason}"`}><span>${rejectReason}</span></div></div></header>`;
       const taskIdentity=this.querySelector('.workbench-task-info__identity');
       for(const [label,attribute] of [['数据处理 ID','data-processing-id'],['数据 ID','data-id']]){
         const identity=document.createElement('div');
@@ -190,47 +226,64 @@
         taskIdentity.before(identity,divider);
       }
       this.querySelector('.workbench-task-info__close').addEventListener('click',()=>this.dispatchEvent(new CustomEvent('workbench-close',{bubbles:true})));
+      if(isLongReject){
+        const trigger=this.querySelector('.workbench-task-info__reject');
+        const tooltip=document.createElement('div');
+        tooltip.className='workbench-reject-tooltip';
+        tooltip.setAttribute('popover','manual');
+        tooltip.setAttribute('role','tooltip');
+        tooltip.id=`reject-tooltip-${Math.random().toString(36).slice(2)}`;
+        tooltip.textContent=rejectReason;
+        this.append(tooltip);
+        trigger.setAttribute('aria-describedby',tooltip.id);
+        const hide=()=>{if(tooltip.matches(':popover-open'))tooltip.hidePopover();};
+        const show=()=>{
+          if(!tooltip.matches(':popover-open'))tooltip.showPopover();
+          const bounds=trigger.getBoundingClientRect();
+          const left=Math.max(8,Math.min(bounds.right-tooltip.offsetWidth,window.innerWidth-tooltip.offsetWidth-8));
+          const top=bounds.bottom+8+tooltip.offsetHeight<=window.innerHeight-8?bounds.bottom+8:Math.max(8,bounds.top-tooltip.offsetHeight-8);
+          tooltip.style.left=`${left}px`;tooltip.style.top=`${top}px`;
+        };
+        trigger.addEventListener('mouseenter',show);
+        trigger.addEventListener('mouseleave',hide);
+        trigger.addEventListener('focus',show);
+        trigger.addEventListener('blur',hide);
+        trigger.addEventListener('keydown',event=>{if(event.key==='Escape')hide();});
+      }
     }
   }
 
   class WorkbenchInstruction extends HTMLElement{
-    static get observedAttributes(){return ['mode'];}
-    attributeChangedCallback(name,oldValue,newValue){if(name==='mode'&&oldValue!==newValue&&this.dataset.rendered==='true')this.setMode(newValue);}
+    static get observedAttributes(){return ['mode','variant'];}
+    attributeChangedCallback(name,oldValue,newValue){
+      if(oldValue===newValue||this.dataset.rendered!=='true')return;
+      if(name==='mode')this.setMode(newValue);
+      if(name==='variant'&&!this.hasAttribute('hydrate'))this.render();
+    }
     connectedCallback(){
       if(this.dataset.rendered)return;
       if(this.hasAttribute('hydrate')){this.dataset.rendered='true';return;}
       this.dataset.rendered='true';
-      this.innerHTML=`<div class="workbench-instruction"><span class="workbench-instruction__mode" data-instruction-mode>标注</span><span class="workbench-instruction__anchor"><button class="workbench-instruction__trigger" type="button" aria-expanded="false">采集指令</button><span class="workbench-instruction__popover" role="tooltip" hidden><span>归位书本与笔记本：将散落的书本和笔记本整理并放回书架指定位置，保持竖立排列或按类别分层摆放，便于查找和取用</span></span></span></div>`;
-      this._trigger=this.querySelector('.workbench-instruction__trigger');
-      this._popover=this.querySelector('.workbench-instruction__popover');
-      this._trigger.addEventListener('click',event=>{event.stopPropagation();this._setOpen(this._popover.hidden);});
-      this._outsideClick=event=>{if(!this.contains(event.target)&&!this._popover.contains(event.target))this._setOpen(false);};
-      this._viewportChange=()=>{if(!this._popover.hidden)this._setOpen(true);};
-      window.addEventListener('resize',this._viewportChange);
-      window.addEventListener('scroll',this._viewportChange,true);
-      this._escapeKey=event=>{if(event.key==='Escape')this._setOpen(false);};
-      document.addEventListener('click',this._outsideClick);document.addEventListener('keydown',this._escapeKey);
+      this.render();
       this.setMode(this.getAttribute('mode')||'segments');
     }
-    disconnectedCallback(){document.removeEventListener('click',this._outsideClick);document.removeEventListener('keydown',this._escapeKey);window.removeEventListener('resize',this._viewportChange);window.removeEventListener('scroll',this._viewportChange,true);if(this._popover?.parentNode===document.body)this._setOpen(false);}
-    setMode(mode){const label=this.querySelector('[data-instruction-mode]');if(label)label.textContent=mode==='quality'?'质检视频':mode==='action'?'动作标注视频':'语义标注视频';}
-    _setOpen(open){
-      if(!this._popover)return;
-      if(open){
-        document.body.appendChild(this._popover);
-        this._popover.style.position='fixed';
-        this._popover.style.zIndex='1000';
-        const bounds=this._trigger.getBoundingClientRect();
-        this._popover.hidden=false;
-        this._popover.style.right='auto';
-        this._popover.style.left=`${Math.max(12,Math.min(bounds.right-this._popover.offsetWidth,window.innerWidth-this._popover.offsetWidth-12))}px`;
-        this._popover.style.top=`${Math.max(12,Math.min(bounds.bottom+8,window.innerHeight-this._popover.offsetHeight-12))}px`;
-      }else{
-        this._popover.hidden=true;
-        this.querySelector('.workbench-instruction__anchor').appendChild(this._popover);
-      }
-      this._trigger.setAttribute('aria-expanded',String(open));
+    render(){
+      const isLong=this.getAttribute('variant')==='long';
+      const instruction=isLong
+        ?'归位书本与笔记本：将散落在桌面、椅面和地面的书本与笔记本逐一整理，按照书本、笔记本分类后放回书架指定位置；摆放时保持书脊朝外、整体竖直，同类物品集中排列，并确保书架前方及周边没有遗漏物品，完成后将双手移出操作区域。'
+        :'归位书本与笔记本：将散落的书本和笔记本整理并放回书架指定位置，保持竖立排列或按类别分层摆放，便于查找和取用';
+      this.innerHTML=`<div class="workbench-instruction${isLong?' workbench-instruction--expandable':''}"${isLong?' aria-expanded="false"':''}><span class="workbench-instruction__inline"><b>采集指令</b><i aria-hidden="true"></i><span>${instruction}</span></span>${isLong?'<button class="workbench-instruction__expand" type="button" aria-expanded="false"><span>展开</span><i aria-hidden="true"></i></button>':''}</div>`;
+      const button=this.querySelector('.workbench-instruction__expand');
+      if(button)button.addEventListener('click',()=>{
+        const panel=this.querySelector('.workbench-instruction');
+        const expanded=button.getAttribute('aria-expanded')!=='true';
+        button.setAttribute('aria-expanded',String(expanded));
+        button.querySelector('span').textContent=expanded?'收起':'展开';
+        panel.setAttribute('aria-expanded',String(expanded));
+        panel.classList.toggle('is-expanded',expanded);
+      });
     }
+    setMode(mode){this.dataset.mode=mode==='quality'?'quality':mode==='action'?'action':'segments';this.setAttribute('aria-label',`${mode==='quality'?'质检':mode==='action'?'动作标注':'语义标注'}视频采集指令`);}
   }
 
   class WorkbenchMediaViewer extends HTMLElement{
@@ -403,6 +456,7 @@
       this.querySelector('.review-log__summary > span:last-child').textContent=`共 ${logTable.children.length} 条`;
       const taskHeader=document.querySelector('workbench-task-header');
       const information=[
+        ['任务描述','归位书本与笔记本：将散落的书本和笔记本整理并放回书架指定位置，保持竖立排列或按类别分层摆放，便于查找和取用。'],
         ['数据 ID',taskHeader?.getAttribute('data-id')||'DT202609070126'],
         ['数据处理 ID',taskHeader?.getAttribute('data-processing-id')||'DP202609070018'],
         ['采集任务 ID','CT202608030042'],
@@ -571,20 +625,68 @@
       if(this.hasAttribute('hydrate')){this.dataset.rendered='true';return;}
       this.dataset.rendered='true';
       const variant=this._normalizeVariant(this.getAttribute('variant'));
-      this.innerHTML=`<aside class="workbench-review"><div class="workbench-review__main"><workbench-segment-list-panel variant="${variant}"></workbench-segment-list-panel><workbench-annotation-list title="质检列表" data-quality-list hidden></workbench-annotation-list><workbench-quality-list title="标注列表" data-action-list hidden></workbench-quality-list><div class="workbench-quality-actions" data-quality-actions hidden><workbench-quality-conclusion></workbench-quality-conclusion><workbench-footer-actions variant="quality"></workbench-footer-actions></div><workbench-footer-actions></workbench-footer-actions></div><workbench-segment-tabs active="${variant}"></workbench-segment-tabs></aside>`;
+      this.innerHTML=`<aside class="workbench-review"><div class="workbench-review__main"><workbench-segment-list-panel variant="${variant}"></workbench-segment-list-panel><workbench-annotation-list title="质检列表" data-quality-list hidden></workbench-annotation-list><workbench-quality-list title="标注列表" data-action-list hidden></workbench-quality-list><div class="workbench-quality-actions" data-quality-actions hidden><workbench-quality-conclusion></workbench-quality-conclusion><workbench-footer-actions variant="quality"></workbench-footer-actions></div><workbench-footer-actions></workbench-footer-actions></div><div class="workbench-review__rail"><workbench-segment-tabs active="${variant}"></workbench-segment-tabs><button class="workbench-theme-switch" type="button" aria-label="切换为浅色主题" aria-pressed="false"><span class="workbench-theme-switch__moon" aria-hidden="true"></span><span class="workbench-theme-switch__sun" aria-hidden="true"></span></button></div></aside>`;
       this._panel=this.querySelector('workbench-segment-list-panel');
       this._quality=this.querySelector('[data-quality-list]');
       this._action=this.querySelector('[data-action-list]');
       this._qualityActions=this.querySelector('[data-quality-actions]');
       this._tabs=this.querySelector('workbench-segment-tabs');
       this._footer=this.querySelector('.workbench-review__main > workbench-footer-actions');
+      this._themeSwitch=this.querySelector('.workbench-theme-switch');
       this._tabs.addEventListener('review-variant-change',event=>{event.stopPropagation();this.setVariant(event.detail.variant,false);this.dispatchEvent(new CustomEvent('review-variant-change',{bubbles:true,detail:event.detail}));});
+      this._themeSwitch.addEventListener('click',()=>this._setPageTheme(!document.body.classList.contains('theme-light'),true));
+      this._syncThemeSwitch();
     }
     get variant(){return this.getAttribute('variant')||'segments';}
     set variant(value){this.setAttribute('variant',this._normalizeVariant(value));}
     _normalizeVariant(value){return value==='quality'||value==='action'||value==='log'||value==='info'?value:'segments';}
     setVariant(value,emit=true){const variant=this._normalizeVariant(value);if(this.getAttribute('variant')!==variant)this.setAttribute('variant',variant);const quality=variant==='quality',action=variant==='action';if(this._panel){this._panel.hidden=quality||action;if(!quality&&!action)this._panel.setVariant(variant,false);}if(this._quality)this._quality.hidden=!quality;if(this._action)this._action.hidden=!action;if(this._qualityActions)this._qualityActions.hidden=!quality;this._tabs?.setActive(variant,false);if(this._footer)this._footer.hidden=quality||variant==='log'||variant==='info';if(emit)this.dispatchEvent(new CustomEvent('review-variant-change',{bubbles:true,detail:{variant}}));}
+    _setPageTheme(light,persist){document.documentElement.classList.toggle('theme-light',light);document.documentElement.dataset.theme=light?'light':'dark';document.body.classList.toggle('theme-light',light);document.body.classList.remove('theme-pending');if(persist)try{localStorage.setItem('workbench-theme',light?'light':'dark');}catch(_){}this._syncThemeSwitch();document.querySelectorAll('timeline-controls').forEach(control=>control._applyTheme?.(light?'light':'dark',false));}
+    _syncThemeSwitch(){if(!this._themeSwitch)return;const light=document.body.classList.contains('theme-light');this._themeSwitch.classList.toggle('is-light',light);this._themeSwitch.setAttribute('aria-pressed',String(light));this._themeSwitch.setAttribute('aria-label',light?'切换为深色主题':'切换为浅色主题');}
     selectSegment(index,emit=true){if(this.variant==='quality')this._quality?.selectSegment(index,emit);else if(this.variant==='action')this._action?.selectSegment(index,emit);else this._panel?.selectSegment(index,emit);}
+  }
+
+  class WorkbenchConfirmDialog extends HTMLElement{
+    connectedCallback(){
+      if(this.dataset.rendered)return;
+      this.dataset.rendered='true';
+      const variant=['unqualified','reject','task-description','standards'].includes(this.getAttribute('variant'))?this.getAttribute('variant'):'submit';
+      const rejectId=`reject-reason-${Math.random().toString(36).slice(2)}`;
+      const header=title=>`<header><h2>${title}</h2><button type="button" data-dialog-action="close" aria-label="关闭">×</button></header>`;
+      const actions=(confirm='确定',single=false)=>`<footer>${single?'':`<button type="button" data-dialog-action="cancel">取消</button>`}<button type="button" data-dialog-action="confirm">${confirm}</button></footer>`;
+      const content=variant==='unqualified'
+        ?`${header('提示')}<div class="workbench-submit-dialog__body"><span class="workbench-submit-dialog__icon is-warning" aria-hidden="true">!</span><p>是否将此条数据判定为不合格数据？</p></div>${actions()}`
+        :variant==='reject'
+          ?`${header('错误原因')}<div class="workbench-submit-dialog__reject"><div><textarea id="${rejectId}" aria-label="错误原因" maxlength="500" placeholder="请输入错误原因（可选）"></textarea><span><b>0</b> / 500</span></div></div>${actions('确定驳回')}`
+          :variant==='task-description'
+            ?`${header('任务描述')}<div class="workbench-submit-dialog__task-description"><p>归位书本与笔记本：将散落的书本和笔记本整理并放回书架指定位置，保持竖立排列或按类别分层摆放，便于查找和取用。</p></div>${actions('我已了解',true)}`
+          :variant==='standards'
+            ?`${header('质检标准')}<div class="workbench-submit-dialog__standards"><section><h3><i>✓</i>失误标准</h3><ol><li>夹爪超出画面（自动化）</li><li>采集动作不规范：手部脱离夹爪（自动化）</li><li>采集动作不规范：其它身体部位辅助</li><li>画面异常：全程部分遮挡/部分时间完全遮挡</li></ol></section><section><h3><i>×</i>不合格标准</h3><ol><li>一致性检测（自动化）</li><li>改造设备（自动化）</li><li>采集时长不足（自动化）</li><li>视频损坏（自动化）</li><li>相机卡死（自动化）</li><li>画面异常：全程完全遮挡（自动化）</li><li>设备穿戴不规范（全程）（自动化）</li><li>改造设备进行采集（自动化）</li><li>头显穿戴不规范（全程）</li></ol></section></div>${actions('我已了解',true)}`
+            :`${header('提示')}<div class="workbench-submit-dialog__body"><span class="workbench-submit-dialog__icon" aria-hidden="true"></span><p>确定要提交当前标注吗？</p></div>${actions()}`;
+      this.innerHTML=`<dialog class="workbench-submit-dialog workbench-submit-dialog--${variant}" aria-label="${variant==='standards'?'质检标准':variant==='reject'?'驳回原因':variant==='task-description'?'任务描述':'确认提示'}">${content}</dialog>`;
+      this._dialog=this.querySelector('dialog');
+      if(this.hasAttribute('preview'))this._dialog.setAttribute('open','');
+      const textarea=this.querySelector('textarea'),counter=this.querySelector('.workbench-submit-dialog__reject b');
+      textarea?.addEventListener('input',()=>{counter.textContent=String(textarea.value.length);});
+      this.addEventListener('click',event=>{
+        const action=event.target.closest('[data-dialog-action]')?.dataset.dialogAction;
+        if(action==='close'||action==='cancel'){this.close();return;}
+        if(action==='confirm'){this.close();this.dispatchEvent(new CustomEvent('confirm-dialog-confirm',{bubbles:true,detail:{variant,value:textarea?.value||''}}));return;}
+        if(event.target===this._dialog&&!this.hasAttribute('preview'))this.close();
+      });
+    }
+    show(){if(!this._dialog.open)this._dialog.showModal();}
+    close(){if(this.hasAttribute('preview'))return;if(this._dialog.open)this._dialog.close();}
+  }
+
+  class WorkbenchShortcutDialog extends HTMLElement{
+    connectedCallback(){
+      if(this.dataset.rendered)return;
+      this.dataset.rendered='true';
+      const platform=this.getAttribute('platform')==='windows'?'windows':'mac';
+      const items=platform==='windows'?windowsShortcutItems:macShortcutItems;
+      this.innerHTML=`<section class="workbench-shortcut-dialog__panel" aria-label="${platform==='windows'?'Windows':'Mac'} 分割模式快捷键"><strong>分割模式快捷键</strong><div class="workbench-shortcut-dialog__list">${items.map(([name,key])=>`<div><span>${name}</span><kbd>${key}</kbd></div>`).join('')}</div></section>`;
+    }
   }
 
   class WorkbenchFooterActions extends HTMLElement{
@@ -593,10 +695,13 @@
       if(this.hasAttribute('hydrate')){this.dataset.rendered='true';return;}
       this.dataset.rendered='true';
       const quality=this.getAttribute('variant')==='quality';
-      this.innerHTML=`<footer class="workbench-footer-actions"><button type="button" data-action="submit">提交</button><button type="button" data-action="${quality?'leave':'reject'}">${quality?'暂离':'驳回'}</button><button type="button" data-action="save">保存</button></footer>`;
+      this.innerHTML=`<footer class="workbench-footer-actions"><button type="button" data-action="submit">提交</button><button type="button" data-action="${quality?'leave':'reject'}">${quality?'暂离':'驳回'}</button><button type="button" data-action="save">保存</button></footer><workbench-confirm-dialog></workbench-confirm-dialog>`;
+      this._dialog=this.querySelector('workbench-confirm-dialog');
+      this._dialog.addEventListener('confirm-dialog-confirm',event=>{event.stopPropagation();this.dispatchEvent(new CustomEvent('workbench-action',{bubbles:true,detail:{action:'submit'}}));});
       this.addEventListener('click',event=>{
         const button=event.target.closest('button[data-action]');
         if(!button)return;
+        if(button.dataset.action==='submit'){this._dialog.show();return;}
         this.dispatchEvent(new CustomEvent('workbench-action',{bubbles:true,detail:{action:button.dataset.action}}));
       });
     }
@@ -615,7 +720,48 @@
     connectedCallback(){
       if(this.dataset.rendered)return;
       this.dataset.rendered='true';
-      this.innerHTML='<section class="segmented-timeline segmented-timeline--quality"><div class="segmented-timeline__body"><timeline-range-selector variant="marked"></timeline-range-selector></div><timeline-controls standard-label="质检标准"></timeline-controls></section>';
+      this.innerHTML='<section class="segmented-timeline segmented-timeline--quality" style="--play-position:.18"><div class="segmented-timeline__body"><timeline-range-selector variant="marked"></timeline-range-selector><i class="segmented-timeline__playhead" role="slider" aria-label="播放位置" aria-valuemin="0" aria-valuemax="100" aria-valuenow="18" tabindex="0"></i></div><timeline-controls standard-label="质检标准"></timeline-controls></section>';
+      requestAnimationFrame(()=>this._connectInteractions());
+    }
+    _connectInteractions(){
+      const section=this.querySelector('.segmented-timeline');
+      const ruler=this.querySelector('timeline-range-selector');
+      const rail=ruler._rail;
+      const playhead=this.querySelector('.segmented-timeline__playhead');
+      const controls=this.querySelector('timeline-controls');
+      const snapPoints=[0,17.8,33.7,47.5,55.5,65.5,76.5,100];
+      ruler.setSnapPoints(snapPoints);
+      const playbackStart=0,playbackEnd=100;
+      let playPercent=playbackStart;
+      let dragging=false,moved=false,startX=0;
+      const setPlayPercent=(value,snap=false)=>{
+        const bounds=rail.getBoundingClientRect();
+        let percent=Math.max(0,Math.min(100,value));
+        const threshold=bounds.width?8/bounds.width*100:0;
+        const nearest=snapPoints.reduce((best,point)=>Math.abs(point-percent)<Math.abs(best-percent)?point:best,snapPoints[0]);
+        const snapped=snap&&Math.abs(nearest-percent)<=threshold;
+        if(snapped)percent=nearest;
+        playPercent=percent;
+        section.style.setProperty('--play-position',percent/100);
+        playhead.classList.toggle('is-snapped',snapped);
+        playhead.setAttribute('aria-valuenow',String(Math.round(percent)));
+        controls.setCurrentTime(percent);
+        this.dispatchEvent(new CustomEvent('playhead-change',{bubbles:true,detail:{percent}}));
+      };
+      const setPlayPosition=clientX=>{const bounds=rail.getBoundingClientRect();setPlayPercent((clientX-bounds.left)/bounds.width*100,true);};
+      const selectRange=(start,end)=>{
+        ruler.setRange(start,end,true);
+      };
+      this.querySelector('.segmented-timeline__range-fragment.is-orange')?.addEventListener('click',()=>selectRange(47.5,55.5));
+      this.querySelector('.segmented-timeline__range-fragment.is-red')?.addEventListener('click',()=>selectRange(65.5,76.5));
+      playhead.addEventListener('pointerdown',event=>{event.preventDefault();dragging=true;moved=false;startX=event.clientX;playhead.setPointerCapture(event.pointerId);playhead.classList.add('is-dragging');});
+      playhead.addEventListener('pointermove',event=>{if(!dragging)return;if(Math.abs(event.clientX-startX)>2)moved=true;setPlayPosition(event.clientX);});
+      playhead.addEventListener('pointerup',event=>{if(!dragging)return;dragging=false;playhead.classList.remove('is-dragging','is-snapped');if(playhead.hasPointerCapture(event.pointerId))playhead.releasePointerCapture(event.pointerId);});
+      playhead.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const percent=event.key==='Home'?0:event.key==='End'?100:playPercent+(event.key==='ArrowLeft'?-1:1);setPlayPercent(percent,true);});
+      let playing=false,lastFrame=0;
+      const animate=now=>{if(!playing)return;if(lastFrame)setPlayPercent(Math.min(playbackEnd,playPercent+(now-lastFrame)/900),false);lastFrame=now;if(playPercent>=playbackEnd){playing=false;controls.setPlaying(false);return;}requestAnimationFrame(animate);};
+      controls.addEventListener('play-toggle',event=>{playing=event.detail.playing;if(playing){if(playPercent<playbackStart||playPercent>=playbackEnd)setPlayPercent(playbackStart,false);lastFrame=0;requestAnimationFrame(animate);}});
+      setPlayPercent(playbackStart,false);
     }
   }
 
@@ -645,19 +791,23 @@
         }
         ruler.setSnapPoints(points);
       };
-      const syncRange=(index,emit=true)=>{
+      let playbackStart=0,playbackEnd=100;
+      const syncRange=(index,emit=true,movePlayhead=false)=>{
         syncGeometry();
         const rail=ruler._rail.getBoundingClientRect();
         const box=row.buttons[index].getBoundingClientRect();
         const start=(box.left-rail.left)/rail.width*100;
         const end=(box.right-rail.left)/rail.width*100;
+        playbackStart=start;playbackEnd=end;
         ruler.setRange(start,end,false);
+        if(movePlayhead)setPlayPercent(start,false);
         if(emit)this.dispatchEvent(new CustomEvent('track-change',{bubbles:true,detail:{index,start:ruler._start,end:ruler._end,source:'segment'}}));
       };
       this._row=row;this._syncRange=syncRange;
       syncGeometry();
-      row.addEventListener('segment-select',event=>syncRange(event.detail.index,true));
+      row.addEventListener('segment-select',event=>{syncRange(event.detail.index,true,true);controls.setPlaying(false);controls.dispatchEvent(new CustomEvent('play-toggle',{bubbles:true,detail:{playing:false}}));});
       ruler.addEventListener('range-change',event=>{
+        playbackStart=event.detail.start;playbackEnd=event.detail.end;
         const activeIndex=row.buttons.findIndex(button=>button.classList.contains('is-active'));
         const index=activeIndex<0?0:activeIndex;
         this.dispatchEvent(new CustomEvent('track-range-change',{bubbles:true,detail:{...event.detail,index}}));
@@ -683,7 +833,7 @@
       const setPlayPosition=clientX=>{const bounds=track.getBoundingClientRect();setPlayPercent((clientX-bounds.left)/bounds.width*100,true);};
       playhead.addEventListener('pointerdown',event=>{event.preventDefault();dragging=true;moved=false;startX=event.clientX;playhead.setPointerCapture(event.pointerId);playhead.classList.add('is-dragging');});
       playhead.addEventListener('pointermove',event=>{if(!dragging)return;if(Math.abs(event.clientX-startX)>2)moved=true;setPlayPosition(event.clientX);});
-      playhead.addEventListener('pointerup',event=>{if(!dragging)return;dragging=false;playhead.classList.remove('is-dragging','is-snapped');if(playhead.hasPointerCapture(event.pointerId))playhead.releasePointerCapture(event.pointerId);if(!moved)ruler.setRange(0,100,true);});
+      playhead.addEventListener('pointerup',event=>{if(!dragging)return;dragging=false;playhead.classList.remove('is-dragging','is-snapped');if(playhead.hasPointerCapture(event.pointerId))playhead.releasePointerCapture(event.pointerId);if(!moved){playbackStart=0;playbackEnd=100;ruler.setRange(0,100,true);}});
       playhead.addEventListener('keydown',event=>{
         if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
         event.preventDefault();
@@ -696,14 +846,14 @@
       playhead.setAttribute('aria-valuemax','100');
       playhead.setAttribute('aria-valuenow',String(Math.round(Number(this.getAttribute('position')||19))));
       let playing=false,lastFrame=0;
-      const animate=now=>{if(!playing)return;if(lastFrame)setPlayPercent(playPercent+(now-lastFrame)/900,false);lastFrame=now;if(playPercent>=100){playing=false;controls.setPlaying(false);return;}requestAnimationFrame(animate);};
-      controls.addEventListener('play-toggle',event=>{playing=event.detail.playing;if(playing){lastFrame=0;requestAnimationFrame(animate);}});
+      const animate=now=>{if(!playing)return;if(lastFrame)setPlayPercent(Math.min(playbackEnd,playPercent+(now-lastFrame)/900),false);lastFrame=now;if(playPercent>=playbackEnd){playing=false;controls.setPlaying(false);return;}requestAnimationFrame(animate);};
+      controls.addEventListener('play-toggle',event=>{playing=event.detail.playing;if(playing){if(playPercent<playbackStart||playPercent>=playbackEnd)setPlayPercent(playbackStart,false);lastFrame=0;requestAnimationFrame(animate);}});
       controls.setCurrentTime(playPercent);
       const resizeObserver=new ResizeObserver(()=>{syncGeometry();const activeIndex=Math.max(0,row.buttons.findIndex(button=>button.classList.contains('is-active')));syncRange(activeIndex,false);});
       resizeObserver.observe(track);
-      syncRange(0,false);
+      syncRange(0,false,true);
     }
-    selectSegment(index,emit=true){if(!this._row||!this._syncRange){requestAnimationFrame(()=>this.selectSegment(index,emit));return;}const safe=Math.max(0,Math.min(this._row.buttons.length-1,Number(index)||0));this._row.selectIndex(safe,false);this._syncRange(safe,emit);}
+    selectSegment(index,emit=true){if(!this._row||!this._syncRange){requestAnimationFrame(()=>this.selectSegment(index,emit));return;}const safe=Math.max(0,Math.min(this._row.buttons.length-1,Number(index)||0));this._row.selectIndex(safe,false);this._syncRange(safe,emit,true);}
   }
 
   class SemanticAnnotationTrack extends HTMLElement{
@@ -814,10 +964,38 @@
   if(!customElements.get('workbench-segment-list'))customElements.define('workbench-segment-list',WorkbenchSegmentList);
   if(!customElements.get('workbench-quality-conclusion'))customElements.define('workbench-quality-conclusion',WorkbenchQualityConclusion);
   if(!customElements.get('workbench-quality-track'))customElements.define('workbench-quality-track',WorkbenchQualityTrack);
+  if(!customElements.get('workbench-confirm-dialog'))customElements.define('workbench-confirm-dialog',WorkbenchConfirmDialog);
+  if(!customElements.get('workbench-shortcut-dialog'))customElements.define('workbench-shortcut-dialog',WorkbenchShortcutDialog);
   if(!customElements.get('workbench-footer-actions'))customElements.define('workbench-footer-actions',WorkbenchFooterActions);
   if(!customElements.get('segmented-track'))customElements.define('segmented-track',SegmentedTrack);
   if(!customElements.get('semantic-annotation-track'))customElements.define('semantic-annotation-track',SemanticAnnotationTrack);
   if(!customElements.get('action-annotation-track'))customElements.define('action-annotation-track',ActionAnnotationTrack);
   if(!customElements.get('workbench-form-control-states'))customElements.define('workbench-form-control-states',WorkbenchFormControlStates);
   if(!customElements.get('segment-color-palette'))customElements.define('segment-color-palette',SegmentColorPalette);
+
+  const gallery=document.querySelector('.workbench-component-preview .component-gallery');
+  if(gallery&&!document.querySelector('.component-quick-nav')){
+    const groups=[
+      {label:'任务信息',target:document.querySelector('#component-major-task')},
+      {label:'采集指令',target:document.querySelector('#component-major-instruction')},
+      {label:'媒体预览',target:document.querySelector('#component-major-media')},
+      {label:'质检标注操作',target:document.querySelector('#component-major-annotation')},
+      {label:'列表',target:document.querySelector('#component-major-list')},
+      {label:'弹窗',target:document.querySelector('#component-major-dialog')},
+      {label:'快捷键',target:document.querySelector('#component-major-shortcuts')},
+      {label:'时间轴',target:document.querySelector('#component-major-timeline')},
+      {label:'空状态',target:document.querySelector('#component-major-empty')}
+    ].filter(group=>group.target);
+    const nav=document.createElement('nav');
+    nav.className='component-quick-nav';
+    nav.setAttribute('aria-label','组件快捷导航');
+    nav.innerHTML=`<strong>快捷导航</strong><div>${groups.map((group,index)=>`<a href="#${group.target.id}"${index===0?' class="is-active"':''}>${group.label}</a>`).join('')}</div>`;
+    document.body.appendChild(nav);
+    const links=[...nav.querySelectorAll('a')];
+    links.forEach(link=>link.addEventListener('click',event=>{event.preventDefault();document.querySelector(link.getAttribute('href'))?.scrollIntoView({behavior:'smooth',block:'start'});}));
+    const syncActive=()=>{const marker=window.innerHeight*.22;let active=0;groups.forEach((group,index)=>{if(group.target.getBoundingClientRect().top<=marker)active=index;});links.forEach((link,index)=>link.classList.toggle('is-active',index===active));};
+    let frame=0;
+    window.addEventListener('scroll',()=>{if(frame)return;frame=requestAnimationFrame(()=>{frame=0;syncActive();});},{passive:true});
+    syncActive();
+  }
 })();

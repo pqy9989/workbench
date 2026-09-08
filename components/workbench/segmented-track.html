@@ -15,8 +15,8 @@
   </script>
   <link rel="stylesheet" href="../../styles.css">
   <link rel="stylesheet" href="../component-preview.css">
-  <link rel="stylesheet" href="./segmented-track.css">
-  <script src="./segmented-track.js" defer></script>
+  <link rel="stylesheet" href="./segmented-track.css?v=component-refactor-150">
+  <script src="./segmented-track.js?v=component-refactor-150" defer></script>
 </head>
 <body class="component-preview workbench-component-preview">
   <main class="component-gallery">
@@ -25,14 +25,23 @@
       <p>标注工作台相关组件</p>
       <button class="component-theme-toggle" type="button" data-component-theme aria-label="切换深浅主题" aria-pressed="false"><span></span></button>
     </header>
+    <h2 class="component-gallery__major-title" id="component-major-task">任务信息</h2>
     <section class="component-gallery__group">
       <h2>任务信息栏</h2>
-      <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed"><workbench-task-header data-processing-id="DP202609070018" data-id="DT202609070126"></workbench-task-header></div>
+      <div class="component-gallery__variants">
+        <div class="component-gallery__variant"><h3>默认</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed"><workbench-task-header data-processing-id="DP202609070018" data-id="DT202609070126"></workbench-task-header></div></div>
+        <div class="component-gallery__variant"><h3>长驳回原因</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed"><workbench-task-header variant="long-reject" data-processing-id="DP202609070018" data-id="DT202609070126"></workbench-task-header></div></div>
+      </div>
     </section>
+    <h2 class="component-gallery__major-title" id="component-major-instruction">采集指令</h2>
     <section class="component-gallery__group">
       <h2>采集指令栏</h2>
-      <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed"><workbench-instruction></workbench-instruction></div>
+      <div class="component-gallery__variants">
+        <div class="component-gallery__variant"><h3>默认</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed"><workbench-instruction></workbench-instruction></div></div>
+        <div class="component-gallery__variant"><h3>长指令</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed"><workbench-instruction variant="long"></workbench-instruction></div></div>
+      </div>
     </section>
+    <h2 class="component-gallery__major-title" id="component-major-media">媒体预览</h2>
     <section class="component-gallery__group">
       <h2>媒体预览</h2>
       <div class="component-gallery__variants">
@@ -46,6 +55,7 @@
         </div>
       </div>
     </section>
+    <h2 class="component-gallery__major-title" id="component-major-annotation">质检标注操作</h2>
     <section class="component-gallery__group">
       <h2>表单控件</h2>
       <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed">
@@ -69,6 +79,7 @@
         </div>
       </div>
     </section>
+    <h2 class="component-gallery__major-title" id="component-major-list">列表</h2>
     <section class="component-gallery__group">
       <h2>片段列表区</h2>
       <div class="component-gallery__variants">
@@ -91,6 +102,27 @@
       <h2>底部操作栏</h2>
       <div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--review-panel"><workbench-footer-actions></workbench-footer-actions></div>
     </section>
+    <h2 class="component-gallery__major-title" id="component-major-dialog">弹窗</h2>
+    <section class="component-gallery__group">
+      <h2>弹窗</h2>
+      <div class="component-gallery__variants">
+        <div class="component-gallery__variant"><h3>提交确认</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--dialog"><workbench-confirm-dialog preview></workbench-confirm-dialog></div></div>
+        <div class="component-gallery__variant"><h3>不合格确认</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--dialog"><workbench-confirm-dialog variant="unqualified" preview></workbench-confirm-dialog></div></div>
+        <div class="component-gallery__variant"><h3>驳回原因</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--dialog"><workbench-confirm-dialog variant="reject" preview></workbench-confirm-dialog></div></div>
+        <div class="component-gallery__variant"><h3>任务描述</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--dialog"><workbench-confirm-dialog variant="task-description" preview></workbench-confirm-dialog></div></div>
+        <div class="component-gallery__variant"><h3>质检标准</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--dialog"><workbench-confirm-dialog variant="standards" preview></workbench-confirm-dialog></div></div>
+      </div>
+    </section>
+    <h2 class="component-gallery__major-title" id="component-major-shortcuts">快捷键</h2>
+    <section class="component-gallery__group">
+      <h2>快捷键弹窗</h2>
+      <div class="component-gallery__variants component-gallery__variants--shortcuts">
+        <div class="component-gallery__variant"><h3>Mac</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--shortcut"><workbench-shortcut-dialog platform="mac"></workbench-shortcut-dialog></div></div>
+        <div class="component-gallery__variant"><h3>Windows</h3><div class="component-gallery__stage component-gallery__stage--track component-gallery__stage--unframed component-gallery__stage--shortcut"><workbench-shortcut-dialog platform="windows"></workbench-shortcut-dialog></div></div>
+      </div>
+      <p>备注：window快捷键无图标</p>
+    </section>
+    <h2 class="component-gallery__major-title" id="component-major-timeline">时间轴</h2>
     <section class="component-gallery__group">
       <h2>时间刻度</h2>
       <div class="component-gallery__stage component-gallery__stage--track"><div class="segmented-timeline segmented-timeline--sample"><div class="segmented-timeline__body"><timeline-time-scale></timeline-time-scale></div></div></div>
@@ -129,8 +161,26 @@
       <div class="component-gallery__stage component-gallery__stage--track">
         <workbench-quality-track></workbench-quality-track>
       </div>
+      <div class="timeline-interaction-notes" aria-label="时间轴交互逻辑">
+        <h3>时间轴交互逻辑</h3>
+        <ul>
+          <li><strong>语义标注与动作标注：</strong>点击任意彩色片段后，播放针定位到该片段起点并保持暂停，上方范围轨道同步显示该片段；点击播放后仅在当前片段内播放。</li>
+          <li><strong>整段播放：</strong>单击蓝色播放针可将语义标注或动作标注切换为整轴范围，再点击播放按钮后从当前位置在整条时间轴内播放。</li>
+          <li><strong>质检：</strong>播放范围始终为完整视频，从头播放到尾；橙色、红色区段只表示质检问题范围，不改变播放范围，也不会触发整条蓝色填充。</li>
+          <li><strong>通用操作：</strong>播放针支持任意拖动，并在接近片段或范围边界时自动吸附；播放按钮可随时切换播放与暂停，播放到当前范围末尾后自动停止。</li>
+        </ul>
+      </div>
       <h3 class="segment-color-palette__title">连续色值</h3>
       <segment-color-palette count="50"></segment-color-palette>
+    </section>
+    <h2 class="component-gallery__major-title" id="component-major-empty">空状态</h2>
+    <section class="component-gallery__group">
+      <h2>空状态</h2>
+      <div class="component-gallery__variants">
+        <div class="component-gallery__variant"><h3>媒体与时间轴区 · 无媒体信息</h3><workbench-empty-state variant="media"></workbench-empty-state></div>
+        <div class="component-gallery__variant"><h3>片段编辑区 · 无选中片段</h3><workbench-empty-state variant="editor"></workbench-empty-state></div>
+        <div class="component-gallery__variant"><h3>列表区 · 无列表信息</h3><div class="empty-state-list-preview"><div class="empty-state-list-preview__header">标注列表</div><workbench-empty-state variant="list"></workbench-empty-state></div></div>
+      </div>
     </section>
   </main>
   <script src="../component-preview.js"></script>
