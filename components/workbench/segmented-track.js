@@ -811,7 +811,6 @@
         if(['start','end','fill'].includes(event.detail.dragMode)){
           controls.setPlaying(false);
           controls.dispatchEvent(new CustomEvent('play-toggle',{bubbles:true,detail:{playing:false}}));
-          setPlayPercent(event.detail.start,false);
         }
         const activeIndex=row.buttons.findIndex(button=>button.classList.contains('is-active'));
         const index=activeIndex<0?0:activeIndex;

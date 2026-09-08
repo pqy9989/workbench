@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="../../styles.css">
   <link rel="stylesheet" href="../component-preview.css">
   <link rel="stylesheet" href="./segmented-track.css?v=component-refactor-150">
-  <script src="./segmented-track.js?v=component-refactor-160" defer></script>
+  <script src="./segmented-track.js?v=component-refactor-163" defer></script>
 </head>
 <body class="component-preview workbench-component-preview">
   <main class="component-gallery">
@@ -165,7 +165,7 @@
         <h3>时间轴交互逻辑</h3>
         <ul>
           <li><strong>选择片段（语义／动作标注）：</strong>点击彩色片段，针回到片段起点并暂停，上方黄绿色区域同步选中该范围。</li>
-          <li><strong>调整范围：</strong>拖动黄色边界调整范围，拖动黄绿色区域平移范围，可跨越多个彩色片段；播放针同步移到新范围起点，并保持暂停。</li>
+          <li><strong>调整范围：</strong>调整左右边界或平移整个黄绿色区域时，针的位置均保持不变，并暂停播放。范围可跨越多个彩色片段。</li>
           <li><strong>定位：</strong>点击第一条轨道，针跳到点击处并暂停；拖动针也会暂停，松手后保持暂停，并保留边界吸附。点击定位或拖动针均不改变选中范围。</li>
           <li><strong>播放／暂停：</strong>点击按钮切换状态。针在黄绿色范围内时，从当前位置播到右边界暂停；再次播放从该节点继续，不回到开头。</li>
           <li><strong>范围外续播：</strong>针在范围外或右边界时，点击播放继续到时间轴末尾；黄绿色范围保持不变。</li>
