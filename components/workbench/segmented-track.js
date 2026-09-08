@@ -808,6 +808,11 @@
       row.addEventListener('segment-select',event=>{syncRange(event.detail.index,true,true);controls.setPlaying(false);controls.dispatchEvent(new CustomEvent('play-toggle',{bubbles:true,detail:{playing:false}}));});
       ruler.addEventListener('range-change',event=>{
         playbackStart=event.detail.start;playbackEnd=event.detail.end;
+        if(['start','end','fill'].includes(event.detail.dragMode)){
+          controls.setPlaying(false);
+          controls.dispatchEvent(new CustomEvent('play-toggle',{bubbles:true,detail:{playing:false}}));
+          setPlayPercent(event.detail.start,false);
+        }
         const activeIndex=row.buttons.findIndex(button=>button.classList.contains('is-active'));
         const index=activeIndex<0?0:activeIndex;
         this.dispatchEvent(new CustomEvent('track-range-change',{bubbles:true,detail:{...event.detail,index}}));
@@ -831,9 +836,25 @@
         this.dispatchEvent(new CustomEvent('playhead-change',{bubbles:true,detail:{percent}}));
       };
       const setPlayPosition=clientX=>{const bounds=track.getBoundingClientRect();setPlayPercent((clientX-bounds.left)/bounds.width*100,true);};
-      playhead.addEventListener('pointerdown',event=>{event.preventDefault();dragging=true;moved=false;startX=event.clientX;playhead.setPointerCapture(event.pointerId);playhead.classList.add('is-dragging');});
-      playhead.addEventListener('pointermove',event=>{if(!dragging)return;if(Math.abs(event.clientX-startX)>2)moved=true;setPlayPosition(event.clientX);});
-      playhead.addEventListener('pointerup',event=>{if(!dragging)return;dragging=false;playhead.classList.remove('is-dragging','is-snapped');if(playhead.hasPointerCapture(event.pointerId))playhead.releasePointerCapture(event.pointerId);if(!moved){playbackStart=0;playbackEnd=100;ruler.setRange(0,100,true);}});
+      let railClick=null;
+      ruler._rail.addEventListener('pointerdown',event=>{
+        railClick=event.button===0&&!event.target.closest('.segmented-timeline__range-handle')?{id:event.pointerId,x:event.clientX,y:event.clientY,moved:false}:null;
+      },true);
+      ruler._rail.addEventListener('pointermove',event=>{
+        if(railClick&&event.pointerId===railClick.id&&Math.hypot(event.clientX-railClick.x,event.clientY-railClick.y)>3)railClick.moved=true;
+      },true);
+      ruler._rail.addEventListener('pointerup',event=>{
+        if(railClick&&event.pointerId===railClick.id&&!railClick.moved){const bounds=ruler._rail.getBoundingClientRect();if(bounds.width){controls.setPlaying(false);controls.dispatchEvent(new CustomEvent('play-toggle',{bubbles:true,detail:{playing:false}}));setPlayPercent((event.clientX-bounds.left)/bounds.width*100,false);}}
+        railClick=null;
+      },true);
+      ruler._rail.addEventListener('pointercancel',()=>{railClick=null;});
+      playhead.addEventListener('pointerdown',event=>{event.preventDefault();controls.setPlaying(false);controls.dispatchEvent(new CustomEvent('play-toggle',{bubbles:true,detail:{playing:false}}));dragging=true;moved=false;startX=event.clientX;playhead.setPointerCapture(event.pointerId);playhead.classList.add('is-dragging');});
+      playhead.addEventListener('pointermove',event=>{
+        if(!dragging)return;
+        if(Math.abs(event.clientX-startX)>2)moved=true;
+        setPlayPosition(event.clientX);
+      });
+      playhead.addEventListener('pointerup',event=>{if(!dragging)return;dragging=false;playhead.classList.remove('is-dragging','is-snapped');if(playhead.hasPointerCapture(event.pointerId))playhead.releasePointerCapture(event.pointerId);});
       playhead.addEventListener('keydown',event=>{
         if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
         event.preventDefault();
@@ -845,11 +866,11 @@
       playhead.setAttribute('aria-valuemin','0');
       playhead.setAttribute('aria-valuemax','100');
       playhead.setAttribute('aria-valuenow',String(Math.round(Number(this.getAttribute('position')||19))));
-      let playing=false,lastFrame=0;
-      const animate=now=>{if(!playing)return;if(lastFrame)setPlayPercent(Math.min(playbackEnd,playPercent+(now-lastFrame)/900),false);lastFrame=now;if(playPercent>=playbackEnd){playing=false;controls.setPlaying(false);return;}requestAnimationFrame(animate);};
-      controls.addEventListener('play-toggle',event=>{playing=event.detail.playing;if(playing){if(playPercent<playbackStart||playPercent>=playbackEnd)setPlayPercent(playbackStart,false);lastFrame=0;requestAnimationFrame(animate);}});
+      let playing=false,lastFrame=0,activePlaybackEnd=100;
+      const animate=now=>{if(!playing)return;if(lastFrame)setPlayPercent(Math.min(activePlaybackEnd,playPercent+(now-lastFrame)/900),false);lastFrame=now;if(playPercent>=activePlaybackEnd){playing=false;controls.setPlaying(false);return;}requestAnimationFrame(animate);};
+      controls.addEventListener('play-toggle',event=>{playing=event.detail.playing;if(playing){const rangeStart=ruler._start,rangeEnd=ruler._end;activePlaybackEnd=playPercent>=rangeStart&&playPercent<rangeEnd?rangeEnd:100;lastFrame=0;requestAnimationFrame(animate);}});
       controls.setCurrentTime(playPercent);
-      const resizeObserver=new ResizeObserver(()=>{syncGeometry();const activeIndex=Math.max(0,row.buttons.findIndex(button=>button.classList.contains('is-active')));syncRange(activeIndex,false);});
+      const resizeObserver=new ResizeObserver(()=>{syncGeometry();});
       resizeObserver.observe(track);
       syncRange(0,false,true);
     }

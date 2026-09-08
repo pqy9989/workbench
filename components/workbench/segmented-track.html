@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="../../styles.css">
   <link rel="stylesheet" href="../component-preview.css">
   <link rel="stylesheet" href="./segmented-track.css?v=component-refactor-150">
-  <script src="./segmented-track.js?v=component-refactor-150" defer></script>
+  <script src="./segmented-track.js?v=component-refactor-160" defer></script>
 </head>
 <body class="component-preview workbench-component-preview">
   <main class="component-gallery">
@@ -164,10 +164,12 @@
       <div class="timeline-interaction-notes" aria-label="时间轴交互逻辑">
         <h3>时间轴交互逻辑</h3>
         <ul>
-          <li><strong>语义标注与动作标注：</strong>点击任意彩色片段后，播放针定位到该片段起点并保持暂停，上方范围轨道同步显示该片段；点击播放后仅在当前片段内播放。</li>
-          <li><strong>整段播放：</strong>单击蓝色播放针可将语义标注或动作标注切换为整轴范围，再点击播放按钮后从当前位置在整条时间轴内播放。</li>
-          <li><strong>质检：</strong>播放范围始终为完整视频，从头播放到尾；橙色、红色区段只表示质检问题范围，不改变播放范围，也不会触发整条蓝色填充。</li>
-          <li><strong>通用操作：</strong>播放针支持任意拖动，并在接近片段或范围边界时自动吸附；播放按钮可随时切换播放与暂停，播放到当前范围末尾后自动停止。</li>
+          <li><strong>选择片段（语义／动作标注）：</strong>点击彩色片段，针回到片段起点并暂停，上方黄绿色区域同步选中该范围。</li>
+          <li><strong>调整范围：</strong>拖动黄色边界调整范围，拖动黄绿色区域平移范围，可跨越多个彩色片段；播放针同步移到新范围起点，并保持暂停。</li>
+          <li><strong>定位：</strong>点击第一条轨道，针跳到点击处并暂停；拖动针也会暂停，松手后保持暂停，并保留边界吸附。点击定位或拖动针均不改变选中范围。</li>
+          <li><strong>播放／暂停：</strong>点击按钮切换状态。针在黄绿色范围内时，从当前位置播到右边界暂停；再次播放从该节点继续，不回到开头。</li>
+          <li><strong>范围外续播：</strong>针在范围外或右边界时，点击播放继续到时间轴末尾；黄绿色范围保持不变。</li>
+          <li><strong>质检：</strong>按完整时间轴播放，到末尾暂停。橙色、红色区段仅标记问题，不限制播放，也不产生全条高亮。</li>
         </ul>
       </div>
       <h3 class="segment-color-palette__title">连续色值</h3>
