@@ -248,6 +248,10 @@ workbench-segment-tabs{display:block;width:28px;max-width:100%;height:auto}
 .workbench-review__rail{width:28px;min-width:28px;display:flex;flex:0 0 28px;flex-direction:column;border-radius:0 12px 12px 0;background:var(--review-panel);overflow:hidden}
 .workbench-review__rail>workbench-segment-tabs{min-height:0;display:block;flex:1 1 auto}
 .workbench-review__rail>workbench-segment-tabs .workbench-review__tabs{height:100%}
+.workbench-list-resize{position:absolute;left:0;top:12px;bottom:12px;width:8px;z-index:20;cursor:ew-resize;touch-action:none;user-select:none;border-radius:4px}
+.workbench-list-resize::after{content:'';position:absolute;left:0;top:0;bottom:0;width:1px;background:transparent}
+.workbench-list-resize:hover::after,.workbench-list-resize:focus-visible::after,.workbench-list-resize.is-dragging::after{background:#23c1d2}
+.workbench-list-resize:focus-visible{outline:none}
 .workbench-review{position:relative;width:408px;max-width:100%;height:650px;display:flex;align-items:stretch;border:.5px solid var(--review-line);border-radius:12px;box-shadow:none;color:var(--review-text);overflow:hidden;box-sizing:border-box}
 .workbench-review__main{width:380px;min-width:0;height:650px;display:flex;flex:1 1 auto;flex-direction:column}
 .workbench-review__main>workbench-segment-list-panel{width:100%;min-height:0;flex:1 1 auto;height:auto}

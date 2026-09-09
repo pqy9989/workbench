@@ -4,7 +4,7 @@
   class ProcessActions extends HTMLElement {
     connectedCallback() {
       if (this.querySelector('.process-actions')) return;
-      const actions = [['preview','预览','preview-icon.svg'],['functions','功能','function-icon.svg'],['publish','发布','publish-icon.svg'],['history','历史','history-icon.svg']];
+      const actions = [['parameters','流程参数','parameters-icon.svg'],['save','保存','save-icon.svg'],['publish','发布','publish-icon.svg'],['history','历史','history-icon.svg']];
       this.innerHTML = `<div class="process-actions" role="group" aria-label="流程操作">${actions.map(([action,label,icon]) => `<button type="button" class="process-actions__button${action==='publish'?' process-actions__button--primary':''}${action==='history'?' process-actions__button--icon':''}" data-process-action="${action}" aria-label="${label}" title="${label}"><img src="${new URL(icon,assets)}" alt="">${action==='history'?'':label}</button>`).join('')}</div>`;
       this.querySelectorAll('button').forEach(button => button.addEventListener('click', () => {
         this.dispatchEvent(new CustomEvent('process-action', {bubbles:true, detail:{action:button.dataset.processAction}}));

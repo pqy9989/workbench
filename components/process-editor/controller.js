@@ -2,7 +2,7 @@
     const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
     const loopMembers = (root) => [...root.querySelectorAll('.graph-node')].filter(node =>
-      !node.dataset.node?.startsWith('added-')
+      (root.loopNodeIds ? root.loopNodeIds.has(node.dataset.node) : !node.dataset.node?.startsWith('added-'))
       && !node.classList.contains('placement-ghost')
       && !['start', 'wait', 'end'].includes(node.dataset.node));
     function updateLoopBounds(root) {
@@ -43,6 +43,20 @@
     ];
 
     function renderGraphEdges(root) {
+      root.alignWorkflowPorts?.();
+      root.querySelectorAll('.graph-node').forEach(node=>{
+        const ports=node.querySelectorAll(':scope > .port');
+        node.querySelectorAll('.node-hover-actions [data-port-index]').forEach(button=>{
+          const port=ports[Number(button.dataset.portIndex)];
+          if(!port)return;
+          button.style.top=`${port.offsetTop+port.offsetHeight/2}px`;
+          button.style.left=`${port.offsetLeft+port.offsetWidth/2}px`;
+          button.style.right='auto';
+          button.style.transform='translate(-50%, -50%)';
+        });
+      });
+      root.querySelectorAll('.graph-node').forEach(node=>node.classList.toggle('flow-hidden',(root.hiddenFlows||[]).includes(node.dataset.flowId||'main')));
+      root.querySelectorAll('.loop-box').forEach(box=>box.classList.toggle('flow-hidden',(root.hiddenFlows||[]).includes(box.dataset.flowId||'main')));
       updateLoopBounds(root);
       const layer = root.querySelector('.edge-layer');
       if (!layer) return;
@@ -51,7 +65,7 @@
       const portPoint = (nodeName, portIndex) => {
         const node = root.querySelector(`.graph-node[data-node="${nodeName}"]`);
         const port = node?.querySelectorAll('.port')[portIndex];
-        if (!node || !port) return null;
+        if (!node || !port || node.classList.contains('flow-hidden')) return null;
         const rect = port.getBoundingClientRect();
         const sceneRect = node.closest('.scene').getBoundingClientRect();
         const scale = Number(node.closest('.canvas-stage').dataset.zoom || 1);
@@ -61,7 +75,9 @@
         };
       };
 
+      let currentConnection;
       const appendPath = (d, withArrow = true) => {
+        const insertionConnection=[...currentConnection];
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttribute('class', withArrow ? 'edge' : 'edge edge--branch');
         path.setAttribute('d', d);
@@ -83,6 +99,7 @@
         group.addEventListener('pointerdown', event => event.stopPropagation());
         add.addEventListener('click', event => {
           event.stopPropagation();
+          root.insertionConnection=insertionConnection;
           root.querySelector('[data-action="add"]')?.dispatchEvent(new CustomEvent('click', {
             detail: { anchor: add.getBoundingClientRect() }
           }));
@@ -91,16 +108,29 @@
       };
 
       // Route each connection independently so moving a node backwards remains valid.
-      const connections = root.querySelector('process-flow-canvas[variant="basic"]')
+      const connections = root.baseConnections ? [...root.baseConnections] : root.querySelector('process-flow-canvas[variant="basic"]')
         ? [['start', 0, 'split', 0], ['split', 1, 'sample', 0], ['sample', 1, 'review', 0], ['review', 1, 'accept', 0], ['accept', 1, 'condition', 0], ['condition', 1, 'internal', 0], ['internal', 1, 'end', 0], ['condition', 2, 'end', 0]] : [...graphConnections];
       connections.push(...(root.customConnections || []).filter(([source,,target]) =>
         root.querySelector(`[data-node="${source}"]`) && root.querySelector(`[data-node="${target}"]`)));
+      if(root.querySelector('process-flow-canvas[variant="initial"]'))connections.unshift(['start',0,'end',0]);
+      root.layoutConnections=connections.filter(item=>!(root.removedConnections||[]).some(removed=>JSON.stringify(item)===JSON.stringify(removed)));
       connections.forEach(([source, sourcePort, target, targetPort]) => {
+        currentConnection=[source,sourcePort,target,targetPort];
+        if((root.removedConnections||[]).some(item=>JSON.stringify(item)===JSON.stringify(currentConnection)))return;
         const from = portPoint(source, sourcePort), to = portPoint(target, targetPort);
         if (!from || !to) return;
         // Leave a small gap outside both ports (including the arrow tip).
         from.x += 5;
         to.x -= 6;
+        if (root.routeWorkflowEdge) {
+          appendPath(root.routeWorkflowEdge(from, to));
+          return;
+        }
+        if (root.loopNodeIds && source === 'continue' && target === 'next') {
+          const y = Math.min(...loopMembers(root).map(node => node.offsetTop)) - 12;
+          appendPath(`M ${from.x} ${from.y} H ${from.x+20} V ${y} H ${to.x-16} V ${to.y} H ${to.x}`);
+          return;
+        }
         if (source === 'condition' && sourcePort === 2) {
           const bottom = Math.max(from.y, to.y) + 85;
           const left = from.x + 24;
@@ -145,6 +175,13 @@
           (source === node.dataset.node || target === node.dataset.node) &&
           root.querySelector(`.graph-node[data-node="${source}"]`) && root.querySelector(`.graph-node[data-node="${target}"]`));
         node.classList.toggle('has-connections', connected);
+        node.querySelectorAll('.port').forEach((port,index)=>{
+          if(!port.style.right)return;
+          const used=root.layoutConnections.some(([source,sourcePort,target,targetPort])=>
+            (source===node.dataset.node&&sourcePort===index || target===node.dataset.node&&targetPort===index) &&
+            root.querySelector(`.graph-node[data-node="${source}"]`) && root.querySelector(`.graph-node[data-node="${target}"]`));
+          port.style.visibility=used?'':'hidden';
+        });
       });
       // SVG paints in DOM order: keep all interactive plus buttons above edges.
       layer.querySelectorAll('.edge-interaction').forEach(group => layer.append(group));
@@ -197,6 +234,7 @@
     }
 
     function initializeEditor(root) {
+      root.addEventListener('flow-visibility-change',event=>{root.hiddenFlows=event.detail.hidden;renderGraphEdges(root);});
       const canvas = root.querySelector('.canvas-stage');
       const zoomText = root.querySelector('.zoom-text');
       const zoomMinus = root.querySelector('[data-action="zoom-out"]');
@@ -211,6 +249,13 @@
 
       if (!canvas) return;
 
+      document.addEventListener('pointerdown', event => {
+        if (event.button !== 0 || event.target.closest('process-node-properties, .right-panel')) return;
+        root.querySelectorAll('process-node-properties .right-panel').forEach(panel => {
+          panel.style.display = 'none';
+        });
+      }, true);
+
       requestAnimationFrame(() => renderGraphEdges(root));
 
       let toastTimer;
@@ -223,6 +268,7 @@
       };
 
       const snapshot = () => ({
+        removedConnections:(root.removedConnections||[]).map(item=>[...item]),
         connections: (root.customConnections || []).map(connection => [...connection]),
         nodes: [...root.querySelectorAll('.graph-node:not(.placement-ghost)')].map(node => ({id: node.dataset.node, x: node.offsetLeft, y: node.offsetTop, html: node.outerHTML})),
       });
@@ -236,6 +282,7 @@
         updateHistoryButtons();
       };
       const restore = (state) => {
+        root.removedConnections=(state.removedConnections||[]).map(item=>[...item]);
         root.customConnections = (state.connections || []).map(connection => [...connection]);
         root.querySelectorAll('.graph-node').forEach(node => { if (!state.nodes.some(saved => saved.id === node.dataset.node)) node.remove(); });
         state.nodes.forEach(saved => {
@@ -249,12 +296,42 @@
         if (undoBtn) undoBtn.disabled = history.past.length < 2;
         if (redoBtn) redoBtn.disabled = history.future.length === 0;
       };
+      root.querySelector('[data-action="arrange"]')?.addEventListener('click',()=>{
+        if(root.arrangeWorkflow){root.arrangeWorkflow();renderGraphEdges(root);fitCanvas(canvas,zoomText);record();return;}
+        const nodes=[...canvas.querySelectorAll('.graph-node:not(.placement-ghost)')];
+        if(!nodes.length)return;
+        const byId=new Map(nodes.map(node=>[node.dataset.node,node]));
+        const outgoing=new Map(nodes.map(node=>[node.dataset.node,new Set()]));
+        const indegree=new Map(nodes.map(node=>[node.dataset.node,0]));
+        for(const [from,,to] of root.layoutConnections||[]){
+          if(from===to||!byId.has(from)||!byId.has(to)||outgoing.get(from).has(to))continue;
+          outgoing.get(from).add(to);indegree.set(to,indegree.get(to)+1);
+        }
+        const ranks=new Map(nodes.map(node=>[node.dataset.node,0]));
+        const queue=[...indegree].filter(([,degree])=>!degree).map(([id])=>id),visited=new Set();
+        while(queue.length){const id=queue.shift();visited.add(id);for(const next of outgoing.get(id)){ranks.set(next,Math.max(ranks.get(next),ranks.get(id)+1));indegree.set(next,indegree.get(next)-1);if(!indegree.get(next))queue.push(next);}}
+        // Keep cyclic nodes together rather than iterating indefinitely.
+        const cycleRank=Math.max(...ranks.values())+1;
+        nodes.forEach(node=>{if(!visited.has(node.dataset.node))ranks.set(node.dataset.node,cycleRank);});
+        const columns=new Map();
+        nodes.forEach(node=>{const rank=ranks.get(node.dataset.node);if(!columns.has(rank))columns.set(rank,[]);columns.get(rank).push(node);});
+        const left=Math.min(...nodes.map(node=>node.offsetLeft)),top=Math.min(...nodes.map(node=>node.offsetTop));
+        let x=left;
+        [...columns].sort(([a],[b])=>a-b).forEach(([,items])=>{
+          items.sort((a,b)=>a.offsetTop-b.offsetTop);let y=top;
+          items.forEach(node=>{node.style.left=`${x}px`;node.style.top=`${y}px`;y+=node.offsetHeight+40;});
+          x+=Math.max(...items.map(node=>node.offsetWidth))+62;
+        });
+        renderGraphEdges(root);
+        fitCanvas(canvas, zoomText);
+        record();
+      });
 
       canvas.dataset.zoom = '0.7';
       canvas.dataset.panX = '30';
       canvas.dataset.panY = '260';
       updateCanvasTransform(canvas, zoomText);
-      fitCanvas(canvas, zoomText, 1);
+      fitCanvas(canvas, zoomText, root.querySelector('process-flow-canvas[variant="current"]') ? undefined : 1);
       history.past.push(snapshot());
       updateHistoryButtons();
 
@@ -264,11 +341,14 @@
         startY: 0,
         startPanX: 0,
         startPanY: 0,
-        handMode: true,
+        handMode: false,
         spaceMode: false,
       };
 
-      const isInteractiveTarget = (target) => Boolean(target.closest('.tool-btn, .zoom-btn, .graph-node, button, a'));
+      handBtn?.classList.remove('active');
+      canvas.style.cursor = 'default';
+      if(handBtn){handBtn.title='按住空格或鼠标中键拖动画布';handBtn.dataset.tooltip=handBtn.title;}
+      const isInteractiveTarget = (target) => Boolean(target.closest('.tool-btn, .zoom-btn, button, a, input, textarea, select, .right-panel'));
 
       let nodeDrag = null;
       const clearAlignmentGuides = () => canvas.querySelectorAll('.alignment-guide').forEach(line => line.remove());
@@ -331,6 +411,22 @@
       });
       const finishNodeDrag = event => {
         if (!nodeDrag || event.pointerId !== nodeDrag.pointerId) return;
+        if(event.type==='pointerup' && nodeDrag.targets.length===1 && Math.hypot(event.clientX-nodeDrag.x,event.clientY-nodeDrag.y)<5){
+          const node=nodeDrag.targets[0].node;
+          let properties=root.querySelector('process-node-properties');
+          if(!properties){
+            properties=document.createElement('process-node-properties');properties.setAttribute('variant','basic');
+            canvas.append(properties);
+            Object.assign(properties.querySelector('.right-panel').style,{position:'absolute',right:'0',top:'0',bottom:'0',zIndex:'30',maxWidth:'90%'});
+          }
+          const panel=properties.querySelector('.right-panel');
+          if(panel){panel.hidden=false;panel.style.display='';}
+          const title=node.querySelector('.graph-title')?.textContent.trim()||'节点';
+          const heading=properties.querySelector('h2');if(heading)heading.textContent=title;
+          for(const [name,value] of [['nodeName',title],['nodeId',node.dataset.node],['description',node.querySelector('.graph-sub')?.textContent.trim()||title]]){
+            const field=properties.querySelector(`[name="${name}"]`);if(field)field.value=value;
+          }
+        }
         nodeDrag=null;
         clearAlignmentGuides();
         record();
@@ -340,9 +436,9 @@
       canvas.addEventListener('pointercancel', finishNodeDrag);
 
       canvas.addEventListener('pointerdown', (event) => {
-        if (event.button !== 0) return;
+        if (!(event.button === 1 || (event.button === 0 && state.spaceMode))) return;
         if (isInteractiveTarget(event.target)) return;
-        if (!state.handMode && !state.spaceMode) return;
+        event.preventDefault();
         state.dragging = true;
         state.startX = event.clientX;
         state.startY = event.clientY;
@@ -372,6 +468,7 @@
 
       canvas.addEventListener('pointerup', endDrag);
       canvas.addEventListener('pointercancel', endDrag);
+      canvas.addEventListener('auxclick',event=>{if(event.button===1)event.preventDefault();});
       canvas.addEventListener('pointerleave', endDrag);
 
       const isTypingTarget = (target) => target instanceof HTMLElement
@@ -418,11 +515,13 @@
         if (event.code !== 'Space') return;
         state.spaceMode = false;
         canvas.classList.remove('is-space-panning');
+        endDrag();
       });
 
       window.addEventListener('blur', () => {
         state.spaceMode = false;
         canvas.classList.remove('is-space-panning');
+        endDrag();
       });
 
       canvas.addEventListener('wheel', (event) => {
@@ -459,10 +558,7 @@
 
       handBtn?.addEventListener('click', (event) => {
         event.preventDefault();
-        state.handMode = !state.handMode;
-        handBtn.classList.toggle('active', state.handMode);
-        canvas.style.cursor = state.handMode ? 'grab' : 'default';
-        notify(state.handMode ? '已启用拖拽平移' : '已切换选择模式');
+        notify('按住空格 + 左键，或按住鼠标中键拖动画布');
       });
       selectBtn?.addEventListener('click', (event) => {
         event.preventDefault();
@@ -556,6 +652,10 @@
           if (actions.querySelector(`.node-add-${side}`)) continue;
           const button = document.createElement('button'); button.type='button';
           button.className=`node-add-${side}`;
+          const port=document.createElement('span');port.className='port';
+          port.style[side==='before'?'left':'right']='-4px';port.style.top='calc(50% - 3.5px)';
+          node.append(port);
+          button.dataset.portIndex=[...node.querySelectorAll(':scope > .port')].indexOf(port);
           button.setAttribute('aria-label',side==='before'?'添加前置节点':'添加后置节点');
           button.style.top='50%';
           button.style.left=side==='before'?'-9px':`${node.offsetWidth-9}px`;
@@ -589,6 +689,28 @@
           pendingNode.querySelector('.port[style*="left"]')?.remove();
         }
         canvas.querySelector('.scene').append(pendingNode);
+        if(root.insertionConnection){
+          const connection=root.insertionConnection;root.insertionConnection=null;
+          const [sourceId,sourcePort,targetId,targetPort]=connection;
+          const source=canvas.querySelector(`[data-node="${sourceId}"]`),target=canvas.querySelector(`[data-node="${targetId}"]`);
+          if(source&&target){
+            const node=pendingNode;
+            // Insertion requires both an input and an output, including terminal templates.
+            if(!node.querySelector('.port[style*="left"]'))node.insertAdjacentHTML('beforeend','<span class="port" style="left:-4px;top:calc(50% - 3.5px)"></span>');
+            const ports=[...node.querySelectorAll('.port')];
+            const input=ports.findIndex(port=>port.style.left!==''),output=ports.findIndex(port=>port.style.right!=='');
+            const x=source.offsetLeft+source.offsetWidth+62;
+            const required=x+node.offsetWidth+62;
+            const shift=Math.max(0,required-target.offsetLeft),oldTargetX=target.offsetLeft;
+            canvas.querySelectorAll('.graph-node').forEach(item=>{if(item!==node&&item!==source&&item.offsetLeft>=oldTargetX)item.style.left=`${item.offsetLeft+shift}px`;});
+            node.style.left=`${x}px`;node.style.top=`${source.offsetTop}px`;
+            node.classList.remove('placement-ghost');decorate(node);pendingNode=null;
+            root.removedConnections ||= [];root.removedConnections.push(connection);
+            root.customConnections ||= [];root.customConnections.push([sourceId,sourcePort,node.dataset.node,input],[node.dataset.node,output,targetId,targetPort]);
+            root.arrangeWorkflow?.();
+            renderGraphEdges(root);record();return;
+          }
+        }
         const rect = canvas.getBoundingClientRect(); positionPending(rect.left+rect.width/2, rect.top+rect.height/2);
       };
       root.addEventListener('node-pick', event => pickNode(event.detail));
@@ -601,7 +723,25 @@
         if (!pendingNode || event.button !== 0 || event.target.closest('button,.canvas-add-menu')) return;
         event.preventDefault(); event.stopImmediatePropagation();
         positionPending(event.clientX,event.clientY);
-        pendingNode.classList.remove('placement-ghost'); decorate(pendingNode); pendingNode = null; record();
+        const added=pendingNode;
+        const loopArea=canvas.querySelector('.loop-box .loop-stage')?.getBoundingClientRect();
+        const insideLoop=Boolean(loopArea&&event.clientX>=loopArea.left&&event.clientX<=loopArea.right&&event.clientY>=loopArea.top&&event.clientY<=loopArea.bottom);
+        added.dataset.loopScope=insideLoop?'inside':'outside';
+        added.classList.remove('placement-ghost'); decorate(added); pendingNode = null;
+        // Keep free placement local: move only the new card out of occupied space.
+        const peers=[...canvas.querySelectorAll('.graph-node:not(.placement-ghost)')].filter(n=>n!==added);
+        let y=added.offsetTop;
+        for(;;){
+          const hit=peers.find(n=>added.offsetLeft<n.offsetLeft+n.offsetWidth+32&&added.offsetLeft+added.offsetWidth+32>n.offsetLeft&&y<n.offsetTop+n.offsetHeight+40&&y+added.offsetHeight+40>n.offsetTop);
+          if(!hit)break;
+          y=hit.offsetTop+hit.offsetHeight+40;
+        }
+        added.style.top=`${y}px`;
+        if(root.loopNodeIds){
+          if(insideLoop)root.loopNodeIds.add(added.dataset.node);
+          else root.loopNodeIds.delete(added.dataset.node);
+        }
+        renderGraphEdges(root);record();
       }, true);
       document.addEventListener('keydown', event => { if (event.key === 'Escape') {
         if (pendingNode) { pendingNode.remove(); pendingNode=null; }
@@ -670,10 +810,12 @@
         const outputIndex=Number(output.dataset.portIndex ?? -1), inputIndex=Number(input.dataset.portIndex ?? -1);
         if(outputIndex<0 || inputIndex<0) return;
         const connection=[output.closest('.graph-node').dataset.node,outputIndex,input.closest('.graph-node').dataset.node,inputIndex];
+        root.removedConnections=(root.removedConnections||[]).filter(item=>JSON.stringify(item)!==JSON.stringify(connection));
         root.customConnections ||= [];
         if (!root.customConnections.some(item=>JSON.stringify(item)===JSON.stringify(connection))) {
-          root.customConnections.push(connection); renderGraphEdges(root); record();
+          root.customConnections.push(connection);
         }
+        renderGraphEdges(root); record();
       });
       document.addEventListener('pointercancel',clearConnectionDrag);
       document.addEventListener('keydown',event=>{if(event.key==='Escape')clearConnectionDrag();});
@@ -692,10 +834,12 @@
         const input = before ? portIndex : inputs.findIndex(port => port.style.left !== '');
         if (output < 0 || input < 0) { notify('该节点没有对应的连接口'); return; }
         const connection = [source.dataset.node, output, destination.dataset.node, input];
+        root.removedConnections=(root.removedConnections||[]).filter(item=>JSON.stringify(item)!==JSON.stringify(connection));
         root.customConnections ||= [];
         if (!root.customConnections.some(item => JSON.stringify(item) === JSON.stringify(connection))) {
-          root.customConnections.push(connection); renderGraphEdges(root); record();
+          root.customConnections.push(connection);
         }
+        renderGraphEdges(root); record();
         pendingConnection=null; canvas.style.cursor='';
       }, true);
       canvas.addEventListener('click', event => {
@@ -717,7 +861,7 @@
       });
 
       root.querySelector('process-actions')?.addEventListener('process-action', event => {
-        const labels = {preview:'预览',functions:'功能',publish:'发布',history:'历史'};
+        const labels = {parameters:'流程参数',save:'保存',publish:'发布',history:'历史'};
         notify(`${labels[event.detail.action]}操作已触发`);
       });
       root.querySelectorAll('.prop-tools button').forEach((button) => {

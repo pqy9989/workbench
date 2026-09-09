@@ -31,6 +31,16 @@
             </form>
             <footer class="human-properties-footer"><span role="status"></span><text-button variant="outline" data-property-action="delete">删除节点</text-button><text-button variant="primary" data-property-action="save">保存</text-button></footer>
           </aside>`;
+          this.querySelectorAll('.human-properties-form section > h3 + p').forEach(label=>{
+            if(['处理人分配','处理规则'].includes(label.textContent.trim()))label.remove();
+          });
+          const workbenchLabel=this.querySelector('.human-workbench');
+          const rejectOption=this.querySelector('.human-option.is-disabled');
+          rejectOption.classList.remove('is-disabled');
+          const rejectInput=rejectOption.querySelector('input');rejectInput.disabled=false;rejectInput.name='allowReject';rejectInput.value='true';
+          this.querySelector('.human-property-note').textContent='支持驳回到前序人工节点。';
+          [...workbenchLabel.childNodes].filter(node=>node.nodeType===Node.TEXT_NODE).forEach(node=>node.remove());
+          workbenchLabel.querySelector('select').setAttribute('aria-label','工作台');
           this.querySelector('[data-property-action="save"]').addEventListener('click', () => {
             const detail = Object.fromEntries(new FormData(this.querySelector('form')));
             this.querySelectorAll('form-input').forEach(input => { detail[input.getAttribute('name')] = input.value; });
@@ -40,13 +50,14 @@
             this.dispatchEvent(new CustomEvent('node-properties-save', { bubbles: true, detail }));
           });
           for (const action of ['close', 'delete']) this.querySelector(`[data-property-action="${action}"]`).addEventListener('click', () => {
+            if(action==='close')this.querySelector('.right-panel').style.display='none';
             this.dispatchEvent(new CustomEvent(`node-properties-${action}`, { bubbles: true, detail: { nodeId: this.querySelector('[name="nodeId"]').value } }));
           });
         }
         if (basic && name === 'process-node-library') {
           this.querySelector('.palette').innerHTML = basicPalette();
         }
-        if (basic && name === 'process-flow-canvas') {
+        if ((basic || this.getAttribute('variant') === 'initial') && name === 'process-flow-canvas') {
           this.querySelector('.loop-box')?.remove();
           const originals = new Map([...this.querySelectorAll('.graph-node')].map(node => [node.dataset.node, node.cloneNode(true)]));
           this.querySelectorAll('.graph-node').forEach(node => node.remove());
@@ -60,7 +71,8 @@
             ['internal','human-1','内部验收','内部验收'],
             ['end','end','end','End']
           ];
-          flow.forEach(([id, source, title, description], index) => {
+          const initial=this.getAttribute('variant')==='initial';
+          (initial?flow.filter(([id])=>id==='start'||id==='end'):flow).forEach(([id, source, title, description], index) => {
             const node = originals.get(source).cloneNode(true);
             node.dataset.node = id;
             node.classList.remove('selected');
@@ -112,10 +124,113 @@
           });
         }
         if (name === 'process-node-library') {
+          if (this.getAttribute('variant') === 'workflow') {
+            const groups = [
+              ['WORKFLOW PRIMITIVE', [['green','start','Start'],['gray','end','End'],['blue','condition-fix','Condition'],['mint','loop','Loop'],['yellow','variable-yellow','Variable Assignment'],['purple','api','API Request'],['blue','call-flow','Call Flow'],['pink2','human','Human Interrupt']]],
+              ['ROBOT / AI CAPABILITY', [['green','pose','Pose Set'],['green','nav','Navigation'],['green','omini','Omini Model']]]
+            ];
+            this.querySelector('.palette').innerHTML = groups.map(([label, items]) => `<div class="palette-group"><div class="group-head"><img src="${assets}chevron.svg" alt=""><span>${label}</span><span class="count">${items.length}</span></div>${items.map(([color, icon, text]) => `<div class="palette-item"><span class="node-icon ${color}"><img src="${assets}${icon}.svg" alt=""></span>${text}</div>`).join('')}</div>`).join('');
+          }
           const panel = this.querySelector('.left-panel');
+          const palette=panel.querySelector('.palette');
+          const heading=document.createElement('h3');heading.className='library-section-title';heading.textContent='节点库';
+          panel.prepend(heading);
+          const flows=panel.querySelector('.flow-list');
+          flows.innerHTML='<h3 class="library-section-title">流程</h3><div class="library-flow-tree"><div class="library-flow-row is-current"><span>主流程</span><button type="button" aria-label="主流程更多操作">···</button></div><div class="library-subflows"><div class="library-flow-row"><span>子流程</span><button type="button" aria-label="子流程更多操作">···</button></div></div></div>';
+          panel.prepend(flows);
+          const more='<button type="button" class="flow-more" aria-label="更多操作"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="13" cy="8" r="1.5"/></svg></button>';
+          flows.innerHTML=`<h3 class="library-section-title">流程</h3><div class="library-flow-tree"><div class="library-flow-row is-current"><button class="flow-tree-toggle" type="button" aria-label="收起子流程" aria-expanded="true"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4 6 4 4 4-4"/></svg></button><span class="flow-name" title="任务处理流程">任务处理流程</span><span class="flow-main-tag">主流程</span>${more}</div><div class="library-subflows"><div class="library-flow-row"><span class="flow-name">数据预处理</span>${more}</div><div class="library-flow-row"><span class="flow-name">质量验收</span>${more}</div></div></div>`;
+          flows.querySelector('.flow-main-tag').textContent='主';
+          const flowHeading=flows.querySelector('.library-section-title');
+          flowHeading.innerHTML='<span>流程 <span class="library-heading-count">'+flows.querySelectorAll('.library-flow-row').length+'</span></span>';
+          const nodeCount=document.createElement('span');nodeCount.className='library-heading-count';nodeCount.textContent=String(palette.querySelectorAll('.palette-item').length);
+          heading.append(' ',nodeCount);
+          const search=document.createElement('label');search.className='library-node-search';
+          search.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input type="search" placeholder="搜索节点" aria-label="搜索节点">';
+          heading.after(search);
+          const empty=document.createElement('div');empty.className='library-search-empty';empty.textContent='未找到匹配节点';empty.hidden=true;palette.append(empty);
+          const groups=[...palette.querySelectorAll('.palette-group')];
+          let collapsedBeforeSearch=null;
+          search.querySelector('input').addEventListener('input',event=>{
+            const query=event.target.value.trim().toLowerCase();
+            if(query && !collapsedBeforeSearch)collapsedBeforeSearch=groups.map(group=>group.classList.contains('is-collapsed'));
+            let count=0;
+            palette.querySelectorAll('.palette-item').forEach(item=>{const match=!query || item.textContent.toLowerCase().includes(query);item.hidden=!match;if(match)count++;});
+            groups.forEach((group,index)=>{
+              group.hidden=!!query && ![...group.querySelectorAll('.palette-item')].some(item=>!item.hidden);
+              if(query)group.classList.remove('is-collapsed');
+              else if(collapsedBeforeSearch)group.classList.toggle('is-collapsed',collapsedBeforeSearch[index]);
+              group.querySelector('.group-head')?.setAttribute('aria-expanded',String(!group.classList.contains('is-collapsed')));
+            });
+            if(!query)collapsedBeforeSearch=null;
+            empty.hidden=count!==0;
+          });
+          flows.querySelector('.library-section-title').insertAdjacentHTML('beforeend','<span class="flow-heading-actions"><button type="button" aria-label="定位流程" title="定位流程"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 2v5m0 10v5M2 12h5m10 0h5"/></svg></button><button type="button" aria-label="新增流程" title="新增流程"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg></button></span>');
+          const eye='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+          const flowIds=['main','preprocess','quality'];
+          const hiddenFlows=new Set();
+          const visibilityButtons=[];
+          const allEye=flows.querySelector('.flow-heading-actions button');
+          const refreshVisibility=()=>{
+            visibilityButtons.forEach((button,index)=>{const visible=!hiddenFlows.has(flowIds[index]);button.innerHTML=eye;button.classList.toggle('is-off',!visible);button.setAttribute('aria-pressed',String(visible));button.title=(visible?'隐藏':'显示')+flows.querySelectorAll('.flow-name')[index].textContent;button.setAttribute('aria-label',button.title);});
+            allEye.innerHTML=eye;allEye.title=hiddenFlows.size?'显示全部流程':'隐藏全部流程';allEye.setAttribute('aria-label',allEye.title);allEye.setAttribute('aria-pressed',String(!hiddenFlows.size));
+            this.dispatchEvent(new CustomEvent('flow-visibility-change',{bubbles:true,detail:{hidden:[...hiddenFlows]}}));
+          };
+          flows.querySelectorAll('.library-flow-row').forEach((row,index)=>{
+            const button=document.createElement('button');button.type='button';button.className='flow-visibility';row.querySelector('.flow-more').before(button);visibilityButtons.push(button);
+            button.addEventListener('click',()=>{const id=flowIds[index];hiddenFlows.has(id)?hiddenFlows.delete(id):hiddenFlows.add(id);refreshVisibility();});
+          });
+          allEye.addEventListener('click',()=>{if(hiddenFlows.size)hiddenFlows.clear();else flowIds.forEach(id=>hiddenFlows.add(id));refreshVisibility();});
+          refreshVisibility();
+          const treeToggle=flows.querySelector('.flow-tree-toggle');
+          const categoryArrow=palette.querySelector('.group-head img');
+          if(categoryArrow){const arrow=categoryArrow.cloneNode(true);arrow.alt='';treeToggle.replaceChildren(arrow);}
+          const alignFlowArrow=()=>{
+            if(!categoryArrow || panel.classList.contains('is-library-collapsed'))return;
+            treeToggle.style.transform='none';
+            const target=categoryArrow.getBoundingClientRect();
+            const scale=panel.getBoundingClientRect().width/panel.offsetWidth;
+            if(!target.width || !scale)return;
+            const row=treeToggle.closest('.library-flow-row');
+            const rowRect=row.getBoundingClientRect();
+            const inset=(target.left-rowRect.left)/scale;
+            row.style.paddingLeft=`${inset}px`;
+            // Use the category's icon-to-label gap for the flow name as well.
+            row.style.gap=getComputedStyle(categoryArrow.parentElement).gap;
+            const more=row.querySelector('.flow-more');
+            const svg=more.querySelector('svg');
+            const internalInset=(more.offsetWidth-svg.getBoundingClientRect().width/scale)/2;
+            flows.querySelectorAll('.library-flow-row').forEach(item=>{item.style.paddingRight=`${Math.max(0,inset-internalInset)}px`;});
+            const headingActions=flows.querySelector('.flow-heading-actions');
+            headingActions.style.transform='none';
+            const headingLast=headingActions.lastElementChild.getBoundingClientRect();
+            const rowLast=more.getBoundingClientRect();
+            headingActions.style.transform=`translateX(${(rowLast.left+rowLast.width/2-headingLast.left-headingLast.width/2)/scale}px)`;
+            headingActions.style.gap=getComputedStyle(row).gap;
+          };
+          const arrowAlignmentObserver=new ResizeObserver(()=>requestAnimationFrame(alignFlowArrow));
+          arrowAlignmentObserver.observe(panel);
+          requestAnimationFrame(alignFlowArrow);
+          treeToggle.addEventListener('click',()=>{
+            const expanded=treeToggle.getAttribute('aria-expanded')!=='true';
+            treeToggle.setAttribute('aria-expanded',String(expanded));
+            treeToggle.setAttribute('aria-label',expanded?'收起子流程':'展开子流程');
+            flows.querySelector('.library-subflows').hidden=!expanded;
+          });
+          const divider=document.createElement('div');divider.className='library-resizer';divider.tabIndex=0;
+          divider.setAttribute('role','separator');divider.setAttribute('aria-orientation','horizontal');divider.setAttribute('aria-label','调整流程区域高度');
+          flows.after(divider);
+          const resize=value=>{const height=Math.max(90,Math.min(value,Math.max(90,panel.clientHeight-160)));flows.style.height=`${height}px`;divider.setAttribute('aria-valuenow',String(Math.round(height)));};
+          let resizeDrag=null;
+          divider.addEventListener('pointerdown',event=>{if(event.button!==0)return;event.preventDefault();resizeDrag={y:event.clientY,height:flows.offsetHeight};divider.setPointerCapture(event.pointerId);});
+          divider.addEventListener('pointermove',event=>{if(resizeDrag)resize(resizeDrag.height+event.clientY-resizeDrag.y);});
+          const endResize=()=>{resizeDrag=null;};
+          divider.addEventListener('pointerup',endResize);divider.addEventListener('pointercancel',endResize);
+          divider.addEventListener('keydown',event=>{if(['ArrowUp','ArrowDown'].includes(event.key)){event.preventDefault();resize(flows.offsetHeight+(event.key==='ArrowUp'?-10:10));}});
           const toggle = document.createElement('button');
           toggle.type = 'button';
           toggle.className = 'node-library-toggle';
+          toggle.style.display = 'none';
           toggle.textContent = '‹';
           toggle.title = '收起节点栏';
           toggle.setAttribute('aria-expanded', 'true');
@@ -133,10 +248,16 @@
           this.querySelector('.toolbar-left').insertAdjacentHTML('beforeend', `
             <span class="toolbar-divider" aria-hidden="true"></span>
             <button type="button" class="tool-btn" data-action="add" title="添加" aria-label="添加">
-              <svg class="toolbar-add-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 7v10M7 12h10" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg>
             </button>`);
           const addButton = this.querySelector('[data-action="add"]');
+          addButton.insertAdjacentHTML('afterend','<button type="button" class="tool-btn" data-action="arrange" title="整理节点" aria-label="整理节点"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="6" rx="1"/><rect x="15" y="15" width="6" height="6" rx="1"/><path d="M9 6h6M6 9v9h9"/></svg></button>');
           const menu = document.createElement('div');
+          const toolLabels={fit:'选择 / 适应画布',hand:'拖动画布',undo:'撤销',redo:'重做',add:'展开 / 收起节点栏',arrange:'整理节点'};
+          this.querySelectorAll('.tool-btn').forEach(button=>{
+            const label=toolLabels[button.dataset.action] || button.getAttribute('aria-label') || '选择节点';
+            button.title=label;button.setAttribute('aria-label',label);button.dataset.tooltip=label;
+          });
           menu.className = 'canvas-add-menu';
           menu.hidden = true;
           menu.setAttribute('aria-label', '添加节点');
@@ -147,12 +268,40 @@
             addButton.setAttribute('aria-expanded', 'false');
           };
           addButton.addEventListener('click', (event) => {
+            if (!event.detail?.anchor) {
+              const canvas=this.closest('.canvas-stage');
+              const scope=this.closest('process-editor-page') || this.closest('.process-editor-components');
+              let library=canvas?.querySelector('process-node-library') || scope?.querySelector('process-node-library');
+              if (!library && canvas) {
+                library=document.createElement('process-node-library');
+                if(this.getAttribute('variant')==='basic')library.setAttribute('variant','basic');
+                canvas.append(library);
+                Object.assign(library.querySelector('.left-panel').style,{position:'absolute',left:'0',top:'0',bottom:'0',zIndex:'20'});
+                library.querySelector('.left-panel').classList.add('is-library-collapsed');
+              }
+              library?.querySelector('.node-library-toggle')?.click();
+              const expanded=!!library && !library.querySelector('.left-panel').classList.contains('is-library-collapsed');
+              addButton.setAttribute('aria-expanded',String(expanded));
+              addButton.title=expanded?'收起节点栏':'展开节点栏';
+              addButton.setAttribute('aria-label',addButton.title);
+              return;
+            }
             if (!menu.hidden) { closeMenu(); return; }
             menu.removeAttribute('style');
             const fragment = document.createElement('template');
             fragment.innerHTML = templates['process-node-library'].replace(/src="assets\//g, 'src="' + assets.href);
             if (this.getAttribute('variant') === 'basic') fragment.content.querySelector('.palette').innerHTML = basicPalette();
             menu.replaceChildren(fragment.content.querySelector('.palette'));
+            if (event.detail?.anchor) {
+              menu.querySelectorAll('.palette-item').forEach(item => {
+                if (['start','end','开始节点','结束节点'].includes(item.textContent.trim().toLowerCase())) item.remove();
+              });
+              menu.querySelectorAll('.palette-group').forEach(group => {
+                const count=group.querySelectorAll('.palette-item').length;
+                const label=group.querySelector('.count');if(label)label.textContent=String(count);
+                if(!count)group.remove();
+              });
+            }
             menu.querySelectorAll('.group-head').forEach(head => {
               head.tabIndex = 0;
               head.setAttribute('role', 'button');
@@ -207,6 +356,45 @@
           });
         }
         if (name === 'process-editor-header') {
+          this.querySelector('.title-block p').textContent = 'v0.1 · 草稿 · 未保存变更';
+          const title = this.querySelector('h1');
+          const titleRow = document.createElement('div');
+          titleRow.className = 'process-title-row';
+          title.replaceWith(titleRow);
+          titleRow.append(title);
+          titleRow.insertAdjacentHTML('beforeend', '<button type="button" class="process-title-edit" aria-label="编辑流程标题" title="编辑标题"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15v5Z"/></svg></button>');
+          const dialog = document.createElement('dialog');
+          dialog.className = 'flow-info-dialog';
+          dialog.setAttribute('aria-labelledby', 'flow-info-heading');
+          dialog.innerHTML = `<form class="flow-info-form">
+            <header><h2 id="flow-info-heading">编辑流程信息</h2><button type="button" data-dismiss aria-label="关闭">×</button></header>
+            <div class="flow-info-fields">
+              <label>流程标识<input value="e2e-split-annotation" readonly></label>
+              <label>流程名称<input name="flowName" required maxlength="100" autocomplete="off"></label>
+              <label>业务环节<select disabled><option>标注</option></select></label>
+            </div>
+            <footer><text-button variant="outline" data-dismiss>关闭</text-button><text-button variant="primary" data-save-info>保存</text-button></footer>
+          </form>`;
+          this.append(dialog);
+          const nameInput = dialog.querySelector('[name="flowName"]');
+          titleRow.querySelector('button').addEventListener('click', () => {
+            nameInput.value = title.textContent.trim();
+            nameInput.setCustomValidity('');
+            dialog.showModal();
+            nameInput.focus();
+            nameInput.setSelectionRange(nameInput.value.length, nameInput.value.length);
+          });
+          dialog.querySelectorAll('[data-dismiss]').forEach(close => close.addEventListener('click', () => dialog.close()));
+          nameInput.addEventListener('input', () => nameInput.setCustomValidity(''));
+          dialog.querySelector('[data-save-info]').addEventListener('click', () => dialog.querySelector('form').requestSubmit());
+          dialog.querySelector('form').addEventListener('submit', event => {
+            event.preventDefault();
+            const value = nameInput.value.trim();
+            if (!value) { nameInput.setCustomValidity('请输入流程名称'); nameInput.reportValidity(); return; }
+            title.textContent = value;
+            this.dispatchEvent(new CustomEvent('flow-info-change', {bubbles:true, detail:{name:value}}));
+            dialog.close();
+          });
           const icon = this.querySelector('.back');
           const button = document.createElement('button');
           button.type = 'button';

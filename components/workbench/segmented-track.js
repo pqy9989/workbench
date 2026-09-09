@@ -423,6 +423,23 @@
     ['00:27','00:32','00:05','将笔记本按类别放回指定位置（前端测试V4 预标注片段 6）','']
   ];
 
+  function enableListResize(host,surface){
+    host.style.position='relative';
+    const handle=document.createElement('div');
+    handle.className='workbench-list-resize';handle.tabIndex=0;
+    handle.setAttribute('role','separator');handle.setAttribute('aria-orientation','vertical');
+    handle.setAttribute('aria-label','调整列表宽度');handle.title='拖动调整宽度（320–600px）';
+    host.append(handle);
+    const limits=()=>{const available=host.parentElement.clientWidth;const max=Math.min(600,host.parentElement.classList.contains('main')?available-480:available);return {min:Math.min(320,Math.max(0,max)),max:Math.max(0,max)};};
+    const update=value=>{const {min,max}=limits();const width=Math.max(min,Math.min(max,value));host.style.width=`${width}px`;host.style.flex=`0 0 ${width}px`;surface.style.width='100%';handle.setAttribute('aria-valuemin',min);handle.setAttribute('aria-valuemax',max);handle.setAttribute('aria-valuenow',Math.round(width));};
+    let drag=null;
+    handle.addEventListener('pointerdown',event=>{if(event.button!==0)return;event.preventDefault();drag={x:event.clientX,width:host.getBoundingClientRect().width};handle.classList.add('is-dragging');handle.setPointerCapture(event.pointerId);});
+    handle.addEventListener('pointermove',event=>{if(drag)update(drag.width+drag.x-event.clientX);});
+    const stop=event=>{drag=null;handle.classList.remove('is-dragging');if(handle.hasPointerCapture(event.pointerId))handle.releasePointerCapture(event.pointerId);};
+    handle.addEventListener('pointerup',stop);handle.addEventListener('pointercancel',stop);
+    handle.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const {min,max}=limits();update(event.key==='Home'?min:event.key==='End'?max:host.getBoundingClientRect().width+(event.key==='ArrowLeft'?16:-16));});
+  }
+
   class WorkbenchSegmentListPanel extends HTMLElement{
     static get observedAttributes(){return ['variant'];}
     attributeChangedCallback(name,oldValue,newValue){
@@ -434,6 +451,7 @@
       this.dataset.rendered='true';
       this._segments=reviewSegments.map(item=>[...item]);
       this.innerHTML=`<section class="workbench-review__panel"><div class="workbench-review__content"><header class="workbench-review__header" data-review-title>片段列表</header><div class="workbench-review__list" data-workbench-review-view="segments"><button class="workbench-review__parent" type="button" aria-expanded="true"><span class="workbench-review__parent-index">01 <i>⌄</i></span><span class="workbench-review__parent-cell"><b>完成整段录制的前端测试V4预标注抽验任务</b><em>6 个子片段</em></span></button><div class="workbench-review__children"></div></div><div class="review-log" data-workbench-review-view="log" hidden><div class="review-log__summary"><span>当前数据处理记录</span><span>共 2 条</span></div><div class="review-log__table" aria-label="当前数据处理记录"><article class="review-log__card"><header><time>2026-08-03 10:42</time><span class="review-log__action">提交</span></header><dl><div><dt>操作人</dt><dd>供应商 A-017</dd></div><div><dt>节点</dt><dd>供应商抽验</dd></div><div><dt>说明</dt><dd>完成首次切分标注并提交</dd></div></dl></article><article class="review-log__card"><header><time>2026-08-03 11:02</time><span class="review-log__action">提交</span></header><dl><div><dt>操作人</dt><dd>供应商 A-017</dd></div><div><dt>节点</dt><dd>供应商抽验</dd></div><div><dt>说明</dt><dd>补充调整后再次提交</dd></div></dl></article></div></div><div class="review-info" data-workbench-review-view="info" hidden><dl class="review-info__list"><div><dt>任务 ID</dt><dd class="review-info__code">20455</dd></div><div><dt>处理任务</dt><dd>端到端切分标注供应商 A 任务</dd></div><div><dt>序列号</dt><dd class="review-info__code">UDAS-00002-2983</dd></div><div><dt>采集员</dt><dd>柳少龙</dd></div><div><dt>数据 ID</dt><dd class="review-info__code">3298698</dd></div><div><dt>版本</dt><dd>第1版</dd></div></dl></div></div></section>`;
+      if(!this.closest('workbench-segment-list'))enableListResize(this,this.querySelector('.workbench-review__panel'));
       this.querySelectorAll('.review-log__card').forEach(card=>{
         const operatorRow=card.querySelector('dl > div');
         const nodeRow=operatorRow.nextElementSibling;
@@ -627,6 +645,7 @@
       const variant=this._normalizeVariant(this.getAttribute('variant'));
       this.innerHTML=`<aside class="workbench-review"><div class="workbench-review__main"><workbench-segment-list-panel variant="${variant}"></workbench-segment-list-panel><workbench-annotation-list title="质检列表" data-quality-list hidden></workbench-annotation-list><workbench-quality-list title="标注列表" data-action-list hidden></workbench-quality-list><div class="workbench-quality-actions" data-quality-actions hidden><workbench-quality-conclusion></workbench-quality-conclusion><workbench-footer-actions variant="quality"></workbench-footer-actions></div><workbench-footer-actions></workbench-footer-actions></div><div class="workbench-review__rail"><workbench-segment-tabs active="${variant}"></workbench-segment-tabs><button class="workbench-theme-switch" type="button" aria-label="切换为浅色主题" aria-pressed="false"><span class="workbench-theme-switch__moon" aria-hidden="true"></span><span class="workbench-theme-switch__sun" aria-hidden="true"></span></button></div></aside>`;
       this._panel=this.querySelector('workbench-segment-list-panel');
+      enableListResize(this,this.querySelector('.workbench-review'));
       this._quality=this.querySelector('[data-quality-list]');
       this._action=this.querySelector('[data-action-list]');
       this._qualityActions=this.querySelector('[data-quality-actions]');
